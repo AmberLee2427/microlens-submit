@@ -14,6 +14,7 @@ def test_full_lifecycle(tmp_path):
 
     evt = sub.get_event("test-event")
     sol1 = evt.add_solution(model_type="test", parameters={"a": 1})
+    sol1.set_compute_info()
     sol2 = evt.add_solution(model_type="test", parameters={"b": 2})
     sub.save()
 
@@ -23,6 +24,10 @@ def test_full_lifecycle(tmp_path):
     new_evt = new_sub.events["test-event"]
     assert sol1.solution_id in new_evt.solutions
     assert sol2.solution_id in new_evt.solutions
+    new_sol1 = new_evt.solutions[sol1.solution_id]
+    assert "dependencies" in new_sol1.compute_info
+    assert isinstance(new_sol1.compute_info["dependencies"], list)
+    assert any("pytest" in dep for dep in new_sol1.compute_info["dependencies"])
 
 
 def test_deactivate_and_export(tmp_path):

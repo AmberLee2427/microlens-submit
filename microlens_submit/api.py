@@ -3,6 +3,8 @@ from __future__ import annotations
 """Core API for microlens-submit."""
 
 import json
+import subprocess
+import sys
 import uuid
 import zipfile
 from datetime import datetime
@@ -26,13 +28,24 @@ class Solution(BaseModel):
     )
 
     def set_compute_info(self, cpu_hours: float | None = None) -> None:
-        """Record basic compute metadata.
+        """Record compute metadata and capture Python environment."""
 
-        Args:
-            cpu_hours: CPU hours consumed by this fit.
-        """
         if cpu_hours is not None:
             self.compute_info["cpu_hours"] = cpu_hours
+
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "freeze"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.compute_info["dependencies"] = (
+                result.stdout.strip().split("\n") if result.stdout else []
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Warning: Could not capture pip environment: {e}")
+            self.compute_info["dependencies"] = []
 
     def deactivate(self) -> None:
         """Mark this solution as inactive."""
