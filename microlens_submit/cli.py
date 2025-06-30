@@ -6,9 +6,13 @@ import json
 from pathlib import Path
 
 import typer
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
 
 from .api import load
 
+console = Console()
 app = typer.Typer()
 
 
@@ -29,7 +33,7 @@ def init(
     sub.team_name = team_name
     sub.tier = tier
     sub.save()
-    typer.echo(f"Initialized project at {project_path}")
+    console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
 
 
 @app.command("add-solution")
@@ -63,7 +67,7 @@ def add_solution(
     sol = evt.add_solution(model_type=model_type, parameters=params)
     sol.notes = notes
     sub.save()
-    typer.echo(sol.solution_id)
+    console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
 
 
 @app.command()
@@ -82,9 +86,9 @@ def deactivate(
         if solution_id in event.solutions:
             event.solutions[solution_id].deactivate()
             sub.save()
-            typer.echo(f"Deactivated {solution_id}")
+            console.print(f"Deactivated {solution_id}")
             return
-    typer.echo(f"Solution {solution_id} not found", err=True)
+    console.print(f"Solution {solution_id} not found", style="bold red")
     raise typer.Exit(code=1)
 
 
@@ -101,7 +105,29 @@ def export(
     """
     sub = load(str(project_path))
     sub.export(str(output_path))
-    typer.echo(f"Exported submission to {output_path}")
+    console.print(Panel(f"Exported submission to {output_path}", style="bold green"))
+
+
+@app.command("list-solutions")
+def list_solutions(
+    event_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """List all solutions for a given event."""
+    sub = load(str(project_path))
+    if event_id not in sub.events:
+        console.print(f"Event {event_id} not found", style="bold red")
+        raise typer.Exit(code=1)
+    evt = sub.events[event_id]
+    table = Table(title=f"Solutions for {event_id}")
+    table.add_column("Solution ID")
+    table.add_column("Model Type")
+    table.add_column("Status")
+    table.add_column("Notes")
+    for sol in evt.solutions.values():
+        status = "[green]Active[/green]" if sol.is_active else "[red]Inactive[/red]"
+        table.add_row(sol.solution_id, sol.model_type, status, sol.notes)
+    console.print(table)
 
 
 if __name__ == "__main__":  # pragma: no cover
