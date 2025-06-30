@@ -6,30 +6,21 @@ from pathlib import Path
 from datetime import datetime
 import json
 import uuid
+import zipfile
 from typing import Dict
+from pydantic import BaseModel, Field
 
 
-class Solution:
-    """Represents a single model fit for an event.
+class Solution(BaseModel):
+    """Represents a single model fit for an event."""
 
-    Parameters
-    ----------
-    solution_id : str
-        Unique identifier for this solution.
-    model_type : str
-        Type of model (e.g., ``single_lens``).
-    parameters : dict
-        Best-fit parameters for the model.
-    """
-
-    def __init__(self, solution_id: str, model_type: str, parameters: dict) -> None:
-        self.solution_id: str = solution_id
-        self.model_type: str = model_type
-        self.parameters: dict = parameters
-        self.is_active: bool = True
-        self.compute_info: dict = {}
-        self.notes: str = ""
-        self.creation_timestamp: str = datetime.utcnow().isoformat()
+    solution_id: str
+    model_type: str
+    parameters: dict
+    is_active: bool = True
+    compute_info: dict = Field(default_factory=dict)
+    notes: str = ""
+    creation_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
     def set_compute_info(self, cpu_hours: float | None = None) -> None:
         """Record basic compute metadata.
@@ -50,47 +41,20 @@ class Solution:
         """Mark this solution as active."""
         self.is_active = True
 
-    def _to_dict(self) -> dict:
-        return {
-            "solution_id": self.solution_id,
-            "model_type": self.model_type,
-            "parameters": self.parameters,
-            "is_active": self.is_active,
-            "compute_info": self.compute_info,
-            "notes": self.notes,
-            "creation_timestamp": self.creation_timestamp,
-        }
-
-    @classmethod
-    def _from_dict(cls, data: dict) -> "Solution":
-        sol = cls(
-            solution_id=data["solution_id"],
-            model_type=data.get("model_type", ""),
-            parameters=data.get("parameters", {}),
-        )
-        sol.is_active = data.get("is_active", True)
-        sol.compute_info = data.get("compute_info", {})
-        sol.notes = data.get("notes", "")
-        sol.creation_timestamp = data.get(
-            "creation_timestamp", datetime.utcnow().isoformat()
-        )
-        return sol
-
     def _save(self, event_path: Path) -> None:
         solutions_dir = event_path / "solutions"
         solutions_dir.mkdir(parents=True, exist_ok=True)
         out_path = solutions_dir / f"{self.solution_id}.json"
         with out_path.open("w", encoding="utf-8") as fh:
-            json.dump(self._to_dict(), fh, indent=2)
+            fh.write(self.model_dump_json(indent=2))
 
 
-class Event:
+class Event(BaseModel):
     """Represents a microlensing event within the submission."""
 
-    def __init__(self, event_id: str, submission: "Submission") -> None:
-        self.event_id: str = event_id
-        self.solutions: Dict[str, Solution] = {}
-        self._submission = submission
+    event_id: str
+    solutions: Dict[str, Solution] = Field(default_factory=dict)
+    submission: "Submission" | None = Field(default=None, exclude=True)
 
     def add_solution(self, model_type: str, parameters: dict) -> Solution:
         """Create and register a new :class:`Solution`.
@@ -116,45 +80,41 @@ class Event:
         """Retrieve a solution by ID."""
         return self.solutions[solution_id]
 
-    def _to_dict(self) -> dict:
-        return {"event_id": self.event_id}
-
     @classmethod
     def _from_dir(cls, event_dir: Path, submission: "Submission") -> "Event":
         event_json = event_dir / "event.json"
         if event_json.exists():
             with event_json.open("r", encoding="utf-8") as fh:
-                data = json.load(fh)
-            event_id = data.get("event_id", event_dir.name)
+                event = cls.model_validate_json(fh.read())
         else:
-            event_id = event_dir.name
-        event = cls(event_id=event_id, submission=submission)
+            event = cls(event_id=event_dir.name)
+        event.submission = submission
         solutions_dir = event_dir / "solutions"
         if solutions_dir.exists():
             for sol_file in solutions_dir.glob("*.json"):
                 with sol_file.open("r", encoding="utf-8") as fh:
-                    sdata = json.load(fh)
-                sol = Solution._from_dict(sdata)
+                    sol = Solution.model_validate_json(fh.read())
                 event.solutions[sol.solution_id] = sol
         return event
 
     def _save(self) -> None:
-        base = Path(self._submission.project_path) / "events" / self.event_id
+        if self.submission is None:
+            raise ValueError("Event is not attached to a submission")
+        base = Path(self.submission.project_path) / "events" / self.event_id
         base.mkdir(parents=True, exist_ok=True)
         with (base / "event.json").open("w", encoding="utf-8") as fh:
-            json.dump(self._to_dict(), fh, indent=2)
+            fh.write(self.model_dump_json(exclude={"solutions", "submission"}, indent=2))
         for sol in self.solutions.values():
             sol._save(base)
 
 
-class Submission:
+class Submission(BaseModel):
     """Container for all challenge events and solutions."""
 
-    def __init__(self, project_path: str) -> None:
-        self.project_path = str(Path(project_path))
-        self.team_name: str = ""
-        self.tier: str = ""
-        self.events: Dict[str, Event] = {}
+    project_path: str = Field(exclude=True)
+    team_name: str = ""
+    tier: str = ""
+    events: Dict[str, Event] = Field(default_factory=dict)
 
     def get_event(self, event_id: str) -> Event:
         """Retrieve an :class:`Event`, creating it if necessary."""
@@ -167,11 +127,32 @@ class Submission:
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
-        sub_data = {"team_name": self.team_name, "tier": self.tier}
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
-            json.dump(sub_data, fh, indent=2)
+            fh.write(
+                self.model_dump_json(
+                    exclude={"events", "project_path"}, indent=2
+                )
+            )
         for event in self.events.values():
+            event.submission = self
             event._save()
+
+    def export(self, output_path: str) -> None:
+        """Create a zip archive of active solutions only."""
+        project = Path(self.project_path)
+        with zipfile.ZipFile(output_path, "w") as zf:
+            events_dir = project / "events"
+            for event in self.events.values():
+                event_dir = events_dir / event.event_id
+                event_json = event_dir / "event.json"
+                if event_json.exists():
+                    zf.write(event_json, arcname=f"events/{event.event_id}/event.json")
+                for sol in event.solutions.values():
+                    if sol.is_active:
+                        sol_path = event_dir / "solutions" / f"{sol.solution_id}.json"
+                        if sol_path.exists():
+                            arc = f"events/{event.event_id}/solutions/{sol.solution_id}.json"
+                            zf.write(sol_path, arcname=arc)
 
 
 def load(project_path: str) -> Submission:
@@ -194,16 +175,16 @@ def load(project_path: str) -> Submission:
         events_dir.mkdir(parents=True, exist_ok=True)
         submission = Submission(project_path=str(project))
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
-            json.dump({"team_name": "", "tier": ""}, fh, indent=2)
+            fh.write(submission.model_dump_json(exclude={"events", "project_path"}, indent=2))
         return submission
 
-    submission = Submission(project_path=str(project))
     sub_json = project / "submission.json"
     if sub_json.exists():
         with sub_json.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
-            submission.team_name = data.get("team_name", "")
-            submission.tier = data.get("tier", "")
+            submission = Submission.model_validate_json(fh.read())
+        submission.project_path = str(project)
+    else:
+        submission = Submission(project_path=str(project))
 
     if events_dir.exists():
         for event_dir in events_dir.iterdir():
