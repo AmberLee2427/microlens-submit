@@ -1,5 +1,5 @@
 """microlens-submit public API."""
 
-from .api import Submission, Event, Solution, load
+from .api import Event, Solution, Submission, load
 
 __all__ = ["Submission", "Event", "Solution", "load"]

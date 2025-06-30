@@ -2,12 +2,13 @@ from __future__ import annotations
 
 """Core API for microlens-submit."""
 
-from pathlib import Path
-from datetime import datetime
 import json
 import uuid
 import zipfile
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -20,7 +21,9 @@ class Solution(BaseModel):
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
     notes: str = ""
-    creation_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    creation_timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat()
+    )
 
     def set_compute_info(self, cpu_hours: float | None = None) -> None:
         """Record basic compute metadata.
@@ -70,7 +73,9 @@ class Event(BaseModel):
             Solution: The newly created solution instance.
         """
         solution_id = str(uuid.uuid4())
-        sol = Solution(solution_id=solution_id, model_type=model_type, parameters=parameters)
+        sol = Solution(
+            solution_id=solution_id, model_type=model_type, parameters=parameters
+        )
         self.solutions[solution_id] = sol
         return sol
 
@@ -110,7 +115,9 @@ class Event(BaseModel):
         base = Path(self.submission.project_path) / "events" / self.event_id
         base.mkdir(parents=True, exist_ok=True)
         with (base / "event.json").open("w", encoding="utf-8") as fh:
-            fh.write(self.model_dump_json(exclude={"solutions", "submission"}, indent=2))
+            fh.write(
+                self.model_dump_json(exclude={"solutions", "submission"}, indent=2)
+            )
         for sol in self.solutions.values():
             sol._save(base)
 
@@ -142,11 +149,7 @@ class Submission(BaseModel):
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
-            fh.write(
-                self.model_dump_json(
-                    exclude={"events", "project_path"}, indent=2
-                )
-            )
+            fh.write(self.model_dump_json(exclude={"events", "project_path"}, indent=2))
         for event in self.events.values():
             event.submission = self
             event._save()
@@ -189,7 +192,9 @@ def load(project_path: str) -> Submission:
         events_dir.mkdir(parents=True, exist_ok=True)
         submission = Submission(project_path=str(project))
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
-            fh.write(submission.model_dump_json(exclude={"events", "project_path"}, indent=2))
+            fh.write(
+                submission.model_dump_json(exclude={"events", "project_path"}, indent=2)
+            )
         return submission
 
     sub_json = project / "submission.json"

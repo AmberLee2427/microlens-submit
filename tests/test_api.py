@@ -1,5 +1,6 @@
 import zipfile
 from pathlib import Path
+
 import pytest
 
 from microlens_submit.api import load
@@ -41,4 +42,6 @@ def test_deactivate_and_export(tmp_path):
         solution_files = [
             n for n in zf.namelist() if n.startswith("events/") and "solutions" in n
         ]
-    assert solution_files == [f"events/test-event/solutions/{sol_active.solution_id}.json"]
+    assert solution_files == [
+        f"events/test-event/solutions/{sol_active.solution_id}.json"
+    ]

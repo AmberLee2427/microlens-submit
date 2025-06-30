@@ -42,4 +42,7 @@ dev = [
     "pytest-cov",
     "build",
     "twine",
+    "pre-commit",
+    "black",
+    "isort",
 ]
