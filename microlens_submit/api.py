@@ -7,7 +7,7 @@ from datetime import datetime
 import json
 import uuid
 import zipfile
-from typing import Dict
+from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
 
@@ -25,10 +25,8 @@ class Solution(BaseModel):
     def set_compute_info(self, cpu_hours: float | None = None) -> None:
         """Record basic compute metadata.
 
-        Parameters
-        ----------
-        cpu_hours : float, optional
-            CPU hours consumed by this fit.
+        Args:
+            cpu_hours: CPU hours consumed by this fit.
         """
         if cpu_hours is not None:
             self.compute_info["cpu_hours"] = cpu_hours
@@ -42,6 +40,11 @@ class Solution(BaseModel):
         self.is_active = True
 
     def _save(self, event_path: Path) -> None:
+        """Write this solution to disk.
+
+        Args:
+            event_path: Directory of the parent event within the project.
+        """
         solutions_dir = event_path / "solutions"
         solutions_dir.mkdir(parents=True, exist_ok=True)
         out_path = solutions_dir / f"{self.solution_id}.json"
@@ -54,22 +57,17 @@ class Event(BaseModel):
 
     event_id: str
     solutions: Dict[str, Solution] = Field(default_factory=dict)
-    submission: "Submission" | None = Field(default=None, exclude=True)
+    submission: Optional["Submission"] = Field(default=None, exclude=True)
 
     def add_solution(self, model_type: str, parameters: dict) -> Solution:
         """Create and register a new :class:`Solution`.
 
-        Parameters
-        ----------
-        model_type : str
-            The type of model being added.
-        parameters : dict
-            Model parameters.
+        Args:
+            model_type: The type of model being added.
+            parameters: Model parameters.
 
-        Returns
-        -------
-        Solution
-            The newly created solution instance.
+        Returns:
+            Solution: The newly created solution instance.
         """
         solution_id = str(uuid.uuid4())
         sol = Solution(solution_id=solution_id, model_type=model_type, parameters=parameters)
@@ -77,11 +75,19 @@ class Event(BaseModel):
         return sol
 
     def get_solution(self, solution_id: str) -> Solution:
-        """Retrieve a solution by ID."""
+        """Retrieve a solution by its ID.
+
+        Args:
+            solution_id: Identifier of the solution to retrieve.
+
+        Returns:
+            Solution: The matching solution instance.
+        """
         return self.solutions[solution_id]
 
     @classmethod
     def _from_dir(cls, event_dir: Path, submission: "Submission") -> "Event":
+        """Load an event from disk."""
         event_json = event_dir / "event.json"
         if event_json.exists():
             with event_json.open("r", encoding="utf-8") as fh:
@@ -98,6 +104,7 @@ class Event(BaseModel):
         return event
 
     def _save(self) -> None:
+        """Write this event and its solutions to disk."""
         if self.submission is None:
             raise ValueError("Event is not attached to a submission")
         base = Path(self.submission.project_path) / "events" / self.event_id
@@ -111,13 +118,20 @@ class Event(BaseModel):
 class Submission(BaseModel):
     """Container for all challenge events and solutions."""
 
-    project_path: str = Field(exclude=True)
+    project_path: str = Field(default="", exclude=True)
     team_name: str = ""
     tier: str = ""
     events: Dict[str, Event] = Field(default_factory=dict)
 
     def get_event(self, event_id: str) -> Event:
-        """Retrieve an :class:`Event`, creating it if necessary."""
+        """Retrieve an :class:`Event`, creating it if necessary.
+
+        Args:
+            event_id: Identifier of the event.
+
+        Returns:
+            Event: The corresponding event object.
+        """
         if event_id not in self.events:
             self.events[event_id] = Event(event_id=event_id, submission=self)
         return self.events[event_id]
@@ -138,7 +152,11 @@ class Submission(BaseModel):
             event._save()
 
     def export(self, output_path: str) -> None:
-        """Create a zip archive of active solutions only."""
+        """Create a zip archive of active solutions only.
+
+        Args:
+            output_path: Destination path for the zip archive.
+        """
         project = Path(self.project_path)
         with zipfile.ZipFile(output_path, "w") as zf:
             events_dir = project / "events"
@@ -158,15 +176,11 @@ class Submission(BaseModel):
 def load(project_path: str) -> Submission:
     """Load or initialize a submission project.
 
-    Parameters
-    ----------
-    project_path : str
-        Path to the submission project on disk.
+    Args:
+        project_path: Path to the submission project on disk.
 
-    Returns
-    -------
-    Submission
-        The loaded or newly created :class:`Submission` instance.
+    Returns:
+        Submission: The loaded or newly created submission instance.
     """
     project = Path(project_path)
     events_dir = project / "events"
@@ -193,3 +207,8 @@ def load(project_path: str) -> Submission:
                 submission.events[event.event_id] = event
 
     return submission
+
+
+# Resolve forward references
+Event.model_rebuild()
+Submission.model_rebuild()
