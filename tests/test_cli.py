@@ -1,17 +1,20 @@
 import zipfile
 from pathlib import Path
+
 import pytest
 from typer.testing import CliRunner
 
-from microlens_submit.cli import app
 from microlens_submit import api
+from microlens_submit.cli import app
 
 runner = CliRunner()
 
 
 def test_cli_init_and_add():
     with runner.isolated_filesystem():
-        result = runner.invoke(app, ["init", "--team-name", "Test Team", "--tier", "test"])
+        result = runner.invoke(
+            app, ["init", "--team-name", "Test Team", "--tier", "test"]
+        )
         assert result.exit_code == 0
         assert Path("submission.json").exists()
 
@@ -30,7 +33,12 @@ def test_cli_init_and_add():
 
 def test_cli_export():
     with runner.isolated_filesystem():
-        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
         sol1 = runner.invoke(
             app,
             ["add-solution", "evt", "test", "--param", "x=1"],
@@ -47,4 +55,3 @@ def test_cli_export():
         with zipfile.ZipFile("submission.zip") as zf:
             solution_files = [n for n in zf.namelist() if "solutions" in n]
         assert solution_files == [f"events/evt/solutions/{sol1}.json"]
-
