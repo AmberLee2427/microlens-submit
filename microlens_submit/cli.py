@@ -1,6 +1,7 @@
 """Command line interface for microlens-submit."""
 
 from __future__ import annotations
+from typing import List
 
 import json
 from pathlib import Path
@@ -40,7 +41,7 @@ def init(
 def add_solution(
     event_id: str,
     model_type: str,
-    param: list[str] = typer.Option(..., help="Model parameters as key=value"),
+    param: List[str] = typer.Option(..., help="Model parameters as key=value"),
     notes: str = typer.Option("", help="Notes for the solution"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
