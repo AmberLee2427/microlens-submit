@@ -2,7 +2,7 @@
 A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.
 
 [![PyPI version](https://badge.fury.io/py/microlens-submit.svg)](https://badge.fury.io/py/microlens-submit)
-[![Build Status](https://travis-ci.org/your-repo/microlens-submit.svg?branch=main)](https://travis-ci.org/AmberLee2427/microlens-submit)
+[![Build Status](https://travis-ci.org/AmberLee2427/microlens-submit.svg?branch=main)](https://travis-ci.org/AmberLee2427/microlens-submit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `microlens-submit` provides a robust, version-controlled workflow for managing, validating, and packaging your challenge submission over a long period. It supports both a programmatic Python API and a full-featured Command Line Interface (CLI) for language-agnostic use.
