@@ -10,6 +10,16 @@ from microlens_submit.cli import app
 runner = CliRunner()
 
 
+def test_global_no_color_option():
+    """The --no-color flag disables ANSI color codes."""
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            app,
+            ["--no-color", "init", "--team-name", "Team", "--tier", "test"],
+        )
+        assert result.exit_code == 0
+        assert "\x1b[" not in result.stdout
+
 def test_cli_init_and_add():
     with runner.isolated_filesystem():
         result = runner.invoke(

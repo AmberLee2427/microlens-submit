@@ -32,6 +32,8 @@ pip install microlens-submit
 
 QuickstartUsing the Command Line Interface (CLI)The CLI is the recommended way to interact with your submission project.
 
+You can pass ``--no-color`` to any command if your terminal does not support ANSI colors.
+
 1. Initialize your project: `microlens-submit init --team-name "Planet Pounders" --tier "advanced"`
 2. Add a new solution to an event:`microlens-submit add-solution ogle-2025-blg-0042 \`
     `--model-type binary_lens \`
