@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Core API for microlens-submit."""
 
-import json
 import logging
 import subprocess
 import sys
