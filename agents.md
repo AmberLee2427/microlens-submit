@@ -385,7 +385,7 @@ For future automation, consider implementing:
 
 - **v0.1.0:** ✅ Released - Initial implementation with basic CLI and API
 - **v0.2.0:** ✅ Released - Feature Batch 1 (Provenance Capture, Structured Metadata, Hardware Info)
-- **v0.3.0:** 🔄 In Development - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
-- **v0.4.0:** 📋 Planned - Feature Batch 3 (Plugin Architecture, Nexus Integration)
+- **v0.3.0:** ✅ Released - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
+- **v0.4.0:** 🔄 In Development - Feature Batch 3 (Plugin Architecture, Nexus Integration)
 - **v1.0.0:** 📋 Planned - Official Release
 
