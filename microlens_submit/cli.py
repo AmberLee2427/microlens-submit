@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import List, Optional
 
@@ -93,6 +94,11 @@ def add_solution(
     ),
     log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
     log_prior: Optional[float] = typer.Option(None, help="Log prior"),
+    n_data_points: Optional[int] = typer.Option(
+        None,
+        "--n-data-points",
+        help="Number of data points used in this solution",
+    ),
     notes: str = typer.Option("", help="Notes for the solution"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
@@ -126,6 +132,7 @@ def add_solution(
     sol.physical_parameters = _parse_pairs(physical_param)
     sol.log_likelihood = log_likelihood
     sol.log_prior = log_prior
+    sol.n_data_points = n_data_points
     sub.save()
     console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
 
@@ -155,6 +162,7 @@ def deactivate(
 @app.command()
 def export(
     output_path: Path,
+    force: bool = typer.Option(False, "--force", help="Skip validation prompts"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Export the submission to a zip archive.
@@ -164,6 +172,15 @@ def export(
         project_path: Directory of the submission project.
     """
     sub = load(str(project_path))
+    warnings = sub.validate()
+    if warnings:
+        console.print(Panel("Validation Warnings", style="yellow"))
+        for w in warnings:
+            console.print(f"- {w}")
+        if not force:
+            if not typer.confirm("Continue with export?"):
+                console.print("Export cancelled", style="bold red")
+                raise typer.Exit()
     sub.export(str(output_path))
     console.print(Panel(f"Exported submission to {output_path}", style="bold green"))
 
@@ -187,6 +204,55 @@ def list_solutions(
     for sol in evt.solutions.values():
         status = "[green]Active[/green]" if sol.is_active else "[red]Inactive[/red]"
         table.add_row(sol.solution_id, sol.model_type, status, sol.notes)
+    console.print(table)
+
+
+@app.command("compare-solutions")
+def compare_solutions(
+    event_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Compare active solutions for an event using BIC."""
+
+    sub = load(str(project_path))
+    if event_id not in sub.events:
+        console.print(f"Event {event_id} not found", style="bold red")
+        raise typer.Exit(code=1)
+
+    evt = sub.events[event_id]
+    solutions = [
+        s
+        for s in evt.get_active_solutions()
+        if s.log_likelihood is not None and s.n_data_points is not None
+    ]
+
+    table = Table(title=f"Solution Comparison for {event_id}")
+    table.add_column("Solution ID")
+    table.add_column("Model Type")
+    table.add_column("# Params (k)")
+    table.add_column("Log-Likelihood")
+    table.add_column("BIC")
+
+    rows = []
+    for sol in solutions:
+        k = len(sol.parameters)
+        bic = k * math.log(sol.n_data_points) - 2 * sol.log_likelihood
+        rows.append(
+            (
+                bic,
+                [
+                    sol.solution_id,
+                    sol.model_type,
+                    str(k),
+                    f"{sol.log_likelihood:.2f}",
+                    f"{bic:.2f}",
+                ],
+            )
+        )
+
+    for _, cols in sorted(rows, key=lambda x: x[0]):
+        table.add_row(*cols)
+
     console.print(table)
 
 

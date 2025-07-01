@@ -1,3 +1,18 @@
+## Release v0.3.0
+
+### What's New
+- Added `compare-solutions` command to evaluate solutions using BIC.
+- `export` now performs pre-flight validation and supports a `--force` flag.
+
+### Bug Fixes
+- BIC calculation now uses the number of data points stored for each solution.
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
 ## Release v0.2.0
 
 ### What's New

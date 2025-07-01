@@ -18,6 +18,7 @@ def test_global_no_color_option():
         assert result.exit_code == 0
         assert "\x1b[" not in result.stdout
 
+
 def test_cli_init_and_add():
     with runner.isolated_filesystem():
         result = runner.invoke(
@@ -67,7 +68,7 @@ def test_cli_export():
         sol1, sol2 = list(evt.solutions.keys())
 
         assert runner.invoke(app, ["deactivate", sol2]).exit_code == 0
-        result = runner.invoke(app, ["export", "submission.zip"])
+        result = runner.invoke(app, ["export", "submission.zip", "--force"])
         assert result.exit_code == 0
         assert Path("submission.zip").exists()
         with zipfile.ZipFile("submission.zip") as zf:
@@ -84,11 +85,15 @@ def test_cli_list_solutions():
             == 0
         )
         assert (
-            runner.invoke(app, ["add-solution", "evt", "test", "--param", "a=1"]).exit_code
+            runner.invoke(
+                app, ["add-solution", "evt", "test", "--param", "a=1"]
+            ).exit_code
             == 0
         )
         assert (
-            runner.invoke(app, ["add-solution", "evt", "test", "--param", "b=2"]).exit_code
+            runner.invoke(
+                app, ["add-solution", "evt", "test", "--param", "b=2"]
+            ).exit_code
             == 0
         )
         sub = api.load(".")
@@ -98,3 +103,47 @@ def test_cli_list_solutions():
         assert result.exit_code == 0
         for sid in ids:
             assert sid in result.stdout
+
+
+def test_cli_compare_solutions():
+    with runner.isolated_filesystem():
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model1",
+                "--param",
+                "x=1",
+                "--log-likelihood",
+                "-10",
+                "--n-data-points",
+                "50",
+            ],
+        )
+        assert result.exit_code == 0
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model2",
+                "--param",
+                "y=2",
+                "--log-likelihood",
+                "-12",
+                "--n-data-points",
+                "60",
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["compare-solutions", "evt"])
+        assert result.exit_code == 0
+        assert "BIC" in result.stdout
