@@ -27,6 +27,21 @@ def test_full_lifecycle(tmp_path):
     assert any("pytest" in dep for dep in new_sol1.compute_info["dependencies"])
 
 
+def test_compute_info_hours(tmp_path):
+    """CPU and wall time are persisted."""
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol = evt.add_solution(model_type="test", parameters={})
+    sol.set_compute_info(cpu_hours=1.5, wall_time_hours=2.0)
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.get_event("evt").solutions[sol.solution_id]
+    assert new_sol.compute_info["cpu_hours"] == 1.5
+    assert new_sol.compute_info["wall_time_hours"] == 2.0
+
+
 def test_deactivate_and_export(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
