@@ -109,6 +109,19 @@ def test_posterior_path_persists(tmp_path):
     assert new_sol.posterior_path == "posteriors/post.h5"
 
 
+def test_model_name_persists(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {"x": 1})
+    sol.model_name = "MulensModel"
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.events["event"].solutions[sol.solution_id]
+    assert new_sol.model_name == "MulensModel"
+
+
 def test_validate_warnings(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))

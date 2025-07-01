@@ -101,12 +101,17 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Include Jupyter-ready templates with tool pre-installed
   - *Why:* Lowers friction and increases adoption.
 
-### v0.5.0 — Feature Batch 5: Model Validation
+### v0.6.0 — Feature Batch 5: CLI Usability & Model Validation
 
-- **Task 6: Plugin Architecture for Models**
-  - *Goal:* Validate known model types intelligently.
-  - *Action:* Enable external packages to register expected parameter sets.
-  - *Why:* Prepares for evolving modeling standards and tools.
+- **Task 6: Parameter File Support**
+  - *Goal:* Reduce manual entry errors by allowing parameters in a JSON file.
+  - *Action:* Add a `--params-file` option to the CLI `add-solution` command.
+  - *Why:* Makes the CLI less fragile for human users.
+
+- **Task 7: Model Validation**
+  - *Goal:* Prepare for plugin architecture by storing the modeling software name.
+  - *Action:* Add a `model_name` field to the `Solution` class and expose it in the CLI.
+  - *Why:* Enables future validation by external packages.
 
 ### v1.0.0 — Official Release
 
@@ -393,7 +398,7 @@ For future automation, consider implementing:
 - **v0.2.0:** ✅ Released - Feature Batch 1 (Provenance Capture, Structured Metadata, Hardware Info)
 - **v0.3.0:** ✅ Released - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
 - **v0.4.0:** ✅ Released - DIY Support Package (Manual and Validation Tools)
-- **v0.5.0:** 🚧 In Development - Seamless Nexus Integration
-- **v0.6.0:** 📋 Planned - Model Validation
+- **v0.5.0:** ✅ Released - Seamless Nexus Integration
+- **v0.6.0:** 🚧 In Development - CLI Usability & Model Validation
 - **v1.0.0:** 📋 Planned - Official Release
 

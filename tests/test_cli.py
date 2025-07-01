@@ -1,3 +1,4 @@
+import json
 import zipfile
 from pathlib import Path
 from typer.testing import CliRunner
@@ -147,3 +148,47 @@ def test_cli_compare_solutions():
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
         assert "BIC" in result.stdout
+
+
+def test_params_file_option_and_model_name():
+    with runner.isolated_filesystem():
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
+        params = {"p1": 1, "p2": 2}
+        with open("params.json", "w", encoding="utf-8") as fh:
+            json.dump(params, fh)
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model",
+                "--params-file",
+                "params.json",
+                "--model-name",
+                "MulensModel",
+            ],
+        )
+        assert result.exit_code == 0
+        sub = api.load(".")
+        sol = next(iter(sub.get_event("evt").solutions.values()))
+        assert sol.parameters == params
+        assert sol.model_name == "MulensModel"
+
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model",
+                "--param",
+                "a=1",
+                "--params-file",
+                "params.json",
+            ],
+        )
+        assert result.exit_code != 0

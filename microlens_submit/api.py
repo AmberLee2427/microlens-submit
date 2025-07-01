@@ -24,6 +24,7 @@ class Solution(BaseModel):
 
     solution_id: str
     model_type: str
+    model_name: Optional[str] = None
     parameters: dict
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
