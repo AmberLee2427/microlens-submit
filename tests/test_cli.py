@@ -1,7 +1,5 @@
 import zipfile
 from pathlib import Path
-
-import pytest
 from typer.testing import CliRunner
 
 from microlens_submit import api
@@ -50,13 +48,19 @@ def test_cli_export():
             ).exit_code
             == 0
         )
-        res1 = runner.invoke(
-            app,
-            ["add-solution", "evt", "test", "--param", "x=1"],
+        assert (
+            runner.invoke(
+                app,
+                ["add-solution", "evt", "test", "--param", "x=1"],
+            ).exit_code
+            == 0
         )
-        res2 = runner.invoke(
-            app,
-            ["add-solution", "evt", "test", "--param", "y=2"],
+        assert (
+            runner.invoke(
+                app,
+                ["add-solution", "evt", "test", "--param", "y=2"],
+            ).exit_code
+            == 0
         )
         sub = api.load(".")
         evt = sub.get_event("evt")
@@ -79,8 +83,14 @@ def test_cli_list_solutions():
             ).exit_code
             == 0
         )
-        res_a = runner.invoke(app, ["add-solution", "evt", "test", "--param", "a=1"])
-        res_b = runner.invoke(app, ["add-solution", "evt", "test", "--param", "b=2"])
+        assert (
+            runner.invoke(app, ["add-solution", "evt", "test", "--param", "a=1"]).exit_code
+            == 0
+        )
+        assert (
+            runner.invoke(app, ["add-solution", "evt", "test", "--param", "b=2"]).exit_code
+            == 0
+        )
         sub = api.load(".")
         evt = sub.get_event("evt")
         ids = list(evt.solutions.keys())

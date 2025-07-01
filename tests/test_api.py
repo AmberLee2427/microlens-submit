@@ -1,7 +1,4 @@
 import zipfile
-from pathlib import Path
-
-import pytest
 
 from microlens_submit.api import load
 
