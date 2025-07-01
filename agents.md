@@ -393,7 +393,7 @@ For future automation, consider implementing:
 - **v0.2.0:** ✅ Released - Feature Batch 1 (Provenance Capture, Structured Metadata, Hardware Info)
 - **v0.3.0:** ✅ Released - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
 - **v0.4.0:** ✅ Released - DIY Support Package (Manual and Validation Tools)
-- **v0.5.0:** 📋 Planned - Seemless Nexus Integration
+- **v0.5.0:** 🚧 In Development - Seamless Nexus Integration
 - **v0.6.0:** 📋 Planned - Model Validation
 - **v1.0.0:** 📋 Planned - Official Release
 

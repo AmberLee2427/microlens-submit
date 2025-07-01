@@ -7,6 +7,7 @@ creates the final zip archive using ``zipfile.ZIP_DEFLATED`` compression.
 """
 
 import logging
+import os
 import subprocess
 import sys
 import uuid
@@ -243,6 +244,40 @@ class Submission(BaseModel):
         if event_id not in self.events:
             self.events[event_id] = Event(event_id=event_id, submission=self)
         return self.events[event_id]
+
+    def autofill_nexus_info(self) -> None:
+        """Populate :attr:`hardware_info` with Roman Nexus platform details."""
+
+        if self.hardware_info is None:
+            self.hardware_info = {}
+
+        try:
+            image = os.environ.get("JUPYTER_IMAGE_SPEC")
+            if image:
+                self.hardware_info["nexus_image"] = image
+        except Exception as exc:  # pragma: no cover - environment may not exist
+            logging.debug("Failed to read JUPYTER_IMAGE_SPEC: %s", exc)
+
+        try:
+            with open("/proc/cpuinfo", "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.lower().startswith("model name"):
+                        self.hardware_info["cpu_details"] = line.split(":", 1)[
+                            1
+                        ].strip()
+                        break
+        except OSError as exc:  # pragma: no cover
+            logging.debug("Failed to read /proc/cpuinfo: %s", exc)
+
+        try:
+            with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("MemTotal"):
+                        mem_kb = int(line.split(":", 1)[1].strip().split()[0])
+                        self.hardware_info["memory_gb"] = round(mem_kb / 1024**2, 2)
+                        break
+        except OSError as exc:  # pragma: no cover
+            logging.debug("Failed to read /proc/meminfo: %s", exc)
 
     def save(self) -> None:
         """Write the submission state to disk."""
