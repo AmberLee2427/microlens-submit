@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-"""Core API for microlens-submit."""
+"""Core API for microlens-submit.
 
-import json
+The :class:`Submission` class provides a method :meth:`Submission.export` that
+creates the final zip archive using ``zipfile.ZIP_DEFLATED`` compression.
+"""
+
+import logging
 import subprocess
 import sys
 import uuid
@@ -22,16 +26,28 @@ class Solution(BaseModel):
     parameters: dict
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
+    posterior_path: Optional[str] = None
     notes: str = ""
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
     )
 
-    def set_compute_info(self, cpu_hours: float | None = None) -> None:
-        """Record compute metadata and capture Python environment."""
+    def set_compute_info(
+        self,
+        cpu_hours: float | None = None,
+        wall_time_hours: float | None = None,
+    ) -> None:
+        """Record compute metadata and capture Python environment.
+
+        Args:
+            cpu_hours: Total CPU time consumed for this solution in hours.
+            wall_time_hours: Total wall-clock time for this solution in hours.
+        """
 
         if cpu_hours is not None:
             self.compute_info["cpu_hours"] = cpu_hours
+        if wall_time_hours is not None:
+            self.compute_info["wall_time_hours"] = wall_time_hours
 
         try:
             result = subprocess.run(
@@ -44,7 +60,7 @@ class Solution(BaseModel):
                 result.stdout.strip().split("\n") if result.stdout else []
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(f"Warning: Could not capture pip environment: {e}")
+            logging.warning("Could not capture pip environment: %s", e)
             self.compute_info["dependencies"] = []
 
     def deactivate(self) -> None:
@@ -102,6 +118,17 @@ class Event(BaseModel):
             Solution: The matching solution instance.
         """
         return self.solutions[solution_id]
+
+    def get_active_solutions(self) -> list[Solution]:
+        """Return all active solutions for this event."""
+
+        return [sol for sol in self.solutions.values() if sol.is_active]
+
+    def clear_solutions(self) -> None:
+        """Mark all solutions inactive without deleting them."""
+
+        for sol in self.solutions.values():
+            sol.is_active = False
 
     @classmethod
     def _from_dir(cls, event_dir: Path, submission: "Submission") -> "Event":
@@ -170,11 +197,16 @@ class Submission(BaseModel):
     def export(self, output_path: str) -> None:
         """Create a zip archive of active solutions only.
 
+        The archive is created using ``zipfile.ZIP_DEFLATED`` compression to
+        minimize file size.
+
         Args:
             output_path: Destination path for the zip archive.
         """
         project = Path(self.project_path)
-        with zipfile.ZipFile(output_path, "w") as zf:
+        with zipfile.ZipFile(
+            output_path, "w", compression=zipfile.ZIP_DEFLATED
+        ) as zf:
             events_dir = project / "events"
             for event in self.events.values():
                 event_dir = events_dir / event.event_id

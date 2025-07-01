@@ -1,20 +1,31 @@
 """Command line interface for microlens-submit."""
 
 from __future__ import annotations
-from typing import List
 
 import json
 from pathlib import Path
+from typing import List
 
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 from .api import load
 
 console = Console()
 app = typer.Typer()
+
+
+@app.callback()
+def main(
+    ctx: typer.Context,
+    no_color: bool = typer.Option(False, "--no-color", help="Disable colored output"),
+) -> None:
+    """Handle global options."""
+    if no_color:
+        global console
+        console = Console(color_system=None)
 
 
 @app.command()

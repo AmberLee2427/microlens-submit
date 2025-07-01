@@ -1,7 +1,4 @@
 import zipfile
-from pathlib import Path
-
-import pytest
 
 from microlens_submit.api import load
 
@@ -30,6 +27,21 @@ def test_full_lifecycle(tmp_path):
     assert any("pytest" in dep for dep in new_sol1.compute_info["dependencies"])
 
 
+def test_compute_info_hours(tmp_path):
+    """CPU and wall time are persisted."""
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol = evt.add_solution(model_type="test", parameters={})
+    sol.set_compute_info(cpu_hours=1.5, wall_time_hours=2.0)
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.get_event("evt").solutions[sol.solution_id]
+    assert new_sol.compute_info["cpu_hours"] == 1.5
+    assert new_sol.compute_info["wall_time_hours"] == 2.0
+
+
 def test_deactivate_and_export(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
@@ -50,3 +62,48 @@ def test_deactivate_and_export(tmp_path):
     assert solution_files == [
         f"events/test-event/solutions/{sol_active.solution_id}.json"
     ]
+
+
+def test_get_active_solutions(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol1 = evt.add_solution("test", {"a": 1})
+    sol2 = evt.add_solution("test", {"b": 2})
+    sol2.deactivate()
+
+    actives = evt.get_active_solutions()
+
+    assert len(actives) == 1
+    assert actives[0].solution_id == sol1.solution_id
+
+
+def test_clear_solutions(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol1 = evt.add_solution("test", {"a": 1})
+    sol2 = evt.add_solution("test", {"b": 2})
+
+    evt.clear_solutions()
+    sub.save()
+
+    reloaded = load(str(project))
+    evt2 = reloaded.get_event("evt")
+
+    assert not evt2.solutions[sol1.solution_id].is_active
+    assert not evt2.solutions[sol2.solution_id].is_active
+    assert len(evt2.solutions) == 2
+    
+
+def test_posterior_path_persists(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {"x": 1})
+    sol.posterior_path = "posteriors/post.h5"
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.events["event"].solutions[sol.solution_id]
+    assert new_sol.posterior_path == "posteriors/post.h5"
