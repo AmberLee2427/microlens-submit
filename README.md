@@ -81,7 +81,7 @@ sol.notes = "This fit was generated from our Python script."
 sub.save()
 
 # When ready, export the final package
-sub.export(filename="final_submission.zip")
+sub.export("final_submission.zip")
 ```
 
 ## Development
