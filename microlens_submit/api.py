@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-"""Core API for microlens-submit."""
+"""Core API for microlens-submit.
+
+The :class:`Submission` class provides a method :meth:`Submission.export` that
+creates the final zip archive using ``zipfile.ZIP_DEFLATED`` compression.
+"""
 
 import json
 import subprocess
@@ -170,11 +174,16 @@ class Submission(BaseModel):
     def export(self, output_path: str) -> None:
         """Create a zip archive of active solutions only.
 
+        The archive is created using ``zipfile.ZIP_DEFLATED`` compression to
+        minimize file size.
+
         Args:
             output_path: Destination path for the zip archive.
         """
         project = Path(self.project_path)
-        with zipfile.ZipFile(output_path, "w") as zf:
+        with zipfile.ZipFile(
+            output_path, "w", compression=zipfile.ZIP_DEFLATED
+        ) as zf:
             events_dir = project / "events"
             for event in self.events.values():
                 event_dir = events_dir / event.event_id
