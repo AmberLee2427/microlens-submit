@@ -1,3 +1,19 @@
+## Release v0.5.0
+
+### What's New
+- Added `nexus-init` command to capture platform metadata on the Roman Research Nexus.
+- `Submission.autofill_nexus_info` auto-populates hardware details from the environment.
+- New Jupyter notebook tutorial for Nexus users.
+
+### Bug Fixes
+- N/A
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
 ## Release v0.4.0
 
 ### What's New

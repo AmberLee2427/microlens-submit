@@ -65,6 +65,21 @@ def init(
     console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
 
 
+@app.command("nexus-init")
+def nexus_init(
+    team_name: str = typer.Option(..., help="Team name"),
+    tier: str = typer.Option(..., help="Challenge tier"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Initialize a project and capture Roman Nexus platform info."""
+
+    init(team_name=team_name, tier=tier, project_path=project_path)
+    sub = load(str(project_path))
+    sub.autofill_nexus_info()
+    sub.save()
+    console.print("Nexus platform info captured.", style="bold green")
+
+
 @app.command("add-solution")
 def add_solution(
     event_id: str,
