@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -15,6 +15,22 @@ from .api import load
 
 console = Console()
 app = typer.Typer()
+
+
+def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
+    """Convert CLI key=value options into a dictionary."""
+    if not pairs:
+        return None
+    out: dict = {}
+    for item in pairs:
+        if "=" not in item:
+            raise typer.BadParameter(f"Invalid format: {item}")
+        key, value = item.split("=", 1)
+        try:
+            out[key] = json.loads(value)
+        except json.JSONDecodeError:
+            out[key] = value
+    return out
 
 
 @app.callback()
@@ -53,6 +69,30 @@ def add_solution(
     event_id: str,
     model_type: str,
     param: List[str] = typer.Option(..., help="Model parameters as key=value"),
+    used_astrometry: bool = typer.Option(False, help="Set if astrometry was used"),
+    used_postage_stamps: bool = typer.Option(
+        False, help="Set if postage stamps were used"
+    ),
+    limb_darkening_model: Optional[str] = typer.Option(
+        None, help="Limb darkening model name"
+    ),
+    limb_darkening_coeff: Optional[List[str]] = typer.Option(
+        None,
+        "--limb-darkening-coeff",
+        help="Limb darkening coefficients as key=value",
+    ),
+    parameter_uncertainty: Optional[List[str]] = typer.Option(
+        None,
+        "--param-uncertainty",
+        help="Parameter uncertainties as key=value",
+    ),
+    physical_param: Optional[List[str]] = typer.Option(
+        None,
+        "--physical-param",
+        help="Physical parameters as key=value",
+    ),
+    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
+    log_prior: Optional[float] = typer.Option(None, help="Log prior"),
     notes: str = typer.Option("", help="Notes for the solution"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
@@ -78,6 +118,14 @@ def add_solution(
             params[key] = value
     sol = evt.add_solution(model_type=model_type, parameters=params)
     sol.notes = notes
+    sol.used_astrometry = used_astrometry
+    sol.used_postage_stamps = used_postage_stamps
+    sol.limb_darkening_model = limb_darkening_model
+    sol.limb_darkening_coeffs = _parse_pairs(limb_darkening_coeff)
+    sol.parameter_uncertainties = _parse_pairs(parameter_uncertainty)
+    sol.physical_parameters = _parse_pairs(physical_param)
+    sol.log_likelihood = log_likelihood
+    sol.log_prior = log_prior
     sub.save()
     console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
 

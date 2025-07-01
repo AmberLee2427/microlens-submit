@@ -28,6 +28,14 @@ class Solution(BaseModel):
     compute_info: dict = Field(default_factory=dict)
     posterior_path: Optional[str] = None
     notes: str = ""
+    used_astrometry: bool = False
+    used_postage_stamps: bool = False
+    limb_darkening_model: Optional[str] = None
+    limb_darkening_coeffs: Optional[dict] = None
+    parameter_uncertainties: Optional[dict] = None
+    physical_parameters: Optional[dict] = None
+    log_likelihood: Optional[float] = None
+    log_prior: Optional[float] = None
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
     )
@@ -62,6 +70,34 @@ class Solution(BaseModel):
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.warning("Could not capture pip environment: %s", e)
             self.compute_info["dependencies"] = []
+
+        try:
+            commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            branch = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+            self.compute_info["git_info"] = {
+                "commit": commit,
+                "branch": branch,
+                "is_dirty": bool(status),
+            }
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logging.warning("Could not capture git info: %s", e)
+            self.compute_info["git_info"] = None
 
     def deactivate(self) -> None:
         """Mark this solution as inactive."""
@@ -168,6 +204,7 @@ class Submission(BaseModel):
     project_path: str = Field(default="", exclude=True)
     team_name: str = ""
     tier: str = ""
+    hardware_info: Optional[dict] = None
     events: Dict[str, Event] = Field(default_factory=dict)
 
     def get_event(self, event_id: str) -> Event:
@@ -204,9 +241,7 @@ class Submission(BaseModel):
             output_path: Destination path for the zip archive.
         """
         project = Path(self.project_path)
-        with zipfile.ZipFile(
-            output_path, "w", compression=zipfile.ZIP_DEFLATED
-        ) as zf:
+        with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             events_dir = project / "events"
             for event in self.events.values():
                 event_dir = events_dir / event.event_id
