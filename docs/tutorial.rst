@@ -19,26 +19,37 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
           --notes "Initial fit"
 
-3. **Add a competing solution**
+3. **Attach a posterior file (optional)**
+
+   After generating a posterior sample (e.g., an MCMC chain), store the file
+   within your project and record its relative path using the Python API::
+
+      >>> sub = microlens_submit.load("/path/to/project")
+      >>> evt = sub.get_event("EVENT123")
+      >>> sol = next(iter(evt.solutions.values()))
+      >>> sol.posterior_path = "posteriors/chain.h5"
+      >>> sub.save()
+
+4. **Add a competing solution**
 
    .. code-block:: bash
 
       microlens-submit add-solution EVENT123 single_lens \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
-4. **List your solutions**
+5. **List your solutions**
 
    .. code-block:: bash
 
       microlens-submit list-solutions EVENT123
 
-5. **Deactivate the less-good solution**
+6. **Deactivate the less-good solution**
 
    .. code-block:: bash
 
       microlens-submit deactivate <solution_id>
 
-6. **Export the final package**
+7. **Export the final package**
 
    .. code-block:: bash
 

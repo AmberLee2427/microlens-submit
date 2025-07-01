@@ -47,3 +47,16 @@ def test_deactivate_and_export(tmp_path):
     assert solution_files == [
         f"events/test-event/solutions/{sol_active.solution_id}.json"
     ]
+
+
+def test_posterior_path_persists(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {"x": 1})
+    sol.posterior_path = "posteriors/post.h5"
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.events["event"].solutions[sol.solution_id]
+    assert new_sol.posterior_path == "posteriors/post.h5"
