@@ -56,9 +56,11 @@ def test_deactivate_and_export(tmp_path):
 
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
         solution_files = [
-            n for n in zf.namelist() if n.startswith("events/") and "solutions" in n
+            n for n in names if n.startswith("events/") and "solutions" in n
         ]
+        assert "submission.json" in names
     assert solution_files == [
         f"events/test-event/solutions/{sol_active.solution_id}.json"
     ]

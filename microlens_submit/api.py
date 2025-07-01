@@ -377,6 +377,9 @@ class Submission(BaseModel):
         """
         project = Path(self.project_path)
         with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            submission_json = project / "submission.json"
+            if submission_json.exists():
+                zf.write(submission_json, arcname="submission.json")
             events_dir = project / "events"
             for event in self.events.values():
                 event_dir = events_dir / event.event_id
