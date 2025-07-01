@@ -1,3 +1,18 @@
+## Release v0.4.0
+
+### What's New
+- Added `SUBMISSION_MANUAL.md` documenting the submission format.
+- Added standalone `validate_submission.py` for validating directories.
+
+### Bug Fixes
+- N/A
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
 ## Release v0.3.0
 
 ### What's New
