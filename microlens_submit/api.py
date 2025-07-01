@@ -22,7 +22,7 @@ class Solution(BaseModel):
     parameters: dict
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
-    posterior_path: str | None = None
+    posterior_path: Optional[str] = None
     notes: str = ""
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
