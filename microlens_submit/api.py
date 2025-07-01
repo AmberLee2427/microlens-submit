@@ -32,11 +32,22 @@ class Solution(BaseModel):
         default_factory=lambda: datetime.utcnow().isoformat()
     )
 
-    def set_compute_info(self, cpu_hours: float | None = None) -> None:
-        """Record compute metadata and capture Python environment."""
+    def set_compute_info(
+        self,
+        cpu_hours: float | None = None,
+        wall_time_hours: float | None = None,
+    ) -> None:
+        """Record compute metadata and capture Python environment.
+
+        Args:
+            cpu_hours: Total CPU time consumed for this solution in hours.
+            wall_time_hours: Total wall-clock time for this solution in hours.
+        """
 
         if cpu_hours is not None:
             self.compute_info["cpu_hours"] = cpu_hours
+        if wall_time_hours is not None:
+            self.compute_info["wall_time_hours"] = wall_time_hours
 
         try:
             result = subprocess.run(
