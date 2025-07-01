@@ -97,3 +97,8 @@ To build and test this project, the development environment needs the following 
 * **`build`**: For building the package from the `pyproject.toml` file.
 * **`twine`**: For uploading the final package to PyPI.
 
+## Citation
+If you use **microlens-submit** in your research, please cite the project using
+the metadata provided in the `CITATION.cff` file. Most reference managers can
+import this file directly.
+
