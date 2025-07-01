@@ -73,7 +73,9 @@ def test_cli_export():
         assert result.exit_code == 0
         assert Path("submission.zip").exists()
         with zipfile.ZipFile("submission.zip") as zf:
-            solution_files = [n for n in zf.namelist() if "solutions" in n]
+            names = zf.namelist()
+            solution_files = [n for n in names if "solutions" in n]
+            assert "submission.json" in names
         assert solution_files == [f"events/evt/solutions/{sol1}.json"]
 
 
