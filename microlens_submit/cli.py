@@ -49,7 +49,7 @@ def main(
     ctx: typer.Context,
     no_color: bool = typer.Option(False, "--no-color", help="Disable colored output"),
 ) -> None:
-    """Handle global options."""
+    """Handle global CLI options."""
     if no_color:
         global console
         console = Console(color_system=None)
@@ -61,7 +61,7 @@ def init(
     tier: str = typer.Option(..., help="Challenge tier"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Initialize a new submission project.
+    """Create a new submission project in ``project_path``.
 
     Args:
         team_name: Name of the team.
@@ -81,7 +81,7 @@ def nexus_init(
     tier: str = typer.Option(..., help="Challenge tier"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Initialize a project and capture Roman Nexus platform info."""
+    """Create a project and record Roman Nexus environment details."""
 
     init(team_name=team_name, tier=tier, project_path=project_path)
     sub = load(str(project_path))
@@ -138,7 +138,7 @@ def add_solution(
     notes: str = typer.Option("", help="Notes for the solution"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Add a new solution to an event.
+    """Add a new solution entry for ``event_id``.
 
     Args:
         event_id: Identifier of the event.
@@ -185,7 +185,7 @@ def deactivate(
     solution_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Deactivate a specific solution.
+    """Mark ``solution_id`` as inactive so it is excluded from exports.
 
     Args:
         solution_id: The ID of the solution to deactivate.
@@ -208,7 +208,7 @@ def export(
     force: bool = typer.Option(False, "--force", help="Skip validation prompts"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Export the submission to a zip archive.
+    """Generate a zip archive containing all active solutions.
 
     Args:
         output_path: Path to the resulting zip file.
@@ -233,7 +233,7 @@ def list_solutions(
     event_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """List all solutions for a given event."""
+    """Display a table of solutions for ``event_id``."""
     sub = load(str(project_path))
     if event_id not in sub.events:
         console.print(f"Event {event_id} not found", style="bold red")
@@ -255,7 +255,7 @@ def compare_solutions(
     event_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Compare active solutions for an event using BIC."""
+    """Rank active solutions for ``event_id`` using the Bayesian Information Criterion."""
 
     sub = load(str(project_path))
     if event_id not in sub.events:

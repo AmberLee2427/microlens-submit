@@ -20,7 +20,38 @@ from pydantic import BaseModel, Field
 
 
 class Solution(BaseModel):
-    """Represents a single model fit for an event."""
+    """Container for an individual model fit.
+
+    This data model stores everything required to describe a single
+    microlensing solution, including the numeric parameters of the fit and
+    metadata about how it was produced.  Instances are normally created via
+    :meth:`Event.add_solution` and persisted to disk when
+    :meth:`Submission.save` is called.
+
+    Attributes:
+        solution_id: Unique identifier for the solution.
+        model_type: Short string describing the type of model (e.g.
+            ``"point_lens"`` or ``"binary_lens"``).
+        model_name: Optional name of the software used to produce the fit.
+        parameters: Dictionary of model parameters used for the fit.
+        is_active: Flag indicating whether the solution should be included in
+            the final submission export.
+        compute_info: Metadata about the computing environment.  Populated by
+            :meth:`set_compute_info`.
+        posterior_path: Optional path to a file containing posterior samples.
+        notes: Free-form notes about the solution.
+        used_astrometry: Whether astrometric information was used when fitting
+            this solution.
+        used_postage_stamps: Whether postage stamp data was used.
+        limb_darkening_model: Name of the limb darkening model employed.
+        limb_darkening_coeffs: Mapping of limb darkening coefficients.
+        parameter_uncertainties: Uncertainties for parameters in ``parameters``.
+        physical_parameters: Physical parameters derived from the model.
+        log_likelihood: Log-likelihood value of the fit.
+        log_prior: Log-prior value of the fit.
+        n_data_points: Number of data points used in the fit.
+        creation_timestamp: UTC timestamp when the solution was created.
+    """
 
     solution_id: str
     model_type: str
@@ -48,11 +79,16 @@ class Solution(BaseModel):
         cpu_hours: float | None = None,
         wall_time_hours: float | None = None,
     ) -> None:
-        """Record compute metadata and capture Python environment.
+        """Record compute metadata and capture environment details.
+
+        When called, this method populates :attr:`compute_info` with timing
+        information as well as a list of installed Python packages and the
+        current Git state.  It is safe to call multiple times—previous values
+        will be overwritten.
 
         Args:
-            cpu_hours: Total CPU time consumed for this solution in hours.
-            wall_time_hours: Total wall-clock time for this solution in hours.
+            cpu_hours: Total CPU time consumed by the model fit in hours.
+            wall_time_hours: Real-world time consumed by the fit in hours.
         """
 
         if cpu_hours is not None:
@@ -124,18 +160,32 @@ class Solution(BaseModel):
 
 
 class Event(BaseModel):
-    """Represents a microlensing event within the submission."""
+    """A collection of solutions for a single microlensing event.
+
+    Events act as containers that group one or more :class:`Solution` objects
+    under a common ``event_id``.  They are created on demand via
+    :meth:`Submission.get_event` and are written to disk when the parent
+    submission is saved.
+
+    Attributes:
+        event_id: Identifier used to reference the event within the project.
+        solutions: Mapping of solution IDs to :class:`Solution` instances.
+        submission: The parent :class:`Submission` or ``None`` if detached.
+    """
 
     event_id: str
     solutions: Dict[str, Solution] = Field(default_factory=dict)
     submission: Optional["Submission"] = Field(default=None, exclude=True)
 
     def add_solution(self, model_type: str, parameters: dict) -> Solution:
-        """Create and register a new :class:`Solution`.
+        """Create and attach a new solution to this event.
+
+        Parameters are stored as provided and the new solution is returned for
+        further modification.
 
         Args:
-            model_type: The type of model being added.
-            parameters: Model parameters.
+            model_type: Short label describing the model type.
+            parameters: Dictionary of model parameters.
 
         Returns:
             Solution: The newly created solution instance.
@@ -148,23 +198,23 @@ class Event(BaseModel):
         return sol
 
     def get_solution(self, solution_id: str) -> Solution:
-        """Retrieve a solution by its ID.
+        """Return a previously added solution.
 
         Args:
             solution_id: Identifier of the solution to retrieve.
 
         Returns:
-            Solution: The matching solution instance.
+            Solution: The corresponding solution.
         """
         return self.solutions[solution_id]
 
     def get_active_solutions(self) -> list[Solution]:
-        """Return all active solutions for this event."""
+        """Return all solutions currently marked as active."""
 
         return [sol for sol in self.solutions.values() if sol.is_active]
 
     def clear_solutions(self) -> None:
-        """Mark all solutions inactive without deleting them."""
+        """Deactivate every solution associated with this event."""
 
         for sol in self.solutions.values():
             sol.is_active = False
@@ -202,7 +252,20 @@ class Event(BaseModel):
 
 
 class Submission(BaseModel):
-    """Container for all challenge events and solutions."""
+    """Top-level object representing an on-disk submission project.
+
+    A ``Submission`` manages a collection of :class:`Event` objects and handles
+    serialization to the project directory.  Users typically obtain an instance
+    via :func:`load` and then interact with events and solutions before calling
+    :meth:`save` or :meth:`export`.
+
+    Attributes:
+        project_path: Root directory where submission files are stored.
+        team_name: Name of the participating team.
+        tier: Challenge tier for the submission.
+        hardware_info: Optional dictionary describing the compute platform.
+        events: Mapping of event IDs to :class:`Event` instances.
+    """
 
     project_path: str = Field(default="", exclude=True)
     team_name: str = ""
@@ -211,10 +274,14 @@ class Submission(BaseModel):
     events: Dict[str, Event] = Field(default_factory=dict)
 
     def validate(self) -> list[str]:
-        """Run validation checks on the submission.
+        """Check the submission for missing or incomplete information.
+
+        The method performs lightweight validation and returns a list of
+        warnings describing potential issues.  It does not raise exceptions and
+        can be used to provide user feedback prior to exporting.
 
         Returns:
-            list[str]: A collection of human-readable warnings.
+            list[str]: Human-readable warning messages.
         """
 
         warnings: list[str] = []
@@ -234,7 +301,10 @@ class Submission(BaseModel):
         return warnings
 
     def get_event(self, event_id: str) -> Event:
-        """Retrieve an :class:`Event`, creating it if necessary.
+        """Return the event with ``event_id``.
+
+        If the event does not yet exist in the submission it will be created
+        automatically and attached to the submission.
 
         Args:
             event_id: Identifier of the event.
@@ -247,7 +317,12 @@ class Submission(BaseModel):
         return self.events[event_id]
 
     def autofill_nexus_info(self) -> None:
-        """Populate :attr:`hardware_info` with Roman Nexus platform details."""
+        """Populate :attr:`hardware_info` with Roman Nexus platform details.
+
+        This helper reads a few well-known files from the Roman Science
+        Platform environment to infer CPU model, available memory and the image
+        identifier.  Missing information is silently ignored.
+        """
 
         if self.hardware_info is None:
             self.hardware_info = {}
@@ -281,7 +356,7 @@ class Submission(BaseModel):
             logging.debug("Failed to read /proc/meminfo: %s", exc)
 
     def save(self) -> None:
-        """Write the submission state to disk."""
+        """Persist the current state of the submission to ``project_path``."""
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
@@ -292,7 +367,7 @@ class Submission(BaseModel):
             event._save()
 
     def export(self, output_path: str) -> None:
-        """Create a zip archive of active solutions only.
+        """Create a zip archive of all active solutions.
 
         The archive is created using ``zipfile.ZIP_DEFLATED`` compression to
         minimize file size.
@@ -317,13 +392,24 @@ class Submission(BaseModel):
 
 
 def load(project_path: str) -> Submission:
-    """Load or initialize a submission project.
+    """Load an existing submission or create a new one.
+
+    The directory specified by ``project_path`` becomes the working
+    directory for all subsequent operations.  If the directory does not
+    exist, a new project structure is created automatically.
 
     Args:
-        project_path: Path to the submission project on disk.
+        project_path: Location of the submission project on disk.
 
     Returns:
         Submission: The loaded or newly created submission instance.
+
+    Example:
+        >>> from microlens_submit import load
+        >>> sub = load("./my_project")
+        >>> evt = sub.get_event("event-001")
+        >>> evt.add_solution("point_lens", {"t0": 123.4})
+        >>> sub.save()
     """
     project = Path(project_path)
     events_dir = project / "events"
