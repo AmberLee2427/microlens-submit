@@ -3,6 +3,8 @@ Getting Started: A Step-by-Step Tutorial
 
 This quick guide walks you through the typical workflow using the ``microlens-submit`` CLI.
 
+If your terminal does not support ANSI escape codes, add ``--no-color`` to disable colored output.
+
 1. **Initialize your project**
 
    .. code-block:: bash

@@ -17,6 +17,17 @@ console = Console()
 app = typer.Typer()
 
 
+@app.callback()
+def main(
+    ctx: typer.Context,
+    no_color: bool = typer.Option(False, "--no-color", help="Disable colored output"),
+) -> None:
+    """Handle global options."""
+    if no_color:
+        global console
+        console = Console(color_system=None)
+
+
 @app.command()
 def init(
     team_name: str = typer.Option(..., help="Team name"),

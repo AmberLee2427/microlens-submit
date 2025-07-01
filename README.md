@@ -34,6 +34,8 @@ pip install microlens-submit
 
 The CLI is the recommended way to interact with your submission project.
 
+You can pass ``--no-color`` to any command if your terminal does not support ANSI colors.
+
 1. Initialize your project: `microlens-submit init --team-name "Planet Pounders" --tier "advanced"`
 2. Add a new solution to an event:
    ```bash
