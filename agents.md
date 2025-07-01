@@ -1,233 +1,283 @@
-# **Development Plan: `microlens-submit`**
+# Development Plan: `microlens-submit`
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Author:** Gemini & Amber  
-**Date:** June 30, 2025
+**Date:** July 1, 2025
 
-## **1\. Project Overview & Goals**
+---
+
+## 1. Project Overview & Goals
 
 The `microlens-submit` library is a Python-based toolkit designed to help participants in a microlensing data challenge manage and package their results.
 
-The primary goals are:
+### Primary Goals
 
-* Provide a simple, programmatic **Python API** for creating and modifying submissions.  
-* Offer a full **Command Line Interface (CLI)** for language-agnostic use, supporting participants whose analysis code is not in Python.  
-* Support a long-term, iterative workflow by treating the submission as a **persistent, on-disk project**.  
-* Handle complex submission requirements, including degenerate solutions, optional posteriors, and different modeling approaches.  
-* Ensure data integrity through **aggressive input validation**.  
-* Capture detailed **computational metadata**, including timing and environment dependencies for each model fit.  
-* Be easily installable via pip from the Python Package Index (PyPI).  
-* **Standardize the final submission format** into a clean, easy-to-parse zip archive.
+- Provide a simple, programmatic **Python API** for creating and modifying submissions.
+- Offer a full **Command Line Interface (CLI)** for language-agnostic use, supporting participants whose analysis code is not in Python.
+- Support a long-term, iterative workflow by treating the submission as a **persistent, on-disk project**.
+- Handle complex submission requirements, including degenerate solutions, optional posteriors, and different modeling approaches.
+- Ensure data integrity through **aggressive input validation**.
+- Capture detailed **computational metadata**, including timing and environment dependencies for each model fit.
+- Be easily installable via pip from the Python Package Index (PyPI).
+- **Standardize the final submission format** into a clean, easy-to-parse zip archive.
 
-## **2\. Core Concepts & Workflow**
+---
+
+## 2. Core Concepts & Workflow
 
 The library is built around a stateful, object-oriented model that mirrors the structure of the challenge. The user's submission is treated as a persistent project on their local disk. The primary workflow is through the Python API, with a parallel CLI providing access to the same functionality.
 
-**The user workflow is as follows:**
+### User Workflow
 
-1. **Initialize/Load:** The user starts by calling `microlens_submit.load(project_path)` or `microlens-submit init` to load or create a submission project.  
-2. **Modify:** The user gets Event objects from the main `Submission` object. For each event, they can add one or more Solution objects, representing different model fits.  
-3. **Record Metadata:** For each `Solution`, the user records the model parameters and calls `.set_compute_info()` to log timing and capture the environment dependencies for that specific run.  
-4. **Manage Solutions:** If a fit is unsatisfactory, the user can `.deactivate()` it. This "soft deletes" the solution—it remains in the project history but is excluded from the final export.  
-5. **Save Progress:** The user periodically calls `.save()` to write all changes back to the file system.  
-6. **Export:** When the challenge is complete, the user calls `.export()` or `microlens-submit export` to generate the final `.zip` archive.
+1. **Initialize/Load:** Use `microlens_submit.load(project_path)` or `microlens-submit init` to load or create a submission project.
+2. **Modify:** Retrieve `Event` objects from the main `Submission` object. Add one or more `Solution` objects for each event.
+3. **Record Metadata:** For each `Solution`, record model parameters and call `.set_compute_info()` to log timing and environment dependencies.
+4. **Manage Solutions:** Use `.deactivate()` to soft-delete unsatisfactory fits (excluded from final export but retained in history).
+5. **Save Progress:** Call `.save()` to persist all changes to disk.
+6. **Export:** Use `.export()` or `microlens-submit export` to generate the final `.zip` archive.
 
-## **3\. Python Class Structure (The API)**
+---
 
-The library will expose three main classes: `Submission`, `Event`, and `Solution`.
+## 3. Development Roadmap & Feature Plan
 
-### **3.1. Data Validation**
+`microlens-submit` is currently at version 0.1.0. Below is the prioritized roadmap for developing version 1.0.0. Tasks are grouped into batches, and future work assumes earlier tasks are completed.
 
-The library will aggressively validate all user input to prevent data corruption and ensure compliance with the submission format. This will be implemented using `Pydantic` to define strict, typed schemas for all data structures. This ensures that any attempt to save malformed data will raise a clear `ValidationError`.
+### v0.2.0 — Feature Batch 1: The "No-Brainer" Upgrades (Immediate Priority)
 
-### **3.2. Core Classes**
+- **Task 1: Full Provenance Capture**
+  - *Goal:* Ensure reproducibility by logging exactly what code generated each result.
+  - *Action:* Extend `Solution.set_compute_info` to capture:
+    - Full Git commit hash
+    - Current branch name
+    - Dirty status (uncommitted changes)
+    - Must fail silently if not a Git repo or if Git is unavailable
+  - *Why:* Enables verifiable, scientific provenance for every model fit.
 
-### **`Submission` Class**
+- **Task 2: Structured Metadata Injection**
+  - *Goal:* Move beyond the unstructured `notes` field by supporting machine-readable, structured metadata.
+  - *Action:* Add optional fields to the `Solution` Pydantic model and expose them in the CLI:
+    - `used_astrometry`, `used_postage_stamps`, `limb_darkening_model`, `limb_darkening_coeffs`, `parameter_uncertainties`, `physical_parameters`, `log_likelihood`, `log_prior`
+  - *Why:* Improves quality, structure, and downstream usability of submitted data.
 
-Manages the overall submission project.
+- **Task 3: Hardware & Platform Specification**
+  - *Goal:* Capture the computational environment for context.
+  - *Action:* Add optional `hardware_info` to the `Submission` model.
+  - *Why:* Important for reproducibility and benchmarking across environments like the Roman Science Platform.
+
+### v0.3.0 — Feature Batch 2: The "Luxury" Upgrades (Next Priority)
+
+- **Task 4: Intelligent Solution Comparison**
+  - *Goal:* Provide quick feedback on degenerate model fits.
+  - *Action:* New CLI command: `microlens-submit compare-solutions <event_id>`
+    - Fetch and compare `log_likelihood`, `log_prior`
+    - Calculate metrics like BIC
+    - Display ranked solution table
+  - *Why:* Helps users make better modeling decisions.
+
+- **Task 5: Pre-flight Validation & Checklist**
+  - *Goal:* Prevent incomplete or invalid submissions.
+  - *Action:* Add validation to `export`, prompting user with:
+    - Missing solutions or metadata
+    - Absent hardware info
+  - *Why:* Reduces submission errors and improves overall data quality.
+
+### v0.4.0 — Feature Batch 3: The "Future-Proofing" (Long-Term Vision)
+
+- **Task 6: Plugin Architecture for Models**
+  - *Goal:* Validate known model types intelligently.
+  - *Action:* Enable external packages to register expected parameter sets.
+  - *Why:* Prepares for evolving modeling standards and tools.
+
+- **Task 7: Seamless Nexus Integration**
+  - *Goal:* Tight integration with the Roman Science Platform.
+  - *Action:*
+    - Auto-populate hardware info from Nexus
+    - Include Jupyter-ready templates with tool pre-installed
+  - *Why:* Lowers friction and increases adoption.
+
+- **Task 8: The "DIY" Support Package**
+  - *Goal:* Provide an alternative for those not using the main tool.
+  - *Action:* Supply:
+    - A `SUBMISSION_MANUAL.md` with schema documentation
+    - A `validate_submission.py` script for compliance checks
+  - *Why:* Encourages good practices while respecting autonomy.
+
+### v1.0.0 — Official Release
+
+Release after comprehensive testing and PyPI publication.
+
+---
+
+## 4. Python Class Structure (Target API)
+
+### 4.1. Data Validation
+
+All user input is validated with `Pydantic` models. Invalid data will raise clear `ValidationError`s before it can be saved.
+
+### 4.2. Core Classes
+
+#### `Submission` Class
+
+Manages the overall submission.
 
 **Attributes:**
-
-* `project_path` (str): The root directory of the submission project.  
-* `team_name` (str): The participant's team name.  
-* `tier` (str): The challenge tier (e.g., "standard", "advanced").  
-* `events` (dict): A dictionary mapping `event_id` to `Event` objects.
+- `project_path`: Root directory of the submission
+- `team_name`: Participant's team
+- `tier`: Challenge tier
+- `events`: Maps event ID to `Event` objects
+- `hardware_info` (optional): Describes computational platform
 
 **Methods:**
+- `__init__(self, project_path)` — use `microlens_submit.load()` instead
+- `get_event(event_id)` — fetches or creates an `Event`
+- `save()` — writes submission state to disk
+- `export(filename)` — generates `.zip` of active solutions
 
-* `__init__(self, project_path)`: Internal constructor. Users should use `microlens_submit.load()`.  
-* `get_event(self, event_id)`: Retrieves an `Event` object. If it doesn't exist, it is created and returned. This prevents key errors for new events. The event IDs are validated against the known event IDs for the data challenge tier; it does not accept random keys. Only expected ones.  
-* `save(self)`: Serializes the entire submission state to JSON files within the `project_path`.  
-* `export(self, filename)`: Creates a final `.zip` archive containing only active solutions and their associated files.
+#### `Event` Class
 
-### **`Event` Class**
-
-Represents a single microlensing event being modeled.
+Represents a single microlensing event.
 
 **Attributes:**
-
-* `event_id` (str): The unique identifier for the event.  
-* `solutions` (dict): A dictionary mapping `solution_id` to `Solution` objects.
+- `event_id`: Unique identifier
+- `solutions`: Maps solution ID to `Solution`
 
 **Methods:**
+- `add_solution(model_type, parameters)` — creates and returns new `Solution`
+- `get_solution(solution_id)` — fetches a specific `Solution`
+- `get_active_solutions()` — returns active solutions
+- `clear_solutions()` — deactivates all solutions
 
-* `add_solution(self, model_type, parameters)`: Creates a new `Solution` object, adds it to the event, and returns it.  
-* `get_solution(self, solution_id)`: Retrieves an existing `Solution` object by its ID.  
-* `get_active_solutions(self)`: Returns a list of all active `Solution` objects for the event.  
-* `clear_solutions(self)`: Deactivates all solutions for this event. It does **not** delete them.
+#### `Solution` Class
 
-### **`Solution` Class**
-
-Represents a single, specific model fit for an `Event`.
+Represents a specific model fit.
 
 **Attributes:**
-
-* `solution_id` (str): A unique ID for the solution (e.g., a UUID generated on creation).  
-* `model_type` (str): The type of model (e.g., "single\_lens", "binary\_lens", "false\_positive").  
-* `parameters` (dict): The best-fit model parameters.  
-* `is_active` (bool): Flag indicating if the solution should be included in the final export. Defaults to `True`.  
-* `compute_info` (dict): Stores CPU hours, wall time, and dependencies.  
-* `posterior_path` (str, optional): A relative path to an associated posterior file.  
-* `notes` (str, optional): User-provided notes about the fit.  
-* `creation_timestamp` (str): ISO 8601 timestamp of when the solution was created.
+- `solution_id`, `model_type`, `parameters`, `is_active`
+- `compute_info`: Includes timing, dependencies, Git info
+- `posterior_path`, `notes`, `creation_timestamp`
+- Optional metadata: `used_astrometry`, `used_postage_stamps`, `limb_darkening_model`, `limb_darkening_coeffs`, `parameter_uncertainties`, `physical_parameters`, `log_likelihood`, `log_prior`
 
 **Methods:**
+- `set_compute_info(cpu_hours=None, wall_time_hours=None)` — captures timing, environment, and Git state
+- `deactivate()` / `activate()` — toggles inclusion in export
 
-* `set_compute_info(self, cpu_hours=None, wall_time_hours=None)`: Records timing information. This method will also be responsible for automatically capturing the current Python environment (`pip freeze`) *at the time of execution* and storing it in the compute\_info attribute.  
-* `deactivate(self)`: Sets `is_active` to `False`.  
-* `activate(self)`: Sets `is_active` to `True`.
+---
 
-## **4\. Command Line Interface (CLI)**
+## 5. Command Line Interface (CLI)
 
-A full-featured CLI will provide access to all core library functions, making the tool language-agnostic. The CLI will be built using the **`Typer`** library for its modern features, automatic help generation, and robust command structure.
+Built with **Typer**, the CLI supports all core functionality.
 
-**Example CLI Commands:**
+### Example Commands
 
-* `microlens-submit init --team-name "Planet Pounders" --tier "advanced"`: Initializes a new submission project in the current directory.  
-* `microlens-submit add-solution <event_id> --model-type binary_lens --param t0=555.5 --param u0=0.1`: Adds a new, active solution to an event.  
-* `microlens-submit list-solutions <event_id>`: Displays a summary of all solutions (active and inactive) for a given event.  
-* `microlens-submit deactivate <solution_id>`: Deactivates a specific solution.  
-* `microlens-submit export --output "final_submission.zip"`: Packages all active solutions into the final zip file.
-
-## **5\. On-Disk File Structure**
-
-The `project_path` will be organized as follows to ensure persistence and clarity. All data will be stored in JSON format.
-
-```  
-<project_path>/  
-├── submission.json  
-├── events/  
-│   ├── <event_id_1>/  
-│   │   ├── event.json  
-│   │   ├── solutions/  
-│   │   │   ├── <solution_id_A>.json  
-│   │   │   └── <solution_id_B>.json  
-│   │   └── posteriors/  
-│   │       └── posterior_A.h5  
-│   │  
-│   └── <event_id_2>/  
-│       ├── event.json  
-│       └── ...  
+```bash
+microlens-submit init --team-name "Planet Pounders" --tier "advanced"
+microlens-submit add-solution <event_id> --model-type binary_lens --param t0=555.5 --param u0=0.1 --log-likelihood -1234.5
+microlens-submit list-solutions <event_id>
+microlens-submit deactivate <solution_id>
+microlens-submit export --output "final_submission.zip"
 ```
 
-**File Contents:**
+> **Note:** All CLI-provided fields must conform to the Python types defined in the Pydantic models. Invalid types will raise validation errors. The `export` command includes a validation step and will fail on invalid or incomplete entries unless explicitly overridden.
 
-* **`Submission.json`**:  
-  ```text  
-  {  
-    "team_name": "Team Supernova",  
-    "tier": "advanced",  
-    "challenge_version": "1.0"  
-  }  
-  ```
+---
 
-* **`events/<event_id>/event.json`**:  
-  ```text  
-  {  
-    "event_id": "ogle-2025-blg-0042",  
-    "last_modified": "2025-07-15T14:00:00Z"  
-  }  
-  ```
+## 6. On-Disk File Structure
 
-* **`events/<event_id>/solutions/<solution_id>.json`**:  
-  ```text  
-  {  
-    "solution_id": "a1b2c3d4-e5f6-...",  
-    "creation_timestamp": "2025-07-15T13:45:10Z",  
-    "is_active": true,  
-    "model_type": "binary_lens",  
-    "parameters": {  
-      "t0": 555.5, "u0": 0.1, "tE": 25.0  
-    },  
-    "posterior_path": "posteriors/posterior_A.h5",  
-    "notes": "Initial fit, looks promising.",  
-    "compute_info": {  
-      "cpu_hours": 15.5,  
-      "wall_time_hours": 2.1,  
-      "dependencies": [  
-        "numpy==1.21.2",  
-        "scipy==1.7.1",  
-        "emcee==3.1.0"  
-      ]  
-    }  
-  }  
-  ```
+```plaintext
+<project_path>/
+├── submission.json
+├── events/
+│   └── <event_id>/
+│       ├── event.json
+│       └── solutions/
+│           ├── <solution_id_A>.json
+│           └── <solution_id_B>.json
+```
 
-## **6\. Example Usage (Full Lifecycle)**
+### Example Solution File
 
-This snippet demonstrates the intended use of the library from start to finish.
+```json
+{
+  "solution_id": "a1b2c3d4-e5f6-...",
+  "creation_timestamp": "2025-07-15T13:45:10Z",
+  "is_active": true,
+  "model_type": "binary_lens",
+  "parameters": {"t0": 555.5, "u0": 0.1, "tE": 25.0},
+  "physical_parameters": {"M_L": 0.5, "D_L": 7.8},
+  "log_likelihood": -1234.56,
+  "posterior_path": "posteriors/posterior_A.h5",
+  "notes": "Binary model provides a much better fit.",
+  "compute_info": {
+    "cpu_hours": 15.5,
+    "wall_time_hours": 2.1,
+    "dependencies": [
+      "numpy==1.21.2",
+      "scipy==1.7.1",
+      "emcee==3.1.0"
+    ],
+    "git_info": {
+      "commit": "f4ac2a9f...e1",
+      "branch": "feature/new-model",
+      "is_dirty": true
+    }
+  }
+}
+```
 
-```python  
-import microlens_submit  
-import time
+> **Note:** `posterior_path` should point to a structured file (e.g., HDF5). Future updates may add format validation.
 
-# --- Day 1: Initial Setup ---  
-# Load/create the project  
-sub = microlens_submit.load(project_path="./my_challenge_submission")  
-sub.team_name = "Planet Pounders"  
+---
+
+## 7. Example Usage: Full Lifecycle
+
+```python
+import microlens_submit
+
+# Initialize the submission
+sub = microlens_submit.load(project_path="./my_challenge_submission")
+sub.team_name = "Planet Pounders"
 sub.tier = "advanced"
+sub.hardware_info = {"cpu": "Intel i9", "ram_gb": 64}
 
-# Get an event and add a first-pass solution  
-evt = sub.get_event("event-001")  
-params_1 = {"t0": 123.4, "u0": 0.5, "tE": 10.0}  
-sol_1 = evt.add_solution(model_type="single_lens", parameters=params_1)
-
-# Record compute info for this specific run  
-sol_1.set_compute_info(cpu_hours=0.5)  
-sol_1.notes = "Quick initial fit. Might be a binary."
-
-# Save progress  
-sub.save()
-
-# --- Day 20: Re-fitting with a better model ---  
-sub = microlens_submit.load(project_path="./my_challenge_submission")  
+# Add a solution
 evt = sub.get_event("event-001")
+params = {"t0": 123.5, "u0": 0.1, "tE": 12.0, "q": 0.1, "s": 1.2}
+sol = evt.add_solution(model_type="binary_lens", parameters=params)
+sol.set_compute_info(cpu_hours=24.0)
+sol.notes = "Binary model provides a much better fit."
+sol.physical_parameters = {"M_L": 0.5, "D_L": 7.8}
+sol.log_likelihood = -1234.56
 
-# Deactivate the old, simple solution  
-old_solution = evt.get_solution(sol_1.solution_id) # Assume we stored the ID  
-old_solution.deactivate()
-
-# Run a more complex fit  
-params_2 = {"t0": 123.5, "u0": 0.1, "tE": 12.0, "q": 0.1, "s": 1.2}  
-sol_2 = evt.add_solution(model_type="binary_lens", parameters=params_2)  
-sol_2.set_compute_info(cpu_hours=24.0)  
-sol_2.notes = "Binary model provides a much better fit."
-
-# Save again  
+# Save work
 sub.save()
 
-# --- Final Day: Export ---  
-sub = microlens_submit.load(project_path="./my_challenge_submission")  
-# Final checks...  
-# ...
-
-# Create the final submission package  
-sub.export(filename="planet_pounders_final.zip")  
+# Final export
+sub = microlens_submit.load(project_path="./my_challenge_submission")
+sub.export(filename="planet_pounders_final.zip")
 ```
 
-## **7\. Distribution & Installation**
+---
 
-The package will be distributed as a modern Python package on the **Python Package Index (PyPI)**.
+## 8. Style Guidelines
 
-* **Installation:** The tool will be installable with a single command:  
-* **Packaging:** The project will use a `pyproject.toml` file to manage dependencies, project metadata, and define the entry point for the command-line script.
+- **Formatting:** Use `black` for all Python code
+- **Type Hinting:** Required for all functions
+- **Docstrings:** Google-style for all public APIs
+- **Commits:** Follow Conventional Commits
+
+---
+
+## 9. Distribution & Installation
+
+The tool will be published to **PyPI**.
+
+### Installation
+
+```bash
+pip install microlens-submit
+```
+
+### Packaging
+
+The project will use `pyproject.toml` for dependency and entry point configuration.
+
