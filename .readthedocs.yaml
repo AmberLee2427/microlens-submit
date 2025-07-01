@@ -4,17 +4,20 @@
 
 version: 2
 
-# Set the version of Python and other tools you might need
 build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
 
-# Build your docs in a sub-directory with Sphinx
+# Tell Sphinx where to find our configuration
 sphinx:
    configuration: docs/conf.py
 
-# If you have additional requirements for building your docs, add them here
+# Define the exact steps to install our project and its doc dependencies
 python:
-   install:
-   - requirements: requirements-dev.txt
+  install:
+    # First, install our microlens-submit package itself
+    - method: pip
+      path: .
+    # Then, install the packages needed to build the docs
+    - requirements: docs/requirements.txt
