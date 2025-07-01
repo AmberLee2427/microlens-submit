@@ -1,6 +1,6 @@
 # Development Plan: `microlens-submit`
 
-**Version:** 1.2  
+**Version:** 1.2.1  
 **Author:** Gemini & Amber  
 **Date:** July 1, 2025
 
@@ -83,10 +83,16 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ### v0.4.0 — Feature Batch 3: The "Future-Proofing" (Long-Term Vision)
 
-- **Task 6: Plugin Architecture for Models**
-  - *Goal:* Validate known model types intelligently.
-  - *Action:* Enable external packages to register expected parameter sets.
-  - *Why:* Prepares for evolving modeling standards and tools.
+> The task are out of order from here on due to a revision.
+
+- **Task 8: The "DIY" Support Package**
+  - *Goal:* Provide an alternative for those not using the main tool.
+  - *Action:* Supply:
+    - A `SUBMISSION_MANUAL.md` with schema documentation
+    - A `validate_submission.py` script for compliance checks
+  - *Why:* Encourages good practices while respecting autonomy.
+
+### v0.5.0 — Feature Batch 4: Seamless Nexus Integration
 
 - **Task 7: Seamless Nexus Integration**
   - *Goal:* Tight integration with the Roman Science Platform.
@@ -95,12 +101,12 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Include Jupyter-ready templates with tool pre-installed
   - *Why:* Lowers friction and increases adoption.
 
-- **Task 8: The "DIY" Support Package**
-  - *Goal:* Provide an alternative for those not using the main tool.
-  - *Action:* Supply:
-    - A `SUBMISSION_MANUAL.md` with schema documentation
-    - A `validate_submission.py` script for compliance checks
-  - *Why:* Encourages good practices while respecting autonomy.
+### v0.5.0 — Feature Batch 5: Model Validation
+
+- **Task 6: Plugin Architecture for Models**
+  - *Goal:* Validate known model types intelligently.
+  - *Action:* Enable external packages to register expected parameter sets.
+  - *Why:* Prepares for evolving modeling standards and tools.
 
 ### v1.0.0 — Official Release
 
@@ -386,6 +392,8 @@ For future automation, consider implementing:
 - **v0.1.0:** ✅ Released - Initial implementation with basic CLI and API
 - **v0.2.0:** ✅ Released - Feature Batch 1 (Provenance Capture, Structured Metadata, Hardware Info)
 - **v0.3.0:** ✅ Released - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
-- **v0.4.0:** 🔄 In Development - Feature Batch 3 (Plugin Architecture, Nexus Integration)
+- **v0.4.0:** ✅ Released - DIY Support Package (Manual and Validation Tools)
+- **v0.5.0:** 📋 Planned - Seemless Nexus Integration
+- **v0.6.0:** 📋 Planned - Model Validation
 - **v1.0.0:** 📋 Planned - Official Release
 
