@@ -94,7 +94,7 @@ def test_clear_solutions(tmp_path):
     assert not evt2.solutions[sol1.solution_id].is_active
     assert not evt2.solutions[sol2.solution_id].is_active
     assert len(evt2.solutions) == 2
-    
+
 
 def test_posterior_path_persists(tmp_path):
     project = tmp_path / "proj"
@@ -107,3 +107,19 @@ def test_posterior_path_persists(tmp_path):
     new_sub = load(str(project))
     new_sol = new_sub.events["event"].solutions[sol.solution_id]
     assert new_sol.posterior_path == "posteriors/post.h5"
+
+
+def test_validate_warnings(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt1 = sub.get_event("evt1")
+    evt1.add_solution("test", {"a": 1})
+    evt2 = sub.get_event("evt2")
+    sol2 = evt2.add_solution("test", {"b": 2})
+    sol2.deactivate()
+
+    warnings = sub.validate()
+
+    assert any("Hardware info" in w for w in warnings)
+    assert any("evt2" in w for w in warnings)
+    assert any("log_likelihood" in w for w in warnings)

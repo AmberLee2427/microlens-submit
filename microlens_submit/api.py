@@ -36,6 +36,7 @@ class Solution(BaseModel):
     physical_parameters: Optional[dict] = None
     log_likelihood: Optional[float] = None
     log_prior: Optional[float] = None
+    n_data_points: Optional[int] = None
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
     )
@@ -206,6 +207,29 @@ class Submission(BaseModel):
     tier: str = ""
     hardware_info: Optional[dict] = None
     events: Dict[str, Event] = Field(default_factory=dict)
+
+    def validate(self) -> list[str]:
+        """Run validation checks on the submission.
+
+        Returns:
+            list[str]: A collection of human-readable warnings.
+        """
+
+        warnings: list[str] = []
+        if not self.hardware_info:
+            warnings.append("Hardware info is missing")
+
+        for event in self.events.values():
+            active = [sol for sol in event.solutions.values() if sol.is_active]
+            if not active:
+                warnings.append(f"Event {event.event_id} has no active solutions")
+            for sol in active:
+                if sol.log_likelihood is None:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} is missing log_likelihood"
+                    )
+
+        return warnings
 
     def get_event(self, event_id: str) -> Event:
         """Retrieve an :class:`Event`, creating it if necessary.
