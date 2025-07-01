@@ -281,3 +281,111 @@ pip install microlens-submit
 
 The project will use `pyproject.toml` for dependency and entry point configuration.
 
+---
+
+## 10. Release Management & Instructions for Agents
+
+### 10.1. Release Process Overview
+
+Before creating any PRs that implement new features or significant changes, agents should follow this release process to ensure proper versioning and distribution.
+
+### 10.2. Pre-Release Checklist
+
+Before creating a release, ensure:
+
+1. **Code Quality:**
+   - All tests pass (`pytest`)
+   - Code is formatted (`black .`)
+   - No linting errors
+   - Working tree is clean (`git status`)
+
+2. **Documentation:**
+   - README.md is up to date
+   - API documentation is current
+   - CHANGELOG.md exists and is updated (if applicable)
+
+3. **Version Management:**
+   - Update version in `pyproject.toml`
+   - Update version in `microlens_submit/__init__.py` (if applicable)
+   - Consider if this is a major, minor, or patch release
+
+### 10.3. Release Commands for Agents
+
+When ready to create a release, execute these commands in sequence:
+
+```bash
+# 1. Ensure working tree is clean
+git status
+
+# 2. Run tests to ensure everything works
+pytest
+
+# 3. Format code
+black .
+
+# 4. Create and push the git tag
+git tag -a v<X.Y.Z> -m "Release v<X.Y.Z> - <brief description>"
+git push origin v<X.Y.Z>
+
+# 5. Build the distribution
+python -m build
+
+# 6. Check the built distribution
+twine check dist/*
+
+# 7. Upload to PyPI (if this is a production release)
+# twine upload dist/*
+```
+
+### 10.4. Version Numbering Strategy
+
+- **Patch releases (0.1.0 → 0.1.1):** Bug fixes, minor improvements
+- **Minor releases (0.1.0 → 0.2.0):** New features, non-breaking changes
+- **Major releases (0.1.0 → 1.0.0):** Breaking changes, major rewrites
+
+### 10.5. Release Notes Template
+
+When creating a release, include:
+
+```markdown
+## Release v<X.Y.Z>
+
+### What's New
+- [Feature 1]
+- [Feature 2]
+
+### Bug Fixes
+- [Bug fix 1]
+- [Bug fix 2]
+
+### Breaking Changes
+- [Any breaking changes]
+
+### Dependencies
+- Updated [dependency] to version [X.Y.Z]
+```
+
+### 10.6. Post-Release Tasks
+
+After creating a release:
+
+1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.1.0 → 0.1.1-dev)
+2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
+3. **Update Roadmap:** Mark completed tasks in this document
+
+### 10.7. Automated Release Workflow
+
+For future automation, consider implementing:
+
+1. **GitHub Actions** for automated testing and building
+2. **Release drafter** for automatic changelog generation
+3. **Automated PyPI publishing** on tag creation
+
+### 10.8. Current Release Status
+
+- **v0.1.0:** ✅ Released - Initial implementation with basic CLI and API
+- **v0.2.0:** 🔄 In Development - Feature Batch 1 (Provenance Capture, Structured Metadata, Hardware Info)
+- **v0.3.0:** 📋 Planned - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
+- **v0.4.0:** 📋 Planned - Feature Batch 3 (Plugin Architecture, Nexus Integration)
+- **v1.0.0:** 📋 Planned - Official Release
+
