@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Core API for microlens-submit."""
 
+import logging
 import subprocess
 import sys
 import uuid
@@ -43,7 +44,7 @@ class Solution(BaseModel):
                 result.stdout.strip().split("\n") if result.stdout else []
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print(f"Warning: Could not capture pip environment: {e}")
+            logging.warning("Could not capture pip environment: %s", e)
             self.compute_info["dependencies"] = []
 
     def deactivate(self) -> None:
