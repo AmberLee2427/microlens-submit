@@ -107,6 +107,17 @@ class Event(BaseModel):
         """
         return self.solutions[solution_id]
 
+    def get_active_solutions(self) -> list[Solution]:
+        """Return all active solutions for this event."""
+
+        return [sol for sol in self.solutions.values() if sol.is_active]
+
+    def clear_solutions(self) -> None:
+        """Mark all solutions inactive without deleting them."""
+
+        for sol in self.solutions.values():
+            sol.is_active = False
+
     @classmethod
     def _from_dir(cls, event_dir: Path, submission: "Submission") -> "Event":
         """Load an event from disk."""

@@ -12,6 +12,8 @@ A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.
 * **Persistent Projects:** Treat your submission as a local project that you can load, edit, and save over weeks or months.
 * **Python API & CLI:** Use the tool directly in your Python analysis scripts or via the command line.
 * **Solution Management:** Easily add, update, and deactivate degenerate solutions for any event without losing your work history.
+* **Active Solution Control:** Quickly list just the active solutions or mark
+  all solutions inactive in one call.
 * **Automatic Validation:** Aggressive data validation powered by Pydantic ensures your submission is always compliant with the challenge rules.
 * **Environment Capture:** Automatically records your Python dependencies for each specific model fit, ensuring reproducibility.
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.

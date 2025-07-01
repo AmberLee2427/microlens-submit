@@ -47,3 +47,35 @@ def test_deactivate_and_export(tmp_path):
     assert solution_files == [
         f"events/test-event/solutions/{sol_active.solution_id}.json"
     ]
+
+
+def test_get_active_solutions(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol1 = evt.add_solution("test", {"a": 1})
+    sol2 = evt.add_solution("test", {"b": 2})
+    sol2.deactivate()
+
+    actives = evt.get_active_solutions()
+
+    assert len(actives) == 1
+    assert actives[0].solution_id == sol1.solution_id
+
+
+def test_clear_solutions(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol1 = evt.add_solution("test", {"a": 1})
+    sol2 = evt.add_solution("test", {"b": 2})
+
+    evt.clear_solutions()
+    sub.save()
+
+    reloaded = load(str(project))
+    evt2 = reloaded.get_event("evt")
+
+    assert not evt2.solutions[sol1.solution_id].is_active
+    assert not evt2.solutions[sol2.solution_id].is_active
+    assert len(evt2.solutions) == 2
