@@ -1,3 +1,18 @@
+## Release v0.6.0
+
+### What's New
+- `add-solution` accepts a `--params-file` option for JSON parameter files.
+- Added optional `model_name` field to `Solution` and CLI.
+
+### Bug Fixes
+- N/A
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
 ## Release v0.5.0
 
 ### What's New

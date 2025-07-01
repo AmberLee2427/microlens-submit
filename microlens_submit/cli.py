@@ -34,6 +34,16 @@ def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
     return out
 
 
+def _params_file_callback(ctx: typer.Context, value: Optional[Path]) -> Optional[Path]:
+    """Validate mutually exclusive parameter options."""
+    param_vals = ctx.params.get("param")
+    if value is not None and param_vals:
+        raise typer.BadParameter("Cannot use --param with --params-file")
+    if value is None and not param_vals and not ctx.resilient_parsing:
+        raise typer.BadParameter("Provide either --param or --params-file")
+    return value
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
@@ -84,7 +94,18 @@ def nexus_init(
 def add_solution(
     event_id: str,
     model_type: str,
-    param: List[str] = typer.Option(..., help="Model parameters as key=value"),
+    param: Optional[List[str]] = typer.Option(
+        None, help="Model parameters as key=value"
+    ),
+    params_file: Optional[Path] = typer.Option(
+        None,
+        "--params-file",
+        help="Path to JSON file with model parameters",
+        callback=_params_file_callback,
+    ),
+    model_name: Optional[str] = typer.Option(
+        None, "--model-name", help="Name of modeling software"
+    ),
     used_astrometry: bool = typer.Option(False, help="Set if astrometry was used"),
     used_postage_stamps: bool = typer.Option(
         False, help="Set if postage stamps were used"
@@ -123,21 +144,28 @@ def add_solution(
         event_id: Identifier of the event.
         model_type: Type of model used for the solution.
         param: List of ``key=value`` strings defining parameters.
+        params_file: Optional JSON file containing parameters.
+        model_name: Name of the modeling software.
         notes: Optional notes for the solution.
         project_path: Directory of the submission project.
     """
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
     params: dict = {}
-    for p in param:
-        if "=" not in p:
-            raise typer.BadParameter(f"Invalid parameter format: {p}")
-        key, value = p.split("=", 1)
-        try:
-            params[key] = json.loads(value)
-        except json.JSONDecodeError:
-            params[key] = value
+    if params_file is not None:
+        with params_file.open("r", encoding="utf-8") as fh:
+            params = json.load(fh)
+    else:
+        for p in param or []:
+            if "=" not in p:
+                raise typer.BadParameter(f"Invalid parameter format: {p}")
+            key, value = p.split("=", 1)
+            try:
+                params[key] = json.loads(value)
+            except json.JSONDecodeError:
+                params[key] = value
     sol = evt.add_solution(model_type=model_type, parameters=params)
+    sol.model_name = model_name
     sol.notes = notes
     sol.used_astrometry = used_astrometry
     sol.used_postage_stamps = used_postage_stamps
