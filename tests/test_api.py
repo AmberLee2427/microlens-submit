@@ -79,3 +79,16 @@ def test_clear_solutions(tmp_path):
     assert not evt2.solutions[sol1.solution_id].is_active
     assert not evt2.solutions[sol2.solution_id].is_active
     assert len(evt2.solutions) == 2
+    
+
+def test_posterior_path_persists(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {"x": 1})
+    sol.posterior_path = "posteriors/post.h5"
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.events["event"].solutions[sol.solution_id]
+    assert new_sol.posterior_path == "posteriors/post.h5"

@@ -16,6 +16,7 @@ A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.
   all solutions inactive in one call.
 * **Automatic Validation:** Aggressive data validation powered by Pydantic ensures your submission is always compliant with the challenge rules.
 * **Environment Capture:** Automatically records your Python dependencies for each specific model fit, ensuring reproducibility.
+* **Optional Posterior Storage:** Record the path to posterior samples for any solution.
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
 
 ## Installation
@@ -98,4 +99,9 @@ To build and test this project, the development environment needs the following 
 ### Packaging & Distribution Dependencies:
 * **`build`**: For building the package from the `pyproject.toml` file.
 * **`twine`**: For uploading the final package to PyPI.
+
+## Citation
+If you use **microlens-submit** in your research, please cite the project using
+the metadata provided in the `CITATION.cff` file. Most reference managers can
+import this file directly.
 
