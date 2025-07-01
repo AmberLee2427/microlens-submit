@@ -263,11 +263,17 @@ def compare_solutions(
         raise typer.Exit(code=1)
 
     evt = sub.events[event_id]
-    solutions = [
-        s
-        for s in evt.get_active_solutions()
-        if s.log_likelihood is not None and s.n_data_points is not None
-    ]
+    solutions = []
+    for s in evt.get_active_solutions():
+        if s.log_likelihood is None or s.n_data_points is None:
+            continue
+        if s.n_data_points <= 0:
+            console.print(
+                f"Skipping {s.solution_id}: n_data_points <= 0",
+                style="bold red",
+            )
+            continue
+        solutions.append(s)
 
     table = Table(title=f"Solution Comparison for {event_id}")
     table.add_column("Solution ID")

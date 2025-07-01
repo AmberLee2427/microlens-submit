@@ -152,6 +152,54 @@ def test_cli_compare_solutions():
         assert "BIC" in result.stdout
 
 
+def test_cli_compare_solutions_skips_zero_data_points():
+    """Solutions with non-positive n_data_points are ignored."""
+    with runner.isolated_filesystem():
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model1",
+                "--param",
+                "x=1",
+                "--log-likelihood",
+                "-5",
+                "--n-data-points",
+                "0",
+            ],
+        )
+        assert result.exit_code == 0
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model2",
+                "--param",
+                "y=2",
+                "--log-likelihood",
+                "-6",
+                "--n-data-points",
+                "10",
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["compare-solutions", "evt"])
+        assert result.exit_code == 0
+        # Only the valid solution should appear in the table
+        assert "model2" in result.stdout
+        assert "model1" not in result.stdout
+        assert "Skipping" in result.stdout
+
+
 def test_params_file_option_and_model_name():
     with runner.isolated_filesystem():
         assert (
