@@ -46,4 +46,6 @@ dev = [
     "pre-commit",
     "black",
     "isort",
+    "sphinx",
+    "sphinx_rtd_theme",
 ]
