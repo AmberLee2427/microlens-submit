@@ -64,7 +64,9 @@ def test_cli_export():
 def test_cli_list_solutions():
     with runner.isolated_filesystem():
         assert (
-            runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
             == 0
         )
         res_a = runner.invoke(app, ["add-solution", "evt", "test", "--param", "a=1"])
