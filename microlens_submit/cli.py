@@ -203,6 +203,28 @@ def deactivate(
 
 
 @app.command()
+def activate(
+    solution_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Mark ``solution_id`` as active so it is included in exports.
+
+    Args:
+        solution_id: The ID of the solution to activate.
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    for event in sub.events.values():
+        if solution_id in event.solutions:
+            event.solutions[solution_id].activate()
+            sub.save()
+            console.print(f"Activated {solution_id}")
+            return
+    console.print(f"Solution {solution_id} not found", style="bold red")
+    raise typer.Exit(code=1)
+
+
+@app.command()
 def export(
     output_path: Path,
     force: bool = typer.Option(False, "--force", help="Skip validation prompts"),
