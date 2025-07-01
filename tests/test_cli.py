@@ -242,3 +242,30 @@ def test_params_file_option_and_model_name():
             ],
         )
         assert result.exit_code != 0
+
+
+def test_cli_activate():
+    with runner.isolated_filesystem():
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
+        assert (
+            runner.invoke(
+                app, ["add-solution", "evt", "model", "--param", "x=1"]
+            ).exit_code
+            == 0
+        )
+        sub = api.load(".")
+        sol_id = next(iter(sub.get_event("evt").solutions))
+
+        assert runner.invoke(app, ["deactivate", sol_id]).exit_code == 0
+        sub = api.load(".")
+        assert not sub.get_event("evt").solutions[sol_id].is_active
+
+        result = runner.invoke(app, ["activate", sol_id])
+        assert result.exit_code == 0
+        sub = api.load(".")
+        assert sub.get_event("evt").solutions[sol_id].is_active
