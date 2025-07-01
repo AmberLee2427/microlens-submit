@@ -18,6 +18,12 @@ A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.
 
 ## Installation
 
+This package is pre-release. It is currently available on TestPyPl:
+
+```bash
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.1.0
+```
+
 The package will be available on PyPI:
 
 ```bash
