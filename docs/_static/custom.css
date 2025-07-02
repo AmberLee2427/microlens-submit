@@ -3,7 +3,7 @@
     --rtd-color-primary: #dfc5fa;
     --rtd-color-secondary: #361d49;
     --rtd-color-accent: #a859e4;
-    --rtd-color-background: #fff;
+    --rtd-color-background: #f4ebfe;
     --rtd-color-text: #000;
   }
   
@@ -36,7 +36,7 @@
   
   /* Search input and dropdown */
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-background) !important;
     color: #fff !important;
   }
   
@@ -60,7 +60,7 @@
   
   /* Version selector */
   .wy-side-nav-search .wy-dropdown {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-secondary) !important;
   }
   
   /* Mobile menu button */
