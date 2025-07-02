@@ -19,3 +19,12 @@ autodoc_default_options = {
 }
 
 html_theme = "sphinx_rtd_theme"
+html_logo = "_static/rges-pit_logo.png"
+html_theme_options = {
+    "logo_only": True,
+    "display_version": True,
+}
+html_static_path = ["_static"]
+
+def setup(app):
+    app.add_css_file("custom.css")

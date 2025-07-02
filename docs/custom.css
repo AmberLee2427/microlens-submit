@@ -1,0 +1,32 @@
+/* RGES-PIT custom colors */
+:root {
+    --rtd-color-primary: #a859e4;
+    --rtd-color-secondary: #361d49;
+    --rtd-color-accent: #a859e4;
+    --rtd-color-background: #fff;
+    --rtd-color-text: #000;
+  }
+  
+  /* Main background and text */
+  body {
+    background: var(--rtd-color-background) !important;
+    color: var(--rtd-color-text) !important;
+  }
+  
+  /* Header and navigation */
+  .wy-side-nav-search, .wy-nav-top {
+    background: var(--rtd-color-primary) !important;
+  }
+  
+  .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
+    background: var(--rtd-color-secondary) !important;
+    color: #fff !important;
+  }
+  
+  /* Links and accents */
+  a, .wy-menu-vertical a {
+    color: var(--rtd-color-primary) !important;
+  }
+  a:hover {
+    color: var(--rtd-color-accent) !important;
+  }
