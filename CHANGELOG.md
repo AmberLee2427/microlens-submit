@@ -1,7 +1,5 @@
 ## Release v0.6.1
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 ### What's New
 - `add-solution` supports a `--dry-run` flag to validate inputs without saving.
 
@@ -17,8 +15,6 @@
 <br>
 
 ## Release v0.6.0
-
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 ### What's New
 - `add-solution` accepts a `--params-file` option for JSON parameter files.
@@ -36,8 +32,6 @@
 <br>
 
 ## Release v0.5.0
-
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 ### What's New
 - Added `nexus-init` command to capture platform metadata on the Roman Research Nexus.
@@ -57,8 +51,6 @@
 
 ## Release v0.4.0
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 ### What's New
 - Added `SUBMISSION_MANUAL.md` documenting the submission format.
 - Added standalone `validate_submission.py` for validating directories.
@@ -76,8 +68,6 @@
 
 ## Release v0.3.0
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 ### What's New
 - Added `compare-solutions` command to evaluate solutions using BIC.
 - `export` now performs pre-flight validation and supports a `--force` flag.
@@ -94,8 +84,6 @@
 <br>
 
 ## Release v0.2.0
-
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 ### What's New
 - Added structured metadata fields to `Solution` and `Submission` models including astrometry usage, limb darkening info, physical parameters, and hardware information.
