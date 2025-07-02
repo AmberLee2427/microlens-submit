@@ -53,19 +53,19 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
 1. Initialize your project: `microlens-submit init --team-name "Planet Pounders" --tier "advanced"`
 2. Add a new solution to an event:
    ```bash
-   microlens-submit add-solution ogle-2025-blg-0042 \
-       --model-type binary_lens \
+   microlens-submit add-solution ogle-2025-blg-0042 1S2L \
        --param t0=555.5 \
        --param u0=0.1 \
        --param tE=25.0 \
        --notes "This is a great fit!"
    ```
+   Model types must be one of `1S1L`, `1S2L`, `2S1L`, `2S2L`, `1S3L`, `2S3L`, or `other`.
    This will create a new solution and print its unique `solution_id`.
    You can run the same command with `--dry-run` first to verify the
    parsed input without saving anything.
 3. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
 4. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
-5. Export your final submission: `microlens-submit export --output "final_submission.zip"`
+5. Export your final submission: `microlens-submit export final_submission.zip`
 
 ### Using the Python API
 
@@ -82,7 +82,7 @@ sub.tier = "advanced"
 # Get an event and add a solution
 evt = sub.get_event("ogle-2025-blg-0042")
 params = {"t0": 555.5, "u0": 0.1, "tE": 25.0}
-sol = evt.add_solution(model_type="binary_lens", parameters=params)
+sol = evt.add_solution(model_type="1S2L", parameters=params)
 
 # Record compute info for this specific run
 sol.set_compute_info(cpu_hours=15.5)
