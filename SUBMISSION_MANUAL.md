@@ -90,6 +90,7 @@ Represents a single model fit.
 |   `physical_parameters`   |  dict   |    No    |               Physical parameters derived from the fit.                |
 |     `log_likelihood`      |  float  |    No    |                   Log-likelihood value for the fit.                    |
 |        `log_prior`        |  float  |    No    |                      Log-prior value for the fit.                      |
+| `relative_probability` |  float  |    No    | Optional relative probability (0-1) that this solution is best. |
 |       `n_data_points`       | integer |    No    |                 Number of data points used in the fit.                 |
 |   `creation_timestamp`    | string  |    No    | ISO timestamp. If omitted, the validator will add a current timestamp. |
 

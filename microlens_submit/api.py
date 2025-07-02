@@ -12,6 +12,7 @@ import subprocess
 import sys
 import uuid
 import zipfile
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
@@ -49,6 +50,7 @@ class Solution(BaseModel):
         physical_parameters: Physical parameters derived from the model.
         log_likelihood: Log-likelihood value of the fit.
         log_prior: Log-prior value of the fit.
+        relative_probability: Optional probability of this solution being the best model.
         n_data_points: Number of data points used in the fit.
         creation_timestamp: UTC timestamp when the solution was created.
     """
@@ -71,6 +73,7 @@ class Solution(BaseModel):
     physical_parameters: Optional[dict] = None
     log_likelihood: Optional[float] = None
     log_prior: Optional[float] = None
+    relative_probability: Optional[float] = None
     n_data_points: Optional[int] = None
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
@@ -396,27 +399,70 @@ class Submission(BaseModel):
                 event_json = event_dir / "event.json"
                 if event_json.exists():
                     zf.write(event_json, arcname=f"events/{event.event_id}/event.json")
-                for sol in event.solutions.values():
-                    if sol.is_active:
-                        sol_path = event_dir / "solutions" / f"{sol.solution_id}.json"
-                        if sol_path.exists():
-                            arc = f"events/{event.event_id}/solutions/{sol.solution_id}.json"
-                            export_sol = sol.model_copy()
-                            for attr in [
-                                "posterior_path",
-                                "lightcurve_plot_path",
-                                "lens_plane_plot_path",
-                            ]:
-                                path = getattr(sol, attr)
-                                if path is not None:
-                                    filename = Path(path).name
-                                    new_path = f"events/{event.event_id}/solutions/{sol.solution_id}/{filename}"
-                                    setattr(export_sol, attr, new_path)
-                            zf.writestr(arc, export_sol.model_dump_json(indent=2))
-                        # Include any referenced external files
-                        sol_dir_arc = (
-                            f"events/{event.event_id}/solutions/{sol.solution_id}"
+                active_sols = [s for s in event.solutions.values() if s.is_active]
+
+                # Determine relative probabilities for this event
+                rel_prob_map: dict[str, float] = {}
+                if active_sols:
+                    provided_sum = sum(
+                        s.relative_probability or 0.0
+                        for s in active_sols
+                        if s.relative_probability is not None
+                    )
+                    need_calc = [
+                        s for s in active_sols if s.relative_probability is None
+                    ]
+                    if need_calc:
+                        can_calc = True
+                        for s in need_calc:
+                            if (
+                                s.log_likelihood is None
+                                or s.n_data_points is None
+                                or s.n_data_points <= 0
+                                or len(s.parameters) == 0
+                            ):
+                                can_calc = False
+                                break
+                        remaining = max(1.0 - provided_sum, 0.0)
+                        if can_calc:
+                            bic_vals = {
+                                s.solution_id: len(s.parameters)
+                                * math.log(s.n_data_points)
+                                - 2 * s.log_likelihood
+                                for s in need_calc
+                            }
+                            bic_min = min(bic_vals.values())
+                            weights = {
+                                sid: math.exp(-0.5 * (bic - bic_min))
+                                for sid, bic in bic_vals.items()
+                            }
+                            wsum = sum(weights.values())
+                            for sid, w in weights.items():
+                                rel_prob_map[sid] = (
+                                    remaining * w / wsum
+                                    if wsum > 0
+                                    else remaining / len(weights)
+                                )
+                            logging.warning(
+                                "relative_probability calculated for event %s using BIC",
+                                event.event_id,
+                            )
+                        else:
+                            eq = remaining / len(need_calc) if need_calc else 0.0
+                            for s in need_calc:
+                                rel_prob_map[s.solution_id] = eq
+                            logging.warning(
+                                "relative_probability set equally for event %s due to missing data",
+                                event.event_id,
+                            )
+
+                for sol in active_sols:
+                    sol_path = event_dir / "solutions" / f"{sol.solution_id}.json"
+                    if sol_path.exists():
+                        arc = (
+                            f"events/{event.event_id}/solutions/{sol.solution_id}.json"
                         )
+                        export_sol = sol.model_copy()
                         for attr in [
                             "posterior_path",
                             "lightcurve_plot_path",
@@ -424,15 +470,32 @@ class Submission(BaseModel):
                         ]:
                             path = getattr(sol, attr)
                             if path is not None:
-                                file_path = Path(self.project_path) / path
-                                if not file_path.exists():
-                                    raise ValueError(
-                                        f"Error: File specified by {attr} in solution {sol.solution_id} does not exist: {file_path}"
-                                    )
-                                zf.write(
-                                    file_path,
-                                    arcname=f"{sol_dir_arc}/{Path(path).name}",
+                                filename = Path(path).name
+                                new_path = f"events/{event.event_id}/solutions/{sol.solution_id}/{filename}"
+                                setattr(export_sol, attr, new_path)
+                        if export_sol.relative_probability is None:
+                            export_sol.relative_probability = rel_prob_map.get(
+                                sol.solution_id
+                            )
+                        zf.writestr(arc, export_sol.model_dump_json(indent=2))
+                    # Include any referenced external files
+                    sol_dir_arc = f"events/{event.event_id}/solutions/{sol.solution_id}"
+                    for attr in [
+                        "posterior_path",
+                        "lightcurve_plot_path",
+                        "lens_plane_plot_path",
+                    ]:
+                        path = getattr(sol, attr)
+                        if path is not None:
+                            file_path = Path(self.project_path) / path
+                            if not file_path.exists():
+                                raise ValueError(
+                                    f"Error: File specified by {attr} in solution {sol.solution_id} does not exist: {file_path}"
                                 )
+                            zf.write(
+                                file_path,
+                                arcname=f"{sol_dir_arc}/{Path(path).name}",
+                            )
 
 
 def load(project_path: str) -> Submission:
