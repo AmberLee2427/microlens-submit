@@ -13,22 +13,22 @@
     color: var(--rtd-color-text) !important;
   }
   
-  /* Header and navigation */
+  /* behind logo */
   .wy-side-nav-search, .wy-nav-top {
     background: var(--rtd-color-primary) !important;
   }
   
-  /* Logo background - this is the key part */
+  /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo {
     background: var(--rtd-color-accent) !important;
   }
   
-  /* Also target the logo container area */
+  /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo img {
     background: var(--rtd-color-accent) !important;
   }
   
-  /* Alternative selector for logo background */
+  /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo,
   .wy-side-nav-search .wy-side-nav-search__logo a {
     background: var(--rtd-color-accent) !important;
@@ -40,30 +40,10 @@
     color: #fff !important;
   }
   
-  /* Version dropdown selector - more specific targeting */
-  .wy-side-nav-search .wy-dropdown > span,
-  .wy-side-nav-search .wy-dropdown > a {
-    background: var(--rtd-color-secondary) !important;
-    color: var(--rtd-color-accent) !important;
-  }
-  
-  /* Version dropdown options */
-  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu {
-    background: var(--rtd-color-secondary) !important;
-  }
-  
-  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a {
-    color: var(--rtd-color-primary) !important;
-  }
-  
-  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a:hover {
-    background: var(--rtd-color-accent) !important;
-  }
-  
   /* More specific version selector targeting */
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle {
     background: var(--rtd-color-secondary) !important;
-    color: var(--rtd-color-primary) !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle:hover {
@@ -73,7 +53,7 @@
   /* Target the version text specifically */
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle span {
     background: var(--rtd-color-secondary) !important;
-    color: var(--rtd-color-primary) !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   /* Links and accents */
