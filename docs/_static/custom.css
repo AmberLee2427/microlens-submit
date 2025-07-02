@@ -15,7 +15,7 @@
   
   /* Header and navigation */
   .wy-side-nav-search, .wy-nav-top {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-accent) !important;
   }
   
   /* Logo background - this is the key part */
