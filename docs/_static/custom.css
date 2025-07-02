@@ -94,26 +94,16 @@
   
   /* Class keyword and function arguments */
   .sig-prename .pre {
-    color: #ff0000 !important;
+    color: var(--rtd-color-accent) !important;
   }
   
   .sig-param {
-    color: #fa5103 !important;
-  }
-  
-  /* Target the "class" keyword specifically */
-  .sig-prename .k {
-    color: #f2ff04 !important;
-  }
-  
-  /* Function parameters and their types */
-  .sig-param .n {
-    color: #00f721 !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   /* Additional targeting for class/function signatures */
   .sig .k, .sig .n {
-    color: #01f2ff !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   /* Method and attribute definitions */
