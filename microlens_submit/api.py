@@ -168,6 +168,52 @@ class Solution(BaseModel):
         """Mark this solution as active."""
         self.is_active = True
 
+    def validate(self) -> list[str]:
+        """Validate this solution's parameters and configuration.
+        
+        This method uses the centralized validation logic to check:
+        - Parameter completeness for the model type
+        - Higher-order effect requirements
+        - Parameter types and value ranges
+        - Physical consistency of parameters
+        
+        Returns:
+            list[str]: Human-readable validation messages (empty if all validations pass)
+        """
+        from .validate_parameters import (
+            check_solution_completeness,
+            validate_parameter_types,
+            validate_solution_consistency
+        )
+        
+        messages = []
+        
+        # Check solution completeness
+        completeness_messages = check_solution_completeness(
+            model_type=self.model_type,
+            parameters=self.parameters,
+            higher_order_effects=self.higher_order_effects,
+            bands=self.bands,
+            t_ref=self.t_ref
+        )
+        messages.extend(completeness_messages)
+        
+        # Check parameter types
+        type_messages = validate_parameter_types(
+            parameters=self.parameters,
+            model_type=self.model_type
+        )
+        messages.extend(type_messages)
+        
+        # Check solution consistency
+        consistency_messages = validate_solution_consistency(
+            model_type=self.model_type,
+            parameters=self.parameters
+        )
+        messages.extend(consistency_messages)
+        
+        return messages
+
     def _save(self, event_path: Path) -> None:
         """Write this solution to disk.
 
@@ -315,6 +361,12 @@ class Submission(BaseModel):
             if not active:
                 warnings.append(f"Event {event.event_id} has no active solutions")
             for sol in active:
+                # Use the new centralized validation
+                solution_messages = sol.validate()
+                for msg in solution_messages:
+                    warnings.append(f"Solution {sol.solution_id} in event {event.event_id}: {msg}")
+                
+                # Additional checks for missing metadata
                 if sol.log_likelihood is None:
                     warnings.append(
                         f"Solution {sol.solution_id} in event {event.event_id} is missing log_likelihood"
@@ -327,22 +379,6 @@ class Submission(BaseModel):
                     warnings.append(
                         f"Solution {sol.solution_id} in event {event.event_id} is missing lens_plane_plot_path"
                     )
-
-                if "parallax" in sol.higher_order_effects and sol.t_ref is None:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} indicates parallax but is missing t_ref."
-                    )
-
-                if sol.model_type.startswith("1S"):
-                    for band in sol.bands:
-                        if f"F{band}_S" not in sol.parameters:
-                            warnings.append(
-                                f"Solution {sol.solution_id} (model_type {sol.model_type}, band {band}) is missing expected source flux parameter F{band}_S in its parameters."
-                            )
-                        if f"F{band}_B" not in sol.parameters:
-                            warnings.append(
-                                f"Solution {sol.solution_id} (model_type {sol.model_type}, band {band}) is missing expected blend flux parameter F{band}_B in its parameters."
-                            )
 
         return warnings
 

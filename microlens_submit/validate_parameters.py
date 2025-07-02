@@ -1,11 +1,19 @@
-# microlens_submit/validation_rules.py
+"""
+Parameter validation module for microlens-submit.
 
-# Define core parameters that might be expected for different model types.
-# This structure is a suggestion and can be adapted.
-# 'required_params_core' are the fundamental microlensing parameters.
-# 'required_higher_order_params' are parameters specifically associated with higher-order effects.
-# 'optional_higher_order_params' are optional parameters for higher-order effects.
-# 'special_attributes' are parameters that live outside the 'parameters' dictionary (like t_ref).
+This module provides centralized validation logic for checking solution completeness
+and parameter consistency against model definitions.
+
+ Define core parameters that might be expected for different model types.
+ This structure is a suggestion and can be adapted.
+ 'required_params_core' are the fundamental microlensing parameters.
+ 'required_higher_order_params' are parameters specifically associated with higher-order effects.
+ 'optional_higher_order_params' are optional parameters for higher-order effects.
+ 'special_attributes' are parameters that live outside the 'parameters' dictionary (like t_ref).
+"""
+
+from typing import Dict, List, Any, Optional, Union
+
 
 MODEL_DEFINITIONS = {
     # Single Source, Single Lens (PSPL)
@@ -28,33 +36,6 @@ MODEL_DEFINITIONS = {
     # "1S3L": { "description": "Point Source, Triple Point Lens", "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]},
     # "2S3L": { "description": "Binary Source, Triple Point Lens", "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]},
 }
-
-def get_required_flux_params(model_type, bands):
-    """
-    Get the required flux parameters for a given model type and bands.
-    
-    Args:
-        model_type (str): The type of model (e.g., "1S1L", "2S1L")
-        bands (list): List of band IDs (e.g., ["0", "1", "2"])
-    
-    Returns:
-        list: List of required flux parameters (e.g., ["F0_S", "F0_B", "F1_S", "F1_B"])
-    """
-    flux_params = []
-    if not bands:
-        return flux_params # No bands, no flux parameters
-        
-    for band in bands:
-        if model_type.startswith("1S"): # Single source models
-            flux_params.append(f"F{band}_S") # Source flux for this band
-            flux_params.append(f"F{band}_B") # Blend flux for this band
-        elif model_type.startswith("2S"): # Binary source models
-            flux_params.append(f"F{band}_S1") # First source flux for this band
-            flux_params.append(f"F{band}_S2") # Second source flux for this band
-            flux_params.append(f"F{band}_B")  # Blend flux for this band (common for binary sources)
-        # Add more source types (e.g., 3S) if necessary in the future
-    return flux_params
-
 
 HIGHER_ORDER_EFFECT_DEFINITIONS = {
     "parallax": {
@@ -151,3 +132,205 @@ PARAMETER_PROPERTIES = {
     "u3": {"type": "float", "units": " ", "description": "Cubic limb darkening coefficient (Fitted Limb Darkening)"},
     "u4": {"type": "float", "units": " ", "description": "Quartic limb darkening coefficient (Fitted Limb Darkening)"},
 }
+
+def get_required_flux_params(model_type, bands):
+    """
+    Get the required flux parameters for a given model type and bands.
+    
+    Args:
+        model_type (str): The type of model (e.g., "1S1L", "2S1L")
+        bands (list): List of band IDs (e.g., ["0", "1", "2"])
+    
+    Returns:
+        list: List of required flux parameters (e.g., ["F0_S", "F0_B", "F1_S", "F1_B"])
+    """
+    flux_params = []
+    if not bands:
+        return flux_params # No bands, no flux parameters
+        
+    for band in bands:
+        if model_type.startswith("1S"): # Single source models
+            flux_params.append(f"F{band}_S") # Source flux for this band
+            flux_params.append(f"F{band}_B") # Blend flux for this band
+        elif model_type.startswith("2S"): # Binary source models
+            flux_params.append(f"F{band}_S1") # First source flux for this band
+            flux_params.append(f"F{band}_S2") # Second source flux for this band
+            flux_params.append(f"F{band}_B")  # Blend flux for this band (common for binary sources)
+        # Add more source types (e.g., 3S) if necessary in the future
+    return flux_params
+
+
+def check_solution_completeness(
+    model_type: str,
+    parameters: Dict[str, Any],
+    higher_order_effects: Optional[List[str]] = None,
+    bands: Optional[List[str]] = None,
+    t_ref: Optional[float] = None,
+    **kwargs
+) -> List[str]:
+    """
+    Check if a solution has all required parameters based on its model type and effects.
+    
+    This function validates that all required parameters are present for the given
+    model type and any higher-order effects. It returns a list of human-readable
+    warning or error messages instead of raising exceptions immediately.
+    
+    Args:
+        model_type: The type of microlensing model (e.g., '1S1L', '1S2L')
+        parameters: Dictionary of model parameters
+        higher_order_effects: List of higher-order effects (e.g., ['parallax', 'finite-source'])
+        bands: List of photometric bands used
+        t_ref: Reference time for time-dependent effects
+        **kwargs: Additional solution attributes to validate
+        
+    Returns:
+        List of validation messages (empty list if all validations pass)
+    """
+    messages = []
+    
+    # Validate model type
+    if model_type not in MODEL_DEFINITIONS:
+        messages.append(f"Unknown model type: '{model_type}'. Valid types: {list(MODEL_DEFINITIONS.keys())}")
+        return messages
+    
+    model_def = MODEL_DEFINITIONS[model_type]
+    
+    # Check required core parameters
+    required_core_params = model_def.get('required_params_core', [])
+    for param in required_core_params:
+        if param not in parameters:
+            messages.append(f"Missing required core parameter '{param}' for model type '{model_type}'")
+    
+    # Validate higher-order effects
+    if higher_order_effects:
+        for effect in higher_order_effects:
+            if effect not in HIGHER_ORDER_EFFECT_DEFINITIONS:
+                messages.append(f"Unknown higher-order effect: '{effect}'. Valid effects: {list(HIGHER_ORDER_EFFECT_DEFINITIONS.keys())}")
+                continue
+            
+            effect_def = HIGHER_ORDER_EFFECT_DEFINITIONS[effect]
+            
+            # Check required parameters for this effect
+            effect_required = effect_def.get('required_higher_order_params', [])
+            for param in effect_required:
+                if param not in parameters:
+                    messages.append(f"Missing required parameter '{param}' for effect '{effect}'")
+            
+            # Check optional parameters for this effect
+            effect_optional = effect_def.get('optional_higher_order_params', [])
+            for param in effect_optional:
+                if param not in parameters:
+                    messages.append(f"Warning: Optional parameter '{param}' not provided for effect '{effect}'")
+            
+            # Check if t_ref is required for this effect
+            if effect_def.get('requires_t_ref', False) and t_ref is None:
+                messages.append(f"Reference time (t_ref) required for effect '{effect}'")
+    
+    # Validate band-specific parameters
+    if bands:
+        required_flux_params = get_required_flux_params(model_type, bands)
+        for param in required_flux_params:
+            if param not in parameters:
+                messages.append(f"Missing required flux parameter '{param}' for bands {bands}")
+    
+    # Check for invalid parameters (not in any definition)
+    all_valid_params = set()
+    
+    # Add core model parameters
+    all_valid_params.update(required_core_params)
+    
+    # Add higher-order effect parameters
+    if higher_order_effects:
+        for effect in higher_order_effects:
+            if effect in HIGHER_ORDER_EFFECT_DEFINITIONS:
+                effect_def = HIGHER_ORDER_EFFECT_DEFINITIONS[effect]
+                all_valid_params.update(effect_def.get('required_higher_order_params', []))
+                all_valid_params.update(effect_def.get('optional_higher_order_params', []))
+    
+    # Add band-specific parameters if bands are specified
+    if bands:
+        all_valid_params.update(get_required_flux_params(model_type, bands))
+    
+    # Check for invalid parameters
+    invalid_params = set(parameters.keys()) - all_valid_params
+    for param in invalid_params:
+        messages.append(f"Warning: Parameter '{param}' not recognized for model type '{model_type}'")
+    
+    return messages
+
+
+def validate_parameter_types(
+    parameters: Dict[str, Any],
+    model_type: str
+) -> List[str]:
+    """
+    Validate parameter types and value ranges.
+    
+    Args:
+        parameters: Dictionary of model parameters
+        model_type: The type of microlensing model
+        
+    Returns:
+        List of validation messages
+    """
+    messages = []
+    
+    if model_type not in MODEL_DEFINITIONS:
+        return [f"Unknown model type: '{model_type}'"]
+    
+    for param, value in parameters.items():
+        if param in PARAMETER_PROPERTIES:
+            prop = PARAMETER_PROPERTIES[param]
+            
+            # Check type
+            expected_type = prop.get('type')
+            if expected_type == 'float' and not isinstance(value, (int, float)):
+                messages.append(f"Parameter '{param}' should be numeric, got {type(value).__name__}")
+            elif expected_type == 'int' and not isinstance(value, int):
+                messages.append(f"Parameter '{param}' should be integer, got {type(value).__name__}")
+            elif expected_type == 'str' and not isinstance(value, str):
+                messages.append(f"Parameter '{param}' should be string, got {type(value).__name__}")
+    
+    return messages
+
+
+def validate_solution_consistency(
+    model_type: str,
+    parameters: Dict[str, Any],
+    **kwargs
+) -> List[str]:
+    """
+    Validate internal consistency of solution parameters.
+    
+    Args:
+        model_type: The type of microlensing model
+        parameters: Dictionary of model parameters
+        **kwargs: Additional solution attributes
+        
+    Returns:
+        List of validation messages
+    """
+    messages = []
+    
+    # Check for physically impossible values
+    if 'tE' in parameters and parameters['tE'] <= 0:
+        messages.append("Einstein crossing time (tE) must be positive")
+    
+    if 'q' in parameters and (parameters['q'] <= 0 or parameters['q'] > 1):
+        messages.append("Mass ratio (q) should be between 0 and 1")
+    
+    if 's' in parameters and parameters['s'] <= 0:
+        messages.append("Separation (s) must be positive")
+    
+    # Check for binary lens specific consistency (1S2L, 2S2L models)
+    if model_type in ['1S2L', '2S2L']:
+        if 'q' in parameters and 's' in parameters:
+            # Check for caustic crossing conditions
+            q = parameters['q']
+            s = parameters['s']
+            
+            # Simple caustic crossing check
+            if s < 0.5 or s > 2.0:
+                messages.append("Warning: Separation (s) outside typical caustic crossing range (0.5-2.0)")
+    
+    return messages
