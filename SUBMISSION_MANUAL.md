@@ -110,6 +110,46 @@ Represents a single model fit.
 > **Note:** Files referenced by `posterior_path`, `lightcurve_plot_path`, and
 > `lens_plane_plot_path` are automatically included in the exported `.zip`.
 
+## 3.1 External File Locations
+
+These optional files must live *inside* your submission directory, and the
+paths stored in each `solution.json` should be **relative** to the submission
+root.  We recommend mirroring the structure that `microlens-submit` itself
+creates:
+
+```text
+<submission_dir>/
+├── submission.json
+└── events/
+    └── <event_id>/
+        ├── event.json
+        └── solutions/
+            ├── <solution_id>.json
+            └── <solution_id>/
+                ├── posterior.h5
+                ├── lightcurve.png
+                └── lens_plane.png
+```
+
+When exported to a `.zip`, these files are copied into the archive following the
+same layout.  The `posterior_path`, `lightcurve_plot_path`, and
+`lens_plane_plot_path` values inside the `solution.json` files in the archive are
+rewritten so that they point to their new location relative to the archive root,
+e.g. `events/<event_id>/solutions/<solution_id>/posterior.h5`.  Be sure to
+extract the archive before running any validation.
+
+Locally, you might reference a posterior file as:
+
+```json
+"posterior_path": "my_runs/posterior.h5"
+```
+
+Inside the exported `.zip`, the same entry becomes:
+
+```json
+"posterior_path": "events/<event_id>/solutions/<solution_id>/posterior.h5"
+```
+
 ## 3\. Validation
 
 Before submitting, you **must** validate your manually created package using the provided `validate_submission.py` script. This is your only safety net.
