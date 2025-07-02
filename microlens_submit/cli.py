@@ -135,6 +135,12 @@ def add_solution(
         "--n-data-points",
         help="Number of data points used in this solution",
     ),
+    lightcurve_plot_path: Optional[Path] = typer.Option(
+        None, "--lightcurve-plot-path", help="Path to lightcurve plot file"
+    ),
+    lens_plane_plot_path: Optional[Path] = typer.Option(
+        None, "--lens-plane-plot-path", help="Path to lens plane plot file"
+    ),
     notes: str = typer.Option("", help="Notes for the solution"),
     dry_run: bool = typer.Option(
         False,
@@ -181,6 +187,12 @@ def add_solution(
     sol.log_likelihood = log_likelihood
     sol.log_prior = log_prior
     sol.n_data_points = n_data_points
+    sol.lightcurve_plot_path = (
+        str(lightcurve_plot_path) if lightcurve_plot_path else None
+    )
+    sol.lens_plane_plot_path = (
+        str(lens_plane_plot_path) if lens_plane_plot_path else None
+    )
 
     if dry_run:
         parsed = {
@@ -197,6 +209,12 @@ def add_solution(
             "log_likelihood": log_likelihood,
             "log_prior": log_prior,
             "n_data_points": n_data_points,
+            "lightcurve_plot_path": (
+                str(lightcurve_plot_path) if lightcurve_plot_path else None
+            ),
+            "lens_plane_plot_path": (
+                str(lens_plane_plot_path) if lens_plane_plot_path else None
+            ),
             "notes": notes,
         }
         console.print(Panel("Parsed Input", style="cyan"))

@@ -79,6 +79,8 @@ Represents a single model fit.
 |        `is_active`        |  bool   |    No    |    If `true`, this solution is included in exports. Defaults to `true`.    |
 |      `compute_info`       |  dict   |    No    |             Recorded dependencies and timing information.              |
 |     `posterior_path`      | string  |    No    |                Path to a stored posterior sample file.                 |
+| `lightcurve_plot_path` | string | No | Path to a lightcurve plot image to include in the export. |
+| `lens_plane_plot_path` | string | No | Path to a lens plane plot image to include in the export. |
 |          `notes`          | string  |    No    |                  Free-form notes about the solution.                   |
 |     `used_astrometry`     |  bool   |    No    |         Indicates use of astrometric data. Defaults to `false`.          |
 |    `used_postage_stamps`    |  bool   |    No    |       Indicates use of postage-stamp images. Defaults to `false`.        |
@@ -104,6 +106,9 @@ Represents a single model fit.
   "creation_timestamp": "2025-07-15T13:45:10Z"
 }
 ```
+
+> **Note:** Files referenced by `posterior_path`, `lightcurve_plot_path`, and
+> `lens_plane_plot_path` are automatically included in the exported `.zip`.
 
 ## 3\. Validation
 

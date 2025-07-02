@@ -30,7 +30,17 @@ def test_cli_init_and_add():
 
         result = runner.invoke(
             app,
-            ["add-solution", "test-event", "test", "--param", "p1=1"],
+            [
+                "add-solution",
+                "test-event",
+                "test",
+                "--param",
+                "p1=1",
+                "--lightcurve-plot-path",
+                "lc.png",
+                "--lens-plane-plot-path",
+                "lens.png",
+            ],
         )
         assert result.exit_code == 0
 
@@ -39,7 +49,10 @@ def test_cli_init_and_add():
         assert len(evt.solutions) == 1
         sol_id = next(iter(evt.solutions))
         assert sol_id in result.stdout
-        assert evt.solutions[sol_id].parameters["p1"] == 1
+        sol = evt.solutions[sol_id]
+        assert sol.parameters["p1"] == 1
+        assert sol.lightcurve_plot_path == "lc.png"
+        assert sol.lens_plane_plot_path == "lens.png"
 
 
 def test_cli_export():
