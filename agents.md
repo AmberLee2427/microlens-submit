@@ -118,6 +118,12 @@ The library is built around a stateful, object-oriented model that mirrors the s
   - *Action:* Add `lightcurve_plot_path` and `lens_plane_plot_path` fields to `Solution` and collect them (and posterior files) during `export`.
   - *Why:* Simplifies sharing complete results and prevents missing file errors.
 
+### v0.9.0 — Strongly Typed Model & Effects & Parameter Validation Foundation
+
+- **Task:** Remove generic `model_name` and enforce strict `model_type` values.
+- **Task:** Add `bands`, `higher_order_effects`, and `t_ref` fields to `Solution`.
+- **Task:** Begin conditional parameter validation based on these fields.
+
 ### v1.0.0 — Official Release
 
 Release after comprehensive testing and PyPI publication.
@@ -404,7 +410,9 @@ For future automation, consider implementing:
 - **v0.3.0:** ✅ Released - Feature Batch 2 (Solution Comparison, Pre-flight Validation)
 - **v0.4.0:** ✅ Released - DIY Support Package (Manual and Validation Tools)
 - **v0.5.0:** ✅ Released - Seamless Nexus Integration
-- **v0.6.0:** 🚧 In Development - CLI Usability & Model Validation
-- **v0.7.0:** 🔜 Planned - Plot Packaging & Validation
+- **v0.6.0:** ✅ Released - CLI Usability & Model Validation
+- **v0.7.0:** ✅ Released - Plot Packaging & Validation
+- **v0.8.0:** ✅ Released - Relative Probability Handling
+- **v0.9.0:** 🚧 In Development - Strongly Typed Model & Effects
 - **v1.0.0:** 📋 Planned - Official Release
 
