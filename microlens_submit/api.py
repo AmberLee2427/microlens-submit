@@ -401,7 +401,18 @@ class Submission(BaseModel):
                         sol_path = event_dir / "solutions" / f"{sol.solution_id}.json"
                         if sol_path.exists():
                             arc = f"events/{event.event_id}/solutions/{sol.solution_id}.json"
-                            zf.write(sol_path, arcname=arc)
+                            export_sol = sol.model_copy()
+                            for attr in [
+                                "posterior_path",
+                                "lightcurve_plot_path",
+                                "lens_plane_plot_path",
+                            ]:
+                                path = getattr(sol, attr)
+                                if path is not None:
+                                    filename = Path(path).name
+                                    new_path = f"events/{event.event_id}/solutions/{sol.solution_id}/{filename}"
+                                    setattr(export_sol, attr, new_path)
+                            zf.writestr(arc, export_sol.model_dump_json(indent=2))
                         # Include any referenced external files
                         sol_dir_arc = (
                             f"events/{event.event_id}/solutions/{sol.solution_id}"

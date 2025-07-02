@@ -1,3 +1,22 @@
+## Release v0.7.1
+
+### What's New
+- Clarified external file (plots, posteriors) storage and path handling in
+  `SUBMISSION_MANUAL.md`. Internal paths within `solution.json` files in exported
+  archives now point to the file's location inside the zip, allowing immediate
+  use after extraction.
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
+<br>
+
 ## Release v0.7.0
 
 ### What's New

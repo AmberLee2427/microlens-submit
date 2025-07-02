@@ -1,4 +1,5 @@
 import zipfile
+import json
 
 from microlens_submit.api import load
 
@@ -89,6 +90,10 @@ def test_export_includes_external_files(tmp_path):
         assert f"{base}/post.h5" in names
         assert f"{base}/lc.png" in names
         assert f"{base}/lens.png" in names
+        data = json.loads(zf.read(f"{base}.json"))
+        assert data["posterior_path"] == f"{base}/post.h5"
+        assert data["lightcurve_plot_path"] == f"{base}/lc.png"
+        assert data["lens_plane_plot_path"] == f"{base}/lens.png"
 
 
 def test_get_active_solutions(tmp_path):
