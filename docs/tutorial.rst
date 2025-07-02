@@ -27,7 +27,18 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       microlens-submit add-solution EVENT123 binary_lens \
           --params-file params.json --notes "Initial fit"
 
-3. **Attach a posterior file (optional)**
+3. **Validate without saving**
+
+   .. code-block:: bash
+
+      microlens-submit add-solution EVENT123 binary_lens \
+          --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+          --dry-run
+
+   This prints the parsed input and resulting schema output without writing
+   anything to disk.
+
+4. **Attach a posterior file (optional)**
 
    After generating a posterior sample (e.g., an MCMC chain), store the file
    within your project and record its relative path using the Python API::
@@ -38,26 +49,26 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       >>> sol.posterior_path = "posteriors/chain.h5"
       >>> sub.save()
 
-4. **Add a competing solution**
+5. **Add a competing solution**
 
    .. code-block:: bash
 
       microlens-submit add-solution EVENT123 single_lens \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
-5. **List your solutions**
+6. **List your solutions**
 
    .. code-block:: bash
 
       microlens-submit list-solutions EVENT123
 
-6. **Deactivate the less-good solution**
+7. **Deactivate the less-good solution**
 
    .. code-block:: bash
 
       microlens-submit deactivate <solution_id>
 
-7. **Export the final package**
+8. **Export the final package**
 
    .. code-block:: bash
 

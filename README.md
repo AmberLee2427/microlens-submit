@@ -52,6 +52,8 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
        --notes "This is a great fit!"
    ```
    This will create a new solution and print its unique `solution_id`.
+   You can run the same command with `--dry-run` first to verify the
+   parsed input without saving anything.
 3. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
 4. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
 5. Export your final submission: `microlens-submit export --output "final_submission.zip"`
