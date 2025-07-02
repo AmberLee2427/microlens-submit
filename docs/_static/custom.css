@@ -72,3 +72,39 @@
   .wy-nav-top {
     background: var(--rtd-color-accent) !important;
   }
+  
+  /* Function and class definition boxes */
+  .sig {
+    background: var(--rtd-color-background) !important;
+    border: 2px solid var(--rtd-color-accent) !important;
+    border-radius: 4px !important;
+  }
+  
+  .sig-name {
+    color: var(--rtd-color-accent) !important;
+  }
+  
+  .sig-prename {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  .sig-paren {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  /* Method and attribute definitions */
+  .descclassname, .descname {
+    background: var(--rtd-color-background) !important;
+    color: var(--rtd-color-accent) !important;
+  }
+  
+  /* Code blocks and inline code */
+  .highlight {
+    background: var(--rtd-color-background) !important;
+    border: 1px solid var(--rtd-color-accent) !important;
+  }
+  
+  code {
+    background: var(--rtd-color-background) !important;
+    color: var(--rtd-color-accent) !important;
+  }
