@@ -6,8 +6,6 @@
 
 <h1 align="center">microlens-submit</h1>
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 *A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
 [![PyPI - v0.6.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
@@ -22,8 +20,6 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 
 ## Key Features
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 * **Persistent Projects:** Treat your submission as a local project that you can load, edit, and save over weeks or months.
 * **Python API & CLI:** Use the tool directly in your Python analysis scripts or via the command line.
 * **Solution Management:** Easily add, update, and deactivate degenerate solutions for any event without losing your work history.
@@ -35,8 +31,6 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
 
 ## Installation
-
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 This package is pre-release. It is currently available on TestPyPI:
 
@@ -103,8 +97,6 @@ sub.export("final_submission.zip")
 
 ## Development
 
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
-
 The full development plan can be found in agents.md. Contributions are welcome!
 
 To build and test this project, the development environment needs the following Python libraries. You can provide these to Codex or set up a `requirements-dev.txt` file.
@@ -122,8 +114,6 @@ To build and test this project, the development environment needs the following 
 * **`twine`**: For uploading the final package to PyPI.
 
 ## Citation
-
-<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 If you use **microlens-submit** in your research, please cite the project using
 the metadata provided in the `CITATION.cff` file. Most reference managers can
