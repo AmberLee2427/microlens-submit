@@ -116,6 +116,16 @@
     color: var(--rtd-color-secondary) !important;
   }
   
+  /* Module names in class signatures */
+  .sig .n:first-child {
+    color: var(--rtd-color-accent) !important;
+  }
+  
+  /* Alternative targeting for module names */
+  .sig-prename .n {
+    color: var(--rtd-color-accent) !important;
+  }
+  
   /* Method and attribute definitions */
   .descclassname, .descname {
     color: var(--rtd-color-accent) !important;
