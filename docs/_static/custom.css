@@ -37,23 +37,11 @@
   /* Search input and dropdown */
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-background) !important;
-    color: #fff !important;
-  }
-  
-  /* More specific version selector targeting */
-  .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle {
-    background: var(--rtd-color-secondary) !important;
     color: var(--rtd-color-secondary) !important;
   }
   
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle:hover {
     background: var(--rtd-color-accent) !important;
-  }
-  
-  /* Target the version text specifically */
-  .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle span {
-    background: var(--rtd-color-secondary) !important;
-    color: var(--rtd-color-secondary) !important;
   }
   
   /* Links and accents */
