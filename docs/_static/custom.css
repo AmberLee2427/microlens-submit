@@ -128,6 +128,5 @@
   }
   
   code {
-    background: var(--rtd-color-background) !important;
     color: var(--rtd-color-accent) !important;
   }
