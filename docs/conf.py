@@ -22,7 +22,7 @@ html_theme = "sphinx_rtd_theme"
 html_logo = "_static/rges-pit_logo.png"
 html_theme_options = {
     "logo_only": False,
-    "display_version": True,
+    "display_version": False,
 }
 html_static_path = ["_static"]
 
