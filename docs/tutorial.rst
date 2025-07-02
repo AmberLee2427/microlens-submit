@@ -19,6 +19,14 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
           --notes "Initial fit"
 
+   You can also load parameters from a JSON file instead of listing them on the
+   command line. Create ``params.json`` containing your values and run:
+
+   .. code-block:: bash
+
+      microlens-submit add-solution EVENT123 binary_lens \
+          --params-file params.json --notes "Initial fit"
+
 3. **Attach a posterior file (optional)**
 
    After generating a posterior sample (e.g., an MCMC chain), store the file
