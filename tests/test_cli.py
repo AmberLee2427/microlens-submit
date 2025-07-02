@@ -244,6 +244,33 @@ def test_params_file_option_and_model_name():
         assert result.exit_code != 0
 
 
+def test_add_solution_dry_run():
+    """--dry-run prints info without saving to disk."""
+    with runner.isolated_filesystem():
+        assert (
+            runner.invoke(
+                app, ["init", "--team-name", "Team", "--tier", "test"]
+            ).exit_code
+            == 0
+        )
+
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "evt",
+                "model",
+                "--param",
+                "x=1",
+                "--dry-run",
+            ],
+        )
+        assert result.exit_code == 0
+        assert "Parsed Input" in result.stdout
+        assert "Schema Output" in result.stdout
+        assert not Path("events/evt").exists()
+
+
 def test_cli_activate():
     with runner.isolated_filesystem():
         assert (

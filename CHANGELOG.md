@@ -1,3 +1,17 @@
+## Release v0.6.1
+
+### What's New
+- `add-solution` supports a `--dry-run` flag to validate inputs without saving.
+
+### Bug Fixes
+- N/A
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
 ## Release v0.6.0
 
 ### What's New
