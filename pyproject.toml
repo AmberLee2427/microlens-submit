@@ -13,10 +13,9 @@ authors = [
 description = "A stateful submission toolkit for the Microlensing Data Challenge."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { file="LICENSE" }
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -49,3 +48,8 @@ dev = [
     "sphinx",
     "sphinx_rtd_theme",
 ]
+
+# Explicitly specify packages to include
+[tool.setuptools.packages.find]
+include = ["microlens_submit*"]
+exclude = ["assets*", "docs*", "tests*"]
