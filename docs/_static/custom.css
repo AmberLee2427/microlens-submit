@@ -36,26 +36,26 @@
   
   /* Search input and dropdown */
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
-    background: var(--rtd-color-secondary) !important;
+    background: var(--rtd-color-primary) !important;
     color: #fff !important;
   }
   
   /* Links and accents */
   a, .wy-menu-vertical a {
-    color: var(--rtd-color-primary) !important;
+    color: var(--rtd-color-accent) !important;
   }
   a:hover {
-    color: var(--rtd-color-accent) !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   /* Navigation menu */
   .wy-menu-vertical li.current > a {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-primary) !important;
     color: #fff !important;
   }
   
   .wy-menu-vertical li.current > a:hover {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-accent) !important;
   }
   
   /* Version selector */
