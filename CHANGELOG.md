@@ -1,3 +1,21 @@
+## Release v0.8.0
+
+### What's New
+- Added `relative_probability` field to `Solution` model with CLI and API support.
+- `Submission.export` automatically computes this probability via BIC when not provided, or assigns equal values if BIC inputs are missing.
+- `compare-solutions` now shows relative probabilities and calculates them on demand.
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- N/A
+
+<br>
+
 ## Release v0.7.1
 
 ### What's New

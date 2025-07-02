@@ -36,6 +36,8 @@ def test_cli_init_and_add():
                 "test",
                 "--param",
                 "p1=1",
+                "--relative-probability",
+                "0.7",
                 "--lightcurve-plot-path",
                 "lc.png",
                 "--lens-plane-plot-path",
@@ -53,6 +55,7 @@ def test_cli_init_and_add():
         assert sol.parameters["p1"] == 1
         assert sol.lightcurve_plot_path == "lc.png"
         assert sol.lens_plane_plot_path == "lens.png"
+        assert sol.relative_probability == 0.7
 
 
 def test_cli_export():
@@ -163,6 +166,7 @@ def test_cli_compare_solutions():
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
         assert "BIC" in result.stdout
+        assert "Relative" in result.stdout and "Prob" in result.stdout
 
 
 def test_cli_compare_solutions_skips_zero_data_points():

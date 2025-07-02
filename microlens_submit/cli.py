@@ -128,6 +128,11 @@ def add_solution(
         "--physical-param",
         help="Physical parameters as key=value",
     ),
+    relative_probability: Optional[float] = typer.Option(
+        None,
+        "--relative-probability",
+        help="Relative probability of this solution",
+    ),
     log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
     log_prior: Optional[float] = typer.Option(None, help="Log prior"),
     n_data_points: Optional[int] = typer.Option(
@@ -186,6 +191,7 @@ def add_solution(
     sol.physical_parameters = _parse_pairs(physical_param)
     sol.log_likelihood = log_likelihood
     sol.log_prior = log_prior
+    sol.relative_probability = relative_probability
     sol.n_data_points = n_data_points
     sol.lightcurve_plot_path = (
         str(lightcurve_plot_path) if lightcurve_plot_path else None
@@ -208,6 +214,7 @@ def add_solution(
             "physical_parameters": _parse_pairs(physical_param),
             "log_likelihood": log_likelihood,
             "log_prior": log_prior,
+            "relative_probability": relative_probability,
             "n_data_points": n_data_points,
             "lightcurve_plot_path": (
                 str(lightcurve_plot_path) if lightcurve_plot_path else None
@@ -350,11 +357,58 @@ def compare_solutions(
     table.add_column("# Params (k)")
     table.add_column("Log-Likelihood")
     table.add_column("BIC")
+    table.add_column("Relative Prob")
+
+    rel_prob_map: dict[str, float] = {}
+    note = None
+    if solutions:
+        provided_sum = sum(
+            s.relative_probability or 0.0
+            for s in solutions
+            if s.relative_probability is not None
+        )
+        need_calc = [s for s in solutions if s.relative_probability is None]
+        if need_calc:
+            can_calc = all(
+                s.log_likelihood is not None
+                and s.n_data_points
+                and s.n_data_points > 0
+                and len(s.parameters) > 0
+                for s in need_calc
+            )
+            remaining = max(1.0 - provided_sum, 0.0)
+            if can_calc:
+                bic_vals = {
+                    s.solution_id: len(s.parameters) * math.log(s.n_data_points)
+                    - 2 * s.log_likelihood
+                    for s in need_calc
+                }
+                bic_min = min(bic_vals.values())
+                weights = {
+                    sid: math.exp(-0.5 * (bic - bic_min))
+                    for sid, bic in bic_vals.items()
+                }
+                wsum = sum(weights.values())
+                for sid, w in weights.items():
+                    rel_prob_map[sid] = (
+                        remaining * w / wsum if wsum > 0 else remaining / len(weights)
+                    )
+                note = "Relative probabilities calculated using BIC"
+            else:
+                eq = remaining / len(need_calc) if need_calc else 0.0
+                for s in need_calc:
+                    rel_prob_map[s.solution_id] = eq
+                note = "Relative probabilities set equal due to missing data"
 
     rows = []
     for sol in solutions:
         k = len(sol.parameters)
         bic = k * math.log(sol.n_data_points) - 2 * sol.log_likelihood
+        rp = (
+            sol.relative_probability
+            if sol.relative_probability is not None
+            else rel_prob_map.get(sol.solution_id)
+        )
         rows.append(
             (
                 bic,
@@ -364,6 +418,7 @@ def compare_solutions(
                     str(k),
                     f"{sol.log_likelihood:.2f}",
                     f"{bic:.2f}",
+                    f"{rp:.3f}" if rp is not None else "N/A",
                 ],
             )
         )
@@ -372,6 +427,8 @@ def compare_solutions(
         table.add_row(*cols)
 
     console.print(table)
+    if note:
+        console.print(note, style="yellow")
 
 
 if __name__ == "__main__":  # pragma: no cover

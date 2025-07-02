@@ -169,6 +169,29 @@ def test_plot_paths_persist(tmp_path):
     assert new_sol.lens_plane_plot_path == "plots/lens.png"
 
 
+def test_relative_probability_export(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol1 = evt.add_solution("test", {"a": 1})
+    sol1.log_likelihood = -10
+    sol1.n_data_points = 50
+    sol1.relative_probability = 0.6
+    sol2 = evt.add_solution("test", {"b": 2})
+    sol2.log_likelihood = -12
+    sol2.n_data_points = 50
+    sub.save()
+
+    zip_path = project / "out.zip"
+    sub.export(str(zip_path))
+
+    with zipfile.ZipFile(zip_path) as zf:
+        data1 = json.loads(zf.read(f"events/evt/solutions/{sol1.solution_id}.json"))
+        data2 = json.loads(zf.read(f"events/evt/solutions/{sol2.solution_id}.json"))
+        assert data1["relative_probability"] == 0.6
+        assert abs(data2["relative_probability"] - 0.4) < 1e-6
+
+
 def test_validate_warnings(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
