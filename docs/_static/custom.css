@@ -1,8 +1,8 @@
 /* RGES-PIT custom colors */
 :root {
-    --rtd-color-primary: #a859e4;
+    --rtd-color-primary: #dfc5fa;
     --rtd-color-secondary: #361d49;
-    --rtd-color-accent: #dfc5fa;
+    --rtd-color-accent: #a859e4;
     --rtd-color-background: #fff;
     --rtd-color-text: #000;
   }
