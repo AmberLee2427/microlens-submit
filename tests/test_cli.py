@@ -33,7 +33,7 @@ def test_cli_init_and_add():
             [
                 "add-solution",
                 "test-event",
-                "test",
+                "other",
                 "--param",
                 "p1=1",
                 "--relative-probability",
@@ -69,14 +69,14 @@ def test_cli_export():
         assert (
             runner.invoke(
                 app,
-                ["add-solution", "evt", "test", "--param", "x=1"],
+                ["add-solution", "evt", "other", "--param", "x=1"],
             ).exit_code
             == 0
         )
         assert (
             runner.invoke(
                 app,
-                ["add-solution", "evt", "test", "--param", "y=2"],
+                ["add-solution", "evt", "other", "--param", "y=2"],
             ).exit_code
             == 0
         )
@@ -105,13 +105,13 @@ def test_cli_list_solutions():
         )
         assert (
             runner.invoke(
-                app, ["add-solution", "evt", "test", "--param", "a=1"]
+                app, ["add-solution", "evt", "other", "--param", "a=1"]
             ).exit_code
             == 0
         )
         assert (
             runner.invoke(
-                app, ["add-solution", "evt", "test", "--param", "b=2"]
+                app, ["add-solution", "evt", "other", "--param", "b=2"]
             ).exit_code
             == 0
         )
@@ -137,7 +137,7 @@ def test_cli_compare_solutions():
             [
                 "add-solution",
                 "evt",
-                "model1",
+                "other",
                 "--param",
                 "x=1",
                 "--log-likelihood",
@@ -152,7 +152,7 @@ def test_cli_compare_solutions():
             [
                 "add-solution",
                 "evt",
-                "model2",
+                "other",
                 "--param",
                 "y=2",
                 "--log-likelihood",
@@ -183,7 +183,7 @@ def test_cli_compare_solutions_skips_zero_data_points():
             [
                 "add-solution",
                 "evt",
-                "model1",
+                "other",
                 "--param",
                 "x=1",
                 "--log-likelihood",
@@ -198,7 +198,7 @@ def test_cli_compare_solutions_skips_zero_data_points():
             [
                 "add-solution",
                 "evt",
-                "model2",
+                "other",
                 "--param",
                 "y=2",
                 "--log-likelihood",
@@ -212,12 +212,11 @@ def test_cli_compare_solutions_skips_zero_data_points():
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
         # Only the valid solution should appear in the table
-        assert "model2" in result.stdout
-        assert "model1" not in result.stdout
+        assert "other" in result.stdout
         assert "Skipping" in result.stdout
 
 
-def test_params_file_option_and_model_name():
+def test_params_file_option_and_bands():
     with runner.isolated_filesystem():
         assert (
             runner.invoke(
@@ -233,25 +232,31 @@ def test_params_file_option_and_model_name():
             [
                 "add-solution",
                 "evt",
-                "model",
+                "1S1L",
                 "--params-file",
                 "params.json",
-                "--model-name",
-                "MulensModel",
+                "--bands",
+                "0,1",
+                "--higher-order-effect",
+                "parallax",
+                "--t-ref",
+                "123.0",
             ],
         )
         assert result.exit_code == 0
         sub = api.load(".")
         sol = next(iter(sub.get_event("evt").solutions.values()))
         assert sol.parameters == params
-        assert sol.model_name == "MulensModel"
+        assert sol.bands == ["0", "1"]
+        assert sol.higher_order_effects == ["parallax"]
+        assert sol.t_ref == 123.0
 
         result = runner.invoke(
             app,
             [
                 "add-solution",
                 "evt",
-                "model",
+                "1S1L",
                 "--param",
                 "a=1",
                 "--params-file",
@@ -276,7 +281,7 @@ def test_add_solution_dry_run():
             [
                 "add-solution",
                 "evt",
-                "model",
+                "other",
                 "--param",
                 "x=1",
                 "--dry-run",
@@ -298,7 +303,7 @@ def test_cli_activate():
         )
         assert (
             runner.invoke(
-                app, ["add-solution", "evt", "model", "--param", "x=1"]
+                app, ["add-solution", "evt", "other", "--param", "x=1"]
             ).exit_code
             == 0
         )

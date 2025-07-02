@@ -74,7 +74,10 @@ Represents a single model fit.
 |          Field          |  Type   | Required |                              Description                               |
 |-------------------------|---------|----------|------------------------------------------------------------------------|
 |       `solution_id`       | string  |   Yes    |                  Unique identifier for the solution.                   |
-|       `model_type`        | string  |   Yes    |                  Name of the model used for the fit.                   |
+|       `model_type`        | string  |   Yes    | Must be one of `1S1L`, `1S2L`, `2S1L`, `2S2L`, `1S3L`, `2S3L`, or `other`. |
+|         `bands`           |  list   |    No    | Photometric bands used, e.g., `["0", "1"]`. |
+| `higher_order_effects` |  list   |    No    | Additional effects like `parallax` or `finite-source`. |
+|          `t_ref`          |  float  |    No    | Reference time for the model. |
 |       `parameters`        |  dict   |   Yes    |                    Dictionary of model parameters.                     |
 |        `is_active`        |  bool   |    No    |    If `true`, this solution is included in exports. Defaults to `true`.    |
 |      `compute_info`       |  dict   |    No    |             Recorded dependencies and timing information.              |

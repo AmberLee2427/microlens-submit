@@ -1,3 +1,24 @@
+## Release v0.9.0
+
+### What's New
+- Removed the `model_name` field from `Solution` and CLI.
+- Introduced strongly typed `model_type` values (e.g., `1S1L`, `1S2L`).
+- Added `bands` attribute for photometric bands.
+- Added `higher_order_effects` list to flag physical effects.
+- Added a dedicated `t_ref` field.
+- Foundation for parameter validation based on `model_type` and `bands`.
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- N/A
+
+<br>
+
 ## Release v0.8.0
 
 ### What's New

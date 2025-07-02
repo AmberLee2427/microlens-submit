@@ -11,9 +11,9 @@ def test_full_lifecycle(tmp_path):
     sub.tier = "test"
 
     evt = sub.get_event("test-event")
-    sol1 = evt.add_solution(model_type="test", parameters={"a": 1})
+    sol1 = evt.add_solution(model_type="other", parameters={"a": 1})
     sol1.set_compute_info()
-    sol2 = evt.add_solution(model_type="test", parameters={"b": 2})
+    sol2 = evt.add_solution(model_type="other", parameters={"b": 2})
     sub.save()
 
     new_sub = load(str(project))
@@ -33,7 +33,7 @@ def test_compute_info_hours(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    sol = evt.add_solution(model_type="test", parameters={})
+    sol = evt.add_solution(model_type="other", parameters={})
     sol.set_compute_info(cpu_hours=1.5, wall_time_hours=2.0)
     sub.save()
 
@@ -47,8 +47,8 @@ def test_deactivate_and_export(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("test-event")
-    sol_active = evt.add_solution("test", {"a": 1})
-    sol_inactive = evt.add_solution("test", {"b": 2})
+    sol_active = evt.add_solution("other", {"a": 1})
+    sol_inactive = evt.add_solution("other", {"b": 2})
     sol_inactive.deactivate()
     sub.save()
 
@@ -71,7 +71,7 @@ def test_export_includes_external_files(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
-    sol = evt.add_solution("test", {})
+    sol = evt.add_solution("other", {})
     (project / "post.h5").write_text("data")
     sol.posterior_path = "post.h5"
     (project / "lc.png").write_text("img")
@@ -100,8 +100,8 @@ def test_get_active_solutions(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    sol1 = evt.add_solution("test", {"a": 1})
-    sol2 = evt.add_solution("test", {"b": 2})
+    sol1 = evt.add_solution("other", {"a": 1})
+    sol2 = evt.add_solution("other", {"b": 2})
     sol2.deactivate()
 
     actives = evt.get_active_solutions()
@@ -114,8 +114,8 @@ def test_clear_solutions(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    sol1 = evt.add_solution("test", {"a": 1})
-    sol2 = evt.add_solution("test", {"b": 2})
+    sol1 = evt.add_solution("other", {"a": 1})
+    sol2 = evt.add_solution("other", {"b": 2})
 
     evt.clear_solutions()
     sub.save()
@@ -132,7 +132,7 @@ def test_posterior_path_persists(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
-    sol = evt.add_solution("test", {"x": 1})
+    sol = evt.add_solution("other", {"x": 1})
     sol.posterior_path = "posteriors/post.h5"
     sub.save()
 
@@ -141,24 +141,28 @@ def test_posterior_path_persists(tmp_path):
     assert new_sol.posterior_path == "posteriors/post.h5"
 
 
-def test_model_name_persists(tmp_path):
+def test_new_fields_persist(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
-    sol = evt.add_solution("test", {"x": 1})
-    sol.model_name = "MulensModel"
+    sol = evt.add_solution("1S1L", {"x": 1})
+    sol.bands = ["0", "1"]
+    sol.higher_order_effects = ["parallax"]
+    sol.t_ref = 123.4
     sub.save()
 
     new_sub = load(str(project))
     new_sol = new_sub.events["event"].solutions[sol.solution_id]
-    assert new_sol.model_name == "MulensModel"
+    assert new_sol.bands == ["0", "1"]
+    assert new_sol.higher_order_effects == ["parallax"]
+    assert new_sol.t_ref == 123.4
 
 
 def test_plot_paths_persist(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
-    sol = evt.add_solution("test", {"x": 1})
+    sol = evt.add_solution("other", {"x": 1})
     sol.lightcurve_plot_path = "plots/lc.png"
     sol.lens_plane_plot_path = "plots/lens.png"
     sub.save()
@@ -173,11 +177,11 @@ def test_relative_probability_export(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    sol1 = evt.add_solution("test", {"a": 1})
+    sol1 = evt.add_solution("other", {"a": 1})
     sol1.log_likelihood = -10
     sol1.n_data_points = 50
     sol1.relative_probability = 0.6
-    sol2 = evt.add_solution("test", {"b": 2})
+    sol2 = evt.add_solution("other", {"b": 2})
     sol2.log_likelihood = -12
     sol2.n_data_points = 50
     sub.save()
@@ -196,9 +200,9 @@ def test_validate_warnings(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt1 = sub.get_event("evt1")
-    evt1.add_solution("test", {"a": 1})
+    evt1.add_solution("other", {"a": 1})
     evt2 = sub.get_event("evt2")
-    sol2 = evt2.add_solution("test", {"b": 2})
+    sol2 = evt2.add_solution("other", {"b": 2})
     sol2.deactivate()
 
     warnings = sub.validate()

@@ -15,7 +15,7 @@ import zipfile
 import math
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Literal, List
 
 from pydantic import BaseModel, Field
 
@@ -31,9 +31,12 @@ class Solution(BaseModel):
 
     Attributes:
         solution_id: Unique identifier for the solution.
-        model_type: Short string describing the type of model (e.g.
-            ``"point_lens"`` or ``"binary_lens"``).
-        model_name: Optional name of the software used to produce the fit.
+        model_type: Specific lens/source configuration such as ``"1S1L"`` or
+            ``"2S1L"``.
+        bands: Photometric bands used in the fit.
+        higher_order_effects: List of physical effects modeled (e.g.,
+            ``"parallax"``).
+        t_ref: Reference time for time-dependent effects.
         parameters: Dictionary of model parameters used for the fit.
         is_active: Flag indicating whether the solution should be included in
             the final submission export.
@@ -56,8 +59,22 @@ class Solution(BaseModel):
     """
 
     solution_id: str
-    model_type: str
-    model_name: Optional[str] = None
+    model_type: Literal["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]
+    bands: List[str] = Field(default_factory=list)
+    higher_order_effects: List[
+        Literal[
+            "lens-orbital-motion",
+            "parallax",
+            "finite-source",
+            "limb-darkening",
+            "xallarap",
+            "stellar-rotation",
+            "fitted-limb-darkening",
+            "gaussian-process",
+            "other",
+        ]
+    ] = Field(default_factory=list)
+    t_ref: Optional[float] = None
     parameters: dict
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
@@ -310,6 +327,22 @@ class Submission(BaseModel):
                     warnings.append(
                         f"Solution {sol.solution_id} in event {event.event_id} is missing lens_plane_plot_path"
                     )
+
+                if "parallax" in sol.higher_order_effects and sol.t_ref is None:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} indicates parallax but is missing t_ref."
+                    )
+
+                if sol.model_type.startswith("1S"):
+                    for band in sol.bands:
+                        if f"F{band}_S" not in sol.parameters:
+                            warnings.append(
+                                f"Solution {sol.solution_id} (model_type {sol.model_type}, band {band}) is missing expected source flux parameter F{band}_S in its parameters."
+                            )
+                        if f"F{band}_B" not in sol.parameters:
+                            warnings.append(
+                                f"Solution {sol.solution_id} (model_type {sol.model_type}, band {band}) is missing expected blend flux parameter F{band}_B in its parameters."
+                            )
 
         return warnings
 

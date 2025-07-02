@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Literal, Annotated
 
 import typer
 from rich.console import Console
@@ -93,7 +93,11 @@ def nexus_init(
 @app.command("add-solution")
 def add_solution(
     event_id: str,
-    model_type: str,
+    model_type: str = typer.Argument(
+        ...,
+        metavar="{1S1L|1S2L|2S1L|2S2L|1S3L|2S3L|other}",
+        help="Type of model used for the solution (e.g., 1S1L, 1S2L)",
+    ),
     param: Optional[List[str]] = typer.Option(
         None, help="Model parameters as key=value"
     ),
@@ -103,8 +107,20 @@ def add_solution(
         help="Path to JSON file with model parameters",
         callback=_params_file_callback,
     ),
-    model_name: Optional[str] = typer.Option(
-        None, "--model-name", help="Name of modeling software"
+    bands: Optional[List[str]] = typer.Option(
+        None,
+        "--bands",
+        help="Comma-separated list of photometric bands used (e.g., 0,1,2)",
+    ),
+    higher_order_effect: Optional[List[str]] = typer.Option(
+        None,
+        "--higher-order-effect",
+        help="List of higher-order effects (e.g., parallax, finite-source)",
+    ),
+    t_ref: Optional[float] = typer.Option(
+        None,
+        "--t-ref",
+        help="Reference time for the model",
     ),
     used_astrometry: bool = typer.Option(False, help="Set if astrometry was used"),
     used_postage_stamps: bool = typer.Option(
@@ -161,7 +177,9 @@ def add_solution(
         model_type: Type of model used for the solution.
         param: List of ``key=value`` strings defining parameters.
         params_file: Optional JSON file containing parameters.
-        model_name: Name of the modeling software.
+        bands: Photometric bands used.
+        higher_order_effect: Higher-order effects applied to the model.
+        t_ref: Reference time for time-dependent effects.
         notes: Optional notes for the solution.
         project_path: Directory of the submission project.
     """
@@ -180,8 +198,29 @@ def add_solution(
                 params[key] = json.loads(value)
             except json.JSONDecodeError:
                 params[key] = value
+    allowed_model_types = [
+        "1S1L",
+        "1S2L",
+        "2S1L",
+        "2S2L",
+        "1S3L",
+        "2S3L",
+        "other",
+    ]
+    if model_type not in allowed_model_types:
+        raise typer.BadParameter(f"model_type must be one of {allowed_model_types}")
+    if bands and len(bands) == 1 and "," in bands[0]:
+        bands = bands[0].split(",")
+    if (
+        higher_order_effect
+        and len(higher_order_effect) == 1
+        and "," in higher_order_effect[0]
+    ):
+        higher_order_effect = higher_order_effect[0].split(",")
     sol = evt.add_solution(model_type=model_type, parameters=params)
-    sol.model_name = model_name
+    sol.bands = bands or []
+    sol.higher_order_effects = higher_order_effect or []
+    sol.t_ref = t_ref
     sol.notes = notes
     sol.used_astrometry = used_astrometry
     sol.used_postage_stamps = used_postage_stamps
@@ -205,7 +244,9 @@ def add_solution(
             "event_id": event_id,
             "model_type": model_type,
             "parameters": params,
-            "model_name": model_name,
+            "bands": bands,
+            "higher_order_effects": higher_order_effect,
+            "t_ref": t_ref,
             "used_astrometry": used_astrometry,
             "used_postage_stamps": used_postage_stamps,
             "limb_darkening_model": limb_darkening_model,
@@ -354,6 +395,7 @@ def compare_solutions(
     table = Table(title=f"Solution Comparison for {event_id}")
     table.add_column("Solution ID")
     table.add_column("Model Type")
+    table.add_column("Higher-Order Effects")
     table.add_column("# Params (k)")
     table.add_column("Log-Likelihood")
     table.add_column("BIC")
@@ -415,6 +457,11 @@ def compare_solutions(
                 [
                     sol.solution_id,
                     sol.model_type,
+                    (
+                        ",".join(sol.higher_order_effects)
+                        if sol.higher_order_effects
+                        else "-"
+                    ),
                     str(k),
                     f"{sol.log_likelihood:.2f}",
                     f"{bic:.2f}",
