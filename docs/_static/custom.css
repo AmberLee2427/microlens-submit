@@ -132,3 +132,15 @@
     background: var(--rtd-color-background) !important;
     color: var(--rtd-color-accent) !important;
   }
+
+/* Make syntax-highlighted code elements (that are usually blue) match secondary color */
+.highlight .n,      /* Names (e.g., event_id, solutions, submission) */
+.highlight .nc,     /* Class names (e.g., Event, Solution, Submission) */
+.highlight .nn,     /* Nested names/namespaces (e.g., microlens_submit.api) */
+.highlight .o,      /* Operators (e.g., :, =) */
+.highlight .k,      /* Keywords (e.g., class) */
+.highlight .kt,     /* Keyword types (e.g., str, Dict) */
+.highlight .nb      /* Built-in names (e.g., None) */
+{
+    color: var(--rtd-color-secondary) !important;
+}
