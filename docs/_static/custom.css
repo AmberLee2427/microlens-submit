@@ -85,11 +85,11 @@
   }
   
   .sig-prename {
-    color: var(--rtd-color-secondary) !important;
+    color: var(--rtd-color-text) !important;
   }
   
   .sig-paren {
-    color: var(--rtd-color-secondary) !important;
+    color: var(--rtd-color-accent) !important;
   }
   
   /* Class keyword and function arguments */
@@ -118,7 +118,6 @@
   
   /* Method and attribute definitions */
   .descclassname, .descname {
-    background: var(--rtd-color-background) !important;
     color: var(--rtd-color-accent) !important;
   }
   
