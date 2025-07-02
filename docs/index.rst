@@ -10,3 +10,5 @@ Welcome to the official documentation for ``microlens-submit``. During the 2018 
    api
 
 
+For those who want to build a package by hand, see
+`SUBMISSION_MANUAL.md <https://github.com/AmberLee2427/microlens-submit/blob/main/SUBMISSION_MANUAL.md>`_.
