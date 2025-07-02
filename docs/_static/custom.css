@@ -92,6 +92,30 @@
     color: var(--rtd-color-secondary) !important;
   }
   
+  /* Class keyword and function arguments */
+  .sig-prename .pre {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  .sig-param {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  /* Target the "class" keyword specifically */
+  .sig-prename .k {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  /* Function parameters and their types */
+  .sig-param .n {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
+  /* Additional targeting for class/function signatures */
+  .sig .k, .sig .n {
+    color: var(--rtd-color-secondary) !important;
+  }
+  
   /* Method and attribute definitions */
   .descclassname, .descname {
     background: var(--rtd-color-background) !important;
