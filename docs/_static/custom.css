@@ -2,7 +2,7 @@
 :root {
     --rtd-color-primary: #a859e4;
     --rtd-color-secondary: #361d49;
-    --rtd-color-accent: #a859e4;
+    --rtd-color-accent: #dfc5fa;
     --rtd-color-background: #fff;
     --rtd-color-text: #000;
   }
@@ -18,6 +18,23 @@
     background: var(--rtd-color-primary) !important;
   }
   
+  /* Logo background - this is the key part */
+  .wy-side-nav-search .wy-side-nav-search__logo {
+    background: var(--rtd-color-accent) !important;
+  }
+  
+  /* Also target the logo container area */
+  .wy-side-nav-search .wy-side-nav-search__logo img {
+    background: var(--rtd-color-accent) !important;
+  }
+  
+  /* Alternative selector for logo background */
+  .wy-side-nav-search .wy-side-nav-search__logo,
+  .wy-side-nav-search .wy-side-nav-search__logo a {
+    background: var(--rtd-color-accent) !important;
+  }
+  
+  /* Search input and dropdown */
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-secondary) !important;
     color: #fff !important;
@@ -29,4 +46,24 @@
   }
   a:hover {
     color: var(--rtd-color-accent) !important;
+  }
+  
+  /* Navigation menu */
+  .wy-menu-vertical li.current > a {
+    background: var(--rtd-color-accent) !important;
+    color: #fff !important;
+  }
+  
+  .wy-menu-vertical li.current > a:hover {
+    background: var(--rtd-color-primary) !important;
+  }
+  
+  /* Version selector */
+  .wy-side-nav-search .wy-dropdown {
+    background: var(--rtd-color-accent) !important;
+  }
+  
+  /* Mobile menu button */
+  .wy-nav-top {
+    background: var(--rtd-color-accent) !important;
   }
