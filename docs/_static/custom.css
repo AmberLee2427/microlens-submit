@@ -3,7 +3,7 @@
     --rtd-color-primary: #dfc5fa;
     --rtd-color-secondary: #361d49;
     --rtd-color-accent: #a859e4;
-    --rtd-color-background: #f4ebfe;
+    --rtd-color-background: #faf7fd;
     --rtd-color-text: #000;
   }
   
@@ -38,6 +38,26 @@
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-background) !important;
     color: #fff !important;
+  }
+  
+  /* Version dropdown selector - more specific targeting */
+  .wy-side-nav-search .wy-dropdown > span,
+  .wy-side-nav-search .wy-dropdown > a {
+    background: var(--rtd-color-secondary) !important;
+    color: #fff !important;
+  }
+  
+  /* Version dropdown options */
+  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu {
+    background: var(--rtd-color-secondary) !important;
+  }
+  
+  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a {
+    color: #fff !important;
+  }
+  
+  .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a:hover {
+    background: var(--rtd-color-accent) !important;
   }
   
   /* Links and accents */
