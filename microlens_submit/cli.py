@@ -136,6 +136,11 @@ def add_solution(
         help="Number of data points used in this solution",
     ),
     notes: str = typer.Option("", help="Notes for the solution"),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Parse inputs and display the resulting Solution without saving",
+    ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Add a new solution entry for ``event_id``.
@@ -176,6 +181,30 @@ def add_solution(
     sol.log_likelihood = log_likelihood
     sol.log_prior = log_prior
     sol.n_data_points = n_data_points
+
+    if dry_run:
+        parsed = {
+            "event_id": event_id,
+            "model_type": model_type,
+            "parameters": params,
+            "model_name": model_name,
+            "used_astrometry": used_astrometry,
+            "used_postage_stamps": used_postage_stamps,
+            "limb_darkening_model": limb_darkening_model,
+            "limb_darkening_coeffs": _parse_pairs(limb_darkening_coeff),
+            "parameter_uncertainties": _parse_pairs(parameter_uncertainty),
+            "physical_parameters": _parse_pairs(physical_param),
+            "log_likelihood": log_likelihood,
+            "log_prior": log_prior,
+            "n_data_points": n_data_points,
+            "notes": notes,
+        }
+        console.print(Panel("Parsed Input", style="cyan"))
+        console.print(json.dumps(parsed, indent=2))
+        console.print(Panel("Schema Output", style="cyan"))
+        console.print(sol.model_dump_json(indent=2))
+        return
+
     sub.save()
     console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
 
