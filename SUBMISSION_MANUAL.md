@@ -1,10 +1,20 @@
-## Microlensing Submission Format Manual
+<p align="center">
+  <a href="https://github.com/AmberLee2427/microlens-submit">
+    <img src="../assets/rges-pit_logo.png" alt="logo" width="300"/>
+  </a>
+</p>
+
+# <font face="Helvetica" size="7"> Microlensing Submission Format Manual </font>  
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;">
 
 > **A Note from the Organizers:** We strongly recommend using the official `microlens-submit` tool for a validated, error-free experience. It handles all the tedious formatting and metadata generation for you.
 > 
 > However, if you insist on building your own submission package programmatically, this document provides the exact specification required. Proceed at your own risk.
 
 ## 1\. Directory Structure
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;">
 
 A valid submission is a directory containing a `submission.json` file and an `events/` subdirectory.
 
@@ -19,6 +29,8 @@ A valid submission is a directory containing a `submission.json` file and an `ev
 ```
 
 ## 2\. File Schemas
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;">
 
 The following sections detail the required JSON structure for each file.
 
@@ -100,6 +112,8 @@ Represents a single model fit.
 ```
 
 ## 3\. Validation
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;">
 
 Before submitting, you **must** validate your manually created package using the provided `validate_submission.py` script. This is your only safety net.
 

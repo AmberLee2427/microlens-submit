@@ -1,15 +1,28 @@
-# microlens-submit
-A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.
+<p align="center">
+  <a href="https://github.com/AmberLee2427/microlens-submit">
+    <img src="../assets/rges-pit_logo.png" alt="logo" width="300"/>
+  </a>
+</p>
+
+<h1 align="center">microlens-submit</h1>
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
+
+*A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
 [![PyPI - v0.6.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<br>
 
 `microlens-submit` provides a robust, version-controlled workflow for managing, validating, and packaging your challenge submission over a long period. It supports both a programmatic Python API and a full-featured Command Line Interface (CLI) for language-agnostic use.
 
 Full documentation is hosted on [Read the Docs](https://microlens-submit.readthedocs.io/en/latest/). A comprehensive tutorial notebook is available at `docs/Submission_Tool_Tutorial.ipynb`. Challenge participants who prefer not to use this tool can consult [SUBMISSION_MANUAL.md](SUBMISSION_MANUAL.md) for the manual submission format.
 
 ## Key Features
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 * **Persistent Projects:** Treat your submission as a local project that you can load, edit, and save over weeks or months.
 * **Python API & CLI:** Use the tool directly in your Python analysis scripts or via the command line.
@@ -22,6 +35,8 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
 
 ## Installation
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
 
 This package is pre-release. It is currently available on TestPyPI:
 
@@ -87,7 +102,9 @@ sub.export("final_submission.zip")
 ```
 
 ## Development
----
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
+
 The full development plan can be found in agents.md. Contributions are welcome!
 
 To build and test this project, the development environment needs the following Python libraries. You can provide these to Codex or set up a `requirements-dev.txt` file.
@@ -105,6 +122,9 @@ To build and test this project, the development environment needs the following 
 * **`twine`**: For uploading the final package to PyPI.
 
 ## Citation
+
+<hr style="border: 1.5pt solid #a859e4; width: 100%; margin-top: -10px;"> 
+
 If you use **microlens-submit** in your research, please cite the project using
 the metadata provided in the `CITATION.cff` file. Most reference managers can
 import this file directly.
