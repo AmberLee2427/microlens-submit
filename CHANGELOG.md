@@ -1,3 +1,21 @@
+## Release v0.7.0
+
+### What's New
+- Added `lightcurve_plot_path` and `lens_plane_plot_path` fields to the `Solution` model and CLI.
+- Posterior and plot files referenced by solutions are automatically packaged on export.
+
+### Bug Fixes
+- Validation now warns when plot paths are missing.
+- Export raises an error if any referenced file does not exist.
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No dependency changes
+
+<br>
+
 ## Release v0.6.1
 
 ### What's New

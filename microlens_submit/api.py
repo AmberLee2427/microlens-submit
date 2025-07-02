@@ -60,6 +60,8 @@ class Solution(BaseModel):
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
     posterior_path: Optional[str] = None
+    lightcurve_plot_path: Optional[str] = None
+    lens_plane_plot_path: Optional[str] = None
     notes: str = ""
     used_astrometry: bool = False
     used_postage_stamps: bool = False
@@ -297,6 +299,14 @@ class Submission(BaseModel):
                     warnings.append(
                         f"Solution {sol.solution_id} in event {event.event_id} is missing log_likelihood"
                     )
+                if sol.lightcurve_plot_path is None:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} is missing lightcurve_plot_path"
+                    )
+                if sol.lens_plane_plot_path is None:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} is missing lens_plane_plot_path"
+                    )
 
         return warnings
 
@@ -392,6 +402,26 @@ class Submission(BaseModel):
                         if sol_path.exists():
                             arc = f"events/{event.event_id}/solutions/{sol.solution_id}.json"
                             zf.write(sol_path, arcname=arc)
+                        # Include any referenced external files
+                        sol_dir_arc = (
+                            f"events/{event.event_id}/solutions/{sol.solution_id}"
+                        )
+                        for attr in [
+                            "posterior_path",
+                            "lightcurve_plot_path",
+                            "lens_plane_plot_path",
+                        ]:
+                            path = getattr(sol, attr)
+                            if path is not None:
+                                file_path = Path(self.project_path) / path
+                                if not file_path.exists():
+                                    raise ValueError(
+                                        f"Error: File specified by {attr} in solution {sol.solution_id} does not exist: {file_path}"
+                                    )
+                                zf.write(
+                                    file_path,
+                                    arcname=f"{sol_dir_arc}/{Path(path).name}",
+                                )
 
 
 def load(project_path: str) -> Submission:

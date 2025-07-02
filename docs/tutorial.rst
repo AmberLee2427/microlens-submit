@@ -17,6 +17,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit add-solution EVENT123 binary_lens \
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+          --lightcurve-plot-path plots/event123_lc.png \
+          --lens-plane-plot-path plots/event123_lens.png \
           --notes "Initial fit"
 
    You can also load parameters from a JSON file instead of listing them on the
@@ -25,7 +27,10 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    .. code-block:: bash
 
       microlens-submit add-solution EVENT123 binary_lens \
-          --params-file params.json --notes "Initial fit"
+          --params-file params.json \
+          --lightcurve-plot-path plots/event123_lc.png \
+          --lens-plane-plot-path plots/event123_lens.png \
+          --notes "Initial fit"
 
 3. **Validate without saving**
 
@@ -47,6 +52,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       >>> evt = sub.get_event("EVENT123")
       >>> sol = next(iter(evt.solutions.values()))
       >>> sol.posterior_path = "posteriors/chain.h5"
+      >>> sol.lightcurve_plot_path = "plots/event123_lc.png"
+      >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
       >>> sub.save()
 
 5. **Add a competing solution**

@@ -66,6 +66,31 @@ def test_deactivate_and_export(tmp_path):
     ]
 
 
+def test_export_includes_external_files(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {})
+    (project / "post.h5").write_text("data")
+    sol.posterior_path = "post.h5"
+    (project / "lc.png").write_text("img")
+    sol.lightcurve_plot_path = "lc.png"
+    (project / "lens.png").write_text("img")
+    sol.lens_plane_plot_path = "lens.png"
+    sub.save()
+
+    zip_path = project / "out.zip"
+    sub.export(str(zip_path))
+
+    with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
+        base = f"events/event/solutions/{sol.solution_id}"
+        assert f"{base}.json" in names
+        assert f"{base}/post.h5" in names
+        assert f"{base}/lc.png" in names
+        assert f"{base}/lens.png" in names
+
+
 def test_get_active_solutions(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
@@ -124,6 +149,21 @@ def test_model_name_persists(tmp_path):
     assert new_sol.model_name == "MulensModel"
 
 
+def test_plot_paths_persist(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("event")
+    sol = evt.add_solution("test", {"x": 1})
+    sol.lightcurve_plot_path = "plots/lc.png"
+    sol.lens_plane_plot_path = "plots/lens.png"
+    sub.save()
+
+    new_sub = load(str(project))
+    new_sol = new_sub.events["event"].solutions[sol.solution_id]
+    assert new_sol.lightcurve_plot_path == "plots/lc.png"
+    assert new_sol.lens_plane_plot_path == "plots/lens.png"
+
+
 def test_validate_warnings(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
@@ -138,3 +178,5 @@ def test_validate_warnings(tmp_path):
     assert any("Hardware info" in w for w in warnings)
     assert any("evt2" in w for w in warnings)
     assert any("log_likelihood" in w for w in warnings)
+    assert any("lightcurve_plot_path" in w for w in warnings)
+    assert any("lens_plane_plot_path" in w for w in warnings)

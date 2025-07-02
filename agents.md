@@ -113,6 +113,11 @@ The library is built around a stateful, object-oriented model that mirrors the s
   - *Action:* Add a `model_name` field to the `Solution` class and expose it in the CLI.
   - *Why:* Enables future validation by external packages.
 
+- **Task 8: Posterior & Plot Packaging**
+  - *Goal:* Ensure external files referenced by solutions are included in exports.
+  - *Action:* Add `lightcurve_plot_path` and `lens_plane_plot_path` fields to `Solution` and collect them (and posterior files) during `export`.
+  - *Why:* Simplifies sharing complete results and prevents missing file errors.
+
 ### v1.0.0 — Official Release
 
 Release after comprehensive testing and PyPI publication.
@@ -400,5 +405,6 @@ For future automation, consider implementing:
 - **v0.4.0:** ✅ Released - DIY Support Package (Manual and Validation Tools)
 - **v0.5.0:** ✅ Released - Seamless Nexus Integration
 - **v0.6.0:** 🚧 In Development - CLI Usability & Model Validation
+- **v0.7.0:** 🔜 Planned - Plot Packaging & Validation
 - **v1.0.0:** 📋 Planned - Official Release
 
