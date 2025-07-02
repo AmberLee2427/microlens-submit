@@ -15,7 +15,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-      microlens-submit add-solution EVENT123 binary_lens \
+     microlens-submit add-solution EVENT123 1S2L \
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
           --lightcurve-plot-path plots/event123_lc.png \
           --lens-plane-plot-path plots/event123_lens.png \
@@ -26,7 +26,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-      microlens-submit add-solution EVENT123 binary_lens \
+     microlens-submit add-solution EVENT123 1S2L \
           --params-file params.json \
           --lightcurve-plot-path plots/event123_lc.png \
           --lens-plane-plot-path plots/event123_lens.png \
@@ -36,7 +36,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-      microlens-submit add-solution EVENT123 binary_lens \
+     microlens-submit add-solution EVENT123 1S2L \
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
           --dry-run
 
@@ -60,7 +60,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-      microlens-submit add-solution EVENT123 single_lens \
+     microlens-submit add-solution EVENT123 1S1L \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
 6. **List your solutions**
