@@ -44,7 +44,7 @@
   .wy-side-nav-search .wy-dropdown > span,
   .wy-side-nav-search .wy-dropdown > a {
     background: var(--rtd-color-secondary) !important;
-    color: #fff !important;
+    color: var(--rtd-color-accent) !important;
   }
   
   /* Version dropdown options */
@@ -53,7 +53,7 @@
   }
   
   .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a {
-    color: #fff !important;
+    color: var(--rtd-color-primary) !important;
   }
   
   .wy-side-nav-search .wy-dropdown .wy-dropdown-menu a:hover {
@@ -63,7 +63,7 @@
   /* More specific version selector targeting */
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle {
     background: var(--rtd-color-secondary) !important;
-    color: #fff !important;
+    color: var(--rtd-color-primary) !important;
   }
   
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle:hover {
@@ -73,7 +73,7 @@
   /* Target the version text specifically */
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle span {
     background: var(--rtd-color-secondary) !important;
-    color: #fff !important;
+    color: var(--rtd-color-primary) !important;
   }
   
   /* Links and accents */
@@ -86,17 +86,18 @@
   
   /* Navigation menu */
   .wy-menu-vertical li.current > a {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-accent) !important;
     color: #fff !important;
   }
   
   .wy-menu-vertical li.current > a:hover {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-primary) !important;
   }
   
   /* Version selector */
   .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-accent) !important;
+    color: var(--rtd-color-secondary) !important;
   }
   
   /* Mobile menu button */
