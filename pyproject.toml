@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 name = "microlens-submit"
 version = "0.9.0"
 authors = [
-  { name="Amber Malpas", email="malpas.1@Oosu.edu" },
+  { name="Amber Malpas", email="malpas.1@osu.edu" },
 ]
 description = "A stateful submission toolkit for the Microlensing Data Challenge."
 readme = "README.md"
