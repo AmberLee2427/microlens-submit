@@ -518,7 +518,7 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
         <div class='bg-white shadow-xl rounded-lg'>
             <!-- Header & Navigation -->
             <div class='text-center py-8'>
-                <img src='../../assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
+                <img src='../../../assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
                 <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Solution Dossier: {solution.solution_id[:8]}...</h1>
                 <p class='text-xl text-rtd-accent text-center mb-4'>Event: {event.event_id} | Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'}</p>
                 <nav class='flex justify-center space-x-4 mb-8'>
