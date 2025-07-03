@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 from microlens_submit import api
 from microlens_submit.cli import app
 
-runner = CliRunner(mix_stderr=False)
+runner = CliRunner()
 
 
 def test_global_no_color_option():
@@ -712,7 +712,7 @@ def test_cli_params_file_mutually_exclusive():
             ],
         )
         assert result.exit_code != 0
-        assert "Cannot use" in result.stderr
+        assert "Cannot use" in result.stdout
 
 
 def test_cli_params_file_required():
@@ -734,7 +734,7 @@ def test_cli_params_file_required():
             ],
         )
         assert result.exit_code != 0
-        assert "Provide either" in result.stderr
+        assert "Provide either" in result.stdout
 
 
 def test_cli_validation_in_dry_run():
