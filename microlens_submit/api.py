@@ -208,7 +208,8 @@ class Solution(BaseModel):
         # Check solution consistency
         consistency_messages = validate_solution_consistency(
             model_type=self.model_type,
-            parameters=self.parameters
+            parameters=self.parameters,
+            relative_probability=self.relative_probability,
         )
         messages.extend(consistency_messages)
         
