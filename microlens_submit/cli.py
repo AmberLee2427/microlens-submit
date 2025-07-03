@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 from typing import List, Optional, Literal
+import os
 
 import typer
 from rich.console import Console
@@ -179,7 +180,8 @@ def add_solution(
     lens_plane_plot_path: Optional[Path] = typer.Option(
         None, "--lens-plane-plot-path", help="Path to lens plane plot file"
     ),
-    notes: str = typer.Option("", help="Notes for the solution (supports Markdown formatting)"),
+    notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
+    notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -187,24 +189,11 @@ def add_solution(
     ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Add a new solution entry for ``event_id``.
-
-    Args:
-        event_id: Identifier of the event.
-        model_type: Type of model used for the solution.
-        param: List of ``key=value`` strings defining parameters.
-        params_file: Optional JSON file containing parameters.
-        bands: Photometric bands used.
-        higher_order_effect: Higher-order effects applied to the model.
-        t_ref: Reference time for time-dependent effects.
-        notes: Optional notes for the solution.
-        project_path: Directory of the submission project.
-    """
+    """Add a new solution entry for ``event_id``. Now supports file-based notes."""
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
     params: dict = {}
     uncertainties: dict = {}
-    
     if params_file is not None:
         params, uncertainties = _parse_structured_params_file(params_file)
     else:
@@ -239,7 +228,6 @@ def add_solution(
     sol.bands = bands or []
     sol.higher_order_effects = higher_order_effect or []
     sol.t_ref = t_ref
-    sol.notes = notes
     sol.used_astrometry = used_astrometry
     sol.used_postage_stamps = used_postage_stamps
     sol.limb_darkening_model = limb_darkening_model
@@ -257,7 +245,18 @@ def add_solution(
     sol.lens_plane_plot_path = (
         str(lens_plane_plot_path) if lens_plane_plot_path else None
     )
-
+    # Handle notes file logic
+    canonical_notes_path = Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
+    if notes_file is not None:
+        sol.notes_path = str(notes_file)
+    else:
+        sol.notes_path = str(canonical_notes_path.relative_to(project_path))
+        if notes is not None:
+            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
+            canonical_notes_path.write_text(notes, encoding="utf-8")
+        elif not canonical_notes_path.exists():
+            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
+            canonical_notes_path.write_text("", encoding="utf-8")
     if dry_run:
         parsed = {
             "event_id": event_id,
@@ -283,13 +282,12 @@ def add_solution(
             "lens_plane_plot_path": (
                 str(lens_plane_plot_path) if lens_plane_plot_path else None
             ),
-            "notes": notes,
+            "notes_path": sol.notes_path,
         }
         console.print(Panel("Parsed Input", style="cyan"))
         console.print(json.dumps(parsed, indent=2))
         console.print(Panel("Schema Output", style="cyan"))
         console.print(sol.model_dump_json(indent=2))
-        # Also run validation and print warnings (but do not save)
         validation_messages = sol.validate()
         if validation_messages:
             console.print(Panel("Validation Warnings", style="yellow"))
@@ -298,8 +296,6 @@ def add_solution(
         else:
             console.print(Panel("Solution validated successfully!", style="green"))
         return
-
-    # After adding a solution, immediately validate and print warnings (but always save)
     sub.save()
     validation_messages = sol.validate()
     if validation_messages:
@@ -703,6 +699,7 @@ def edit_solution(
         help="Number of data points used in this solution",
     ),
     notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
+    notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
     append_notes: Optional[str] = typer.Option(
         None,
         "--append-notes",
@@ -737,18 +734,8 @@ def edit_solution(
     ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Edit an existing solution's attributes.
-    
-    This command allows you to modify solution attributes after creation.
-    Use --dry-run to see what would be changed without saving.
-    
-    Args:
-        solution_id: The ID of the solution to edit.
-        project_path: Directory of the submission project.
-    """
+    """Edit an existing solution's attributes, including file-based notes."""
     sub = load(str(project_path))
-    
-    # Find the solution
     target_solution = None
     target_event_id = None
     for event_id, event in sub.events.items():
@@ -756,15 +743,10 @@ def edit_solution(
             target_solution = event.solutions[solution_id]
             target_event_id = event_id
             break
-    
     if target_solution is None:
         console.print(f"Solution {solution_id} not found", style="bold red")
         raise typer.Exit(code=1)
-    
-    # Track changes for dry-run
     changes = []
-    
-    # Handle relative probability
     if clear_relative_probability:
         if target_solution.relative_probability is not None:
             changes.append(f"Clear relative_probability: {target_solution.relative_probability}")
@@ -773,8 +755,6 @@ def edit_solution(
         if target_solution.relative_probability != relative_probability:
             changes.append(f"Update relative_probability: {target_solution.relative_probability} → {relative_probability}")
             target_solution.relative_probability = relative_probability
-    
-    # Handle log likelihood
     if clear_log_likelihood:
         if target_solution.log_likelihood is not None:
             changes.append(f"Clear log_likelihood: {target_solution.log_likelihood}")
@@ -783,8 +763,6 @@ def edit_solution(
         if target_solution.log_likelihood != log_likelihood:
             changes.append(f"Update log_likelihood: {target_solution.log_likelihood} → {log_likelihood}")
             target_solution.log_likelihood = log_likelihood
-    
-    # Handle n_data_points
     if clear_n_data_points:
         if target_solution.n_data_points is not None:
             changes.append(f"Clear n_data_points: {target_solution.n_data_points}")
@@ -793,48 +771,48 @@ def edit_solution(
         if target_solution.n_data_points != n_data_points:
             changes.append(f"Update n_data_points: {target_solution.n_data_points} → {n_data_points}")
             target_solution.n_data_points = n_data_points
-    
-    # Handle notes
-    if clear_notes:
-        if target_solution.notes:
-            changes.append(f"Clear notes: '{target_solution.notes}'")
-            target_solution.notes = ""
-    elif append_notes is not None:
-        new_notes = (target_solution.notes + " " + append_notes).strip()
-        changes.append(f"Append to notes: '{append_notes}'")
-        target_solution.notes = new_notes
+    # Notes file logic
+    canonical_notes_path = Path(project_path) / "events" / target_event_id / "solutions" / f"{target_solution.solution_id}.md"
+    if notes_file is not None:
+        target_solution.notes_path = str(notes_file)
+        changes.append(f"Set notes_path to {notes_file}")
     elif notes is not None:
-        if target_solution.notes != notes:
-            changes.append(f"Update notes: '{target_solution.notes}' → '{notes}'")
-            target_solution.notes = notes
-    
-    # Handle clearing optional attributes
+        target_solution.notes_path = str(canonical_notes_path.relative_to(project_path))
+        canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
+        canonical_notes_path.write_text(notes, encoding="utf-8")
+        changes.append(f"Updated notes in {canonical_notes_path}")
+    elif append_notes is not None:
+        if target_solution.notes_path:
+            notes_file_path = Path(project_path) / target_solution.notes_path
+            old_content = notes_file_path.read_text(encoding="utf-8") if notes_file_path.exists() else ""
+            notes_file_path.parent.mkdir(parents=True, exist_ok=True)
+            notes_file_path.write_text(old_content + "\n" + append_notes, encoding="utf-8")
+            changes.append(f"Appended notes in {notes_file_path}")
+    elif clear_notes:
+        if target_solution.notes_path:
+            notes_file_path = Path(project_path) / target_solution.notes_path
+            notes_file_path.parent.mkdir(parents=True, exist_ok=True)
+            notes_file_path.write_text("", encoding="utf-8")
+            changes.append(f"Cleared notes in {notes_file_path}")
     if clear_parameter_uncertainties:
         if target_solution.parameter_uncertainties:
             changes.append("Clear parameter_uncertainties")
             target_solution.parameter_uncertainties = None
-    
     if clear_physical_parameters:
         if target_solution.physical_parameters:
             changes.append("Clear physical_parameters")
             target_solution.physical_parameters = None
-    
-    # Handle compute info updates
     if cpu_hours is not None or wall_time_hours is not None:
         old_cpu = target_solution.compute_info.get("cpu_hours")
         old_wall = target_solution.compute_info.get("wall_time_hours")
-        
         if cpu_hours is not None and old_cpu != cpu_hours:
             changes.append(f"Update cpu_hours: {old_cpu} → {cpu_hours}")
         if wall_time_hours is not None and old_wall != wall_time_hours:
             changes.append(f"Update wall_time_hours: {old_wall} → {wall_time_hours}")
-        
         target_solution.set_compute_info(
             cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
             wall_time_hours=wall_time_hours if wall_time_hours is not None else old_wall
         )
-    
-    # Handle parameter updates
     if param:
         for p in param:
             if "=" not in p:
@@ -844,17 +822,13 @@ def edit_solution(
                 new_value = json.loads(value)
             except json.JSONDecodeError:
                 new_value = value
-            
             old_value = target_solution.parameters.get(key)
             if old_value != new_value:
                 changes.append(f"Update parameter {key}: {old_value} → {new_value}")
                 target_solution.parameters[key] = new_value
-    
-    # Handle uncertainty updates
     if param_uncertainty:
         if target_solution.parameter_uncertainties is None:
             target_solution.parameter_uncertainties = {}
-        
         for p in param_uncertainty:
             if "=" not in p:
                 raise typer.BadParameter(f"Invalid uncertainty format: {p}")
@@ -863,13 +837,10 @@ def edit_solution(
                 new_value = json.loads(value)
             except json.JSONDecodeError:
                 new_value = value
-            
             old_value = target_solution.parameter_uncertainties.get(key)
             if old_value != new_value:
                 changes.append(f"Update uncertainty {key}: {old_value} → {new_value}")
                 target_solution.parameter_uncertainties[key] = new_value
-    
-    # Handle higher-order effect updates
     if clear_higher_order_effects:
         if target_solution.higher_order_effects:
             changes.append(f"Clear higher_order_effects: {target_solution.higher_order_effects}")
@@ -878,7 +849,6 @@ def edit_solution(
         if target_solution.higher_order_effects != higher_order_effect:
             changes.append(f"Update higher_order_effects: {target_solution.higher_order_effects} → {higher_order_effect}")
             target_solution.higher_order_effects = higher_order_effect
-    
     if dry_run:
         if changes:
             console.print(Panel(f"Changes for {solution_id} (event {target_event_id})", style="cyan"))
@@ -887,8 +857,6 @@ def edit_solution(
         else:
             console.print(Panel("No changes would be made", style="yellow"))
         return
-    
-    # Save changes
     if changes:
         sub.save()
         console.print(Panel(f"Updated {solution_id} (event {target_event_id})", style="green"))
@@ -896,6 +864,37 @@ def edit_solution(
             console.print(f"  • {change}")
     else:
         console.print(Panel("No changes made", style="yellow"))
+
+
+@app.command("notes")
+def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), help="Project directory")) -> None:
+    """Open the notes file for a solution in $EDITOR (or nano/vi fallback)."""
+    sub = load(str(project_path))
+    for event in sub.events.values():
+        if solution_id in event.solutions:
+            sol = event.solutions[solution_id]
+            if not sol.notes_path:
+                console.print(f"No notes file associated with solution {solution_id}", style="bold red")
+                raise typer.Exit(code=1)
+            notes_file = Path(project_path) / sol.notes_path
+            notes_file.parent.mkdir(parents=True, exist_ok=True)
+            if not notes_file.exists():
+                notes_file.write_text("", encoding="utf-8")
+            editor = os.environ.get("EDITOR", None)
+            if editor:
+                os.system(f'{editor} "{notes_file}"')
+            else:
+                # Try nano, then vi
+                for fallback in ["nano", "vi"]:
+                    if os.system(f"command -v {fallback} > /dev/null 2>&1") == 0:
+                        os.system(f'{fallback} "{notes_file}"')
+                        break
+                else:
+                    console.print(f"Could not find an editor to open {notes_file}", style="bold red")
+                    raise typer.Exit(code=1)
+            return
+    console.print(f"Solution {solution_id} not found", style="bold red")
+    raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":  # pragma: no cover

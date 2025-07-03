@@ -26,7 +26,27 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --notes "Initial fit" \
           --higher-order-effect parallax,finite-source
 
-   **Note:** The ``--notes`` field supports Markdown formatting, allowing you to create rich documentation with headers, lists, code blocks, and links. This is especially useful for creating detailed submission dossiers for evaluators.
+   **Note:**
+   The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
+   - Use ``--notes-file <path>`` to specify an existing Markdown file (the path is stored as-is).
+   - Use ``--notes <string>`` to create a canonical notes file at ``events/<event_id>/solutions/<solution_id>.md`` (the path is stored automatically).
+   - If neither is provided, an empty canonical notes file is created.
+
+   You can append to notes later with:
+
+   .. code-block:: bash
+
+     microlens-submit edit-solution <solution_id> --append-notes "More details after review."
+
+   Or open the notes file in your editor (using $EDITOR, nano, or vi):
+
+   .. code-block:: bash
+
+     microlens-submit notes <solution_id>
+
+   **Tip:**
+   - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
+   - The notes file is included in the exported zip and rendered in the HTML dossier.
 
    You can also load parameters from a JSON or YAML file instead of listing them on the
    command line. Create ``params.json`` containing your values and run:

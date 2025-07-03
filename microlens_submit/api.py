@@ -43,7 +43,7 @@ class Solution(BaseModel):
         compute_info: Metadata about the computing environment.  Populated by
             :meth:`set_compute_info`.
         posterior_path: Optional path to a file containing posterior samples.
-        notes: Free-form notes about the solution.
+        notes_path: Path to the markdown notes file
         used_astrometry: Whether astrometric information was used when fitting
             this solution.
         used_postage_stamps: Whether postage stamp data was used.
@@ -57,7 +57,7 @@ class Solution(BaseModel):
         creation_timestamp: UTC timestamp when the solution was created.
         
     Note:
-        The ``notes`` field supports Markdown formatting, allowing you to create rich,
+        The ``notes_path`` field supports Markdown formatting, allowing you to create rich,
         structured documentation with headers, lists, code blocks, tables, and links.
         This is particularly useful for creating detailed submission dossiers for evaluators.
     """
@@ -85,7 +85,7 @@ class Solution(BaseModel):
     posterior_path: Optional[str] = None
     lightcurve_plot_path: Optional[str] = None
     lens_plane_plot_path: Optional[str] = None
-    notes: str = ""
+    notes_path: Optional[str] = None
     used_astrometry: bool = False
     used_postage_stamps: bool = False
     limb_darkening_model: Optional[str] = None
@@ -276,6 +276,56 @@ class Solution(BaseModel):
         out_path = solutions_dir / f"{self.solution_id}.json"
         with out_path.open("w", encoding="utf-8") as fh:
             fh.write(self.model_dump_json(indent=2))
+
+    def get_notes(self, project_root: Optional[Path] = None) -> str:
+        """Read notes from the notes file, if present."""
+        if not self.notes_path:
+            return ""
+        path = Path(self.notes_path)
+        if not path.is_absolute() and project_root is not None:
+            path = project_root / path
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+        return ""
+
+    def set_notes(self, content: str, project_root: Optional[Path] = None) -> None:
+        """
+        Write notes to the notes file, creating it if needed.
+        If notes_path is not set, create a temp file in tmp/<solution_id>.md and set notes_path.
+        On Submission.save(), temp notes files are moved to the canonical location.
+        """
+        if not self.notes_path:
+            # Use tmp/ for unsaved notes
+            tmp_dir = Path(project_root or ".") / "tmp"
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+            tmp_path = tmp_dir / f"{self.solution_id}.md"
+            self.notes_path = str(tmp_path.relative_to(project_root or "."))
+        path = Path(self.notes_path)
+        if not path.is_absolute() and project_root is not None:
+            path = project_root / path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    @property
+    def notes(self) -> str:
+        """Return the Markdown notes string from the notes file (read-only)."""
+        return self.get_notes()
+
+    def view_notes(self, render_html: bool = True, project_root: Optional[Path] = None) -> str:
+        """
+        Return the notes as Markdown (default) or rendered HTML (for Jupyter/IPython).
+
+        Args:
+            render_html: If True, return HTML using markdown.markdown. If False, return Markdown string.
+            project_root: Optionally specify the project root for relative notes_path resolution.
+        Returns:
+            str: Markdown or HTML string.
+        """
+        md = self.get_notes(project_root=project_root)
+        if render_html:
+            import markdown
+            return markdown.markdown(md or "", extensions=["extra", "tables", "fenced_code"])
+        return md
 
 
 class Event(BaseModel):
@@ -523,6 +573,20 @@ class Submission(BaseModel):
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
+        # Move any notes files from tmp/ to canonical location
+        for event in self.events.values():
+            for sol in event.solutions.values():
+                if sol.notes_path:
+                    notes_path = Path(sol.notes_path)
+                    if notes_path.parts and notes_path.parts[0] == "tmp":
+                        # Move to canonical location
+                        canonical = Path("events") / event.event_id / "solutions" / f"{sol.solution_id}.md"
+                        src = project / notes_path
+                        dst = project / canonical
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        if src.exists():
+                            src.replace(dst)
+                        sol.notes_path = str(canonical)
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
             fh.write(self.model_dump_json(exclude={"events", "project_path"}, indent=2))
         for event in self.events.values():
@@ -623,6 +687,13 @@ class Submission(BaseModel):
                                 filename = Path(path).name
                                 new_path = f"events/{event.event_id}/solutions/{sol.solution_id}/{filename}"
                                 setattr(export_sol, attr, new_path)
+                        if sol.notes_path:
+                            notes_file = Path(self.project_path) / sol.notes_path
+                            if notes_file.exists():
+                                notes_filename = notes_file.name
+                                notes_arc = f"events/{event.event_id}/solutions/{sol.solution_id}/{notes_filename}"
+                                export_sol.notes_path = notes_arc
+                                zf.write(notes_file, arcname=notes_arc)
                         if export_sol.relative_probability is None:
                             export_sol.relative_probability = rel_prob_map.get(
                                 sol.solution_id

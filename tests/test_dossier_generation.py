@@ -21,6 +21,7 @@ from pathlib import Path
 import time
 import json
 import os
+import shlex
 
 
 def run_command(cmd, check=True, capture_output=True):
@@ -73,6 +74,20 @@ def main():
         --wall-time-hours 0.5 \
         --relative-probability 0.6 \
         --notes "# Single Lens Solution\n\nThis is a simple point source, point lens fit for EVENT001." """)
+    
+    # Add a solution with elaborate markdown notes for testing
+    elaborate_md = "example_note.md"
+    escaped_md = elaborate_md.replace('"', '\\"').replace('\n', '\\n')
+    run_command(f'microlens-submit add-solution EVENT001 1S1L {project_dir} '
+                f'--param t0=2459123.6 '
+                f'--param u0=0.16 '
+                f'--param tE=21.0 '
+                f'--log-likelihood -1200.00 '
+                f'--n-data-points 1300 '
+                f'--cpu-hours 3.0 '
+                f'--wall-time-hours 0.7 '
+                f'--relative-probability 0.5 '
+                f'--notes-file "{escaped_md}"')
     
     # Add a binary lens solution with higher-order effects
     run_command(f"""microlens-submit add-solution EVENT001 1S2L {project_dir} \

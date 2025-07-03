@@ -108,6 +108,7 @@ pip install --upgrade pip
 
 # Install the package in editable mode
 print_status "Installing microlens-submit in editable mode..."
+pip install markdown
 pip install -e .
 
 # Verify installation
@@ -144,7 +145,21 @@ echo "=========================================="
 print_success "All tests passed! Check the generated dossier in test_dossier_output/index.html"
 print_status "Log file saved to: $LOG_FILE"
 
-# Prompt before cleanup
+# Offer to serve the dossier with a local HTTP server
+read -p $'\nWould you like to serve the dossier with a local HTTP server for browser testing? (y/n): ' serve_choice
+if [[ "$serve_choice" =~ ^[Yy]$ ]]; then
+    if command -v python3 &> /dev/null; then
+        print_status "Starting local HTTP server in test_submission_project/dossier..."
+        (cd test_submission_project/dossier && python3 -m http.server 8000)
+        print_status "Server stopped."
+    else
+        print_warning "python3 not found. Cannot start HTTP server."
+    fi
+else
+    print_status "Skipping HTTP server."
+fi
+
+# Always prompt before cleanup, after the server (or skip)
 read -p $'\nPress enter to clean up and remove the test environment and output files...'
 
 # Don't cleanup here - let the trap handle it
