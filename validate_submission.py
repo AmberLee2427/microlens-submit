@@ -18,6 +18,8 @@ class Solution(BaseModel):
     is_active: bool = True
     compute_info: dict = Field(default_factory=dict)
     posterior_path: Optional[str] = None
+    lightcurve_plot_path: Optional[str] = None
+    lens_plane_plot_path: Optional[str] = None
     notes: str = ""
     used_astrometry: bool = False
     used_postage_stamps: bool = False
@@ -27,6 +29,7 @@ class Solution(BaseModel):
     physical_parameters: Optional[dict] = None
     log_likelihood: Optional[float] = None
     log_prior: Optional[float] = None
+    relative_probability: Optional[float] = None
     n_data_points: Optional[int] = None
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
