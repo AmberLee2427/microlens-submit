@@ -193,7 +193,7 @@ Built with **Typer**, the CLI supports all core functionality.
 
 ```bash
 microlens-submit init --team-name "Planet Pounders" --tier "advanced"
-microlens-submit add-solution <event_id> --model-type binary_lens --param t0=555.5 --param u0=0.1 --log-likelihood -1234.5
+microlens-submit add-solution <event_id> --model-type 1S2L --param t0=555.5 --param u0=0.1 --log-likelihood -1234.5
 microlens-submit list-solutions <event_id>
 microlens-submit deactivate <solution_id>
 microlens-submit export --output "final_submission.zip"
@@ -223,7 +223,7 @@ microlens-submit export --output "final_submission.zip"
   "solution_id": "a1b2c3d4-e5f6-...",
   "creation_timestamp": "2025-07-15T13:45:10Z",
   "is_active": true,
-  "model_type": "binary_lens",
+  "model_type": "1S2L",
   "parameters": {"t0": 555.5, "u0": 0.1, "tE": 25.0},
   "physical_parameters": {"M_L": 0.5, "D_L": 7.8},
   "log_likelihood": -1234.56,
@@ -264,7 +264,7 @@ sub.hardware_info = {"cpu": "Intel i9", "ram_gb": 64}
 # Add a solution
 evt = sub.get_event("event-001")
 params = {"t0": 123.5, "u0": 0.1, "tE": 12.0, "q": 0.1, "s": 1.2}
-sol = evt.add_solution(model_type="binary_lens", parameters=params)
+sol = evt.add_solution(model_type="1S2L", parameters=params)
 sol.set_compute_info(cpu_hours=24.0)
 sol.notes = "Binary model provides a much better fit."
 sol.physical_parameters = {"M_L": 0.5, "D_L": 7.8}
