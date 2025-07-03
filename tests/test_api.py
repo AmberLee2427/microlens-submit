@@ -212,3 +212,15 @@ def test_validate_warnings(tmp_path):
     assert any("log_likelihood" in w for w in warnings)
     assert any("lightcurve_plot_path" in w for w in warnings)
     assert any("lens_plane_plot_path" in w for w in warnings)
+
+
+def test_relative_probability_range(tmp_path):
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    evt = sub.get_event("evt")
+    sol = evt.add_solution("other", {"a": 1})
+    sol.relative_probability = 1.2
+
+    warnings = sub.validate()
+
+    assert any("between 0 and 1" in w for w in warnings)

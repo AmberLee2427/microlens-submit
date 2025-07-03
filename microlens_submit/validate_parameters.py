@@ -297,7 +297,7 @@ def validate_parameter_types(
 def validate_solution_consistency(
     model_type: str,
     parameters: Dict[str, Any],
-    **kwargs
+    **kwargs: Any,
 ) -> List[str]:
     """
     Validate internal consistency of solution parameters.
@@ -305,7 +305,8 @@ def validate_solution_consistency(
     Args:
         model_type: The type of microlensing model
         parameters: Dictionary of model parameters
-        **kwargs: Additional solution attributes
+        **kwargs: Additional solution attributes. Supports
+            ``relative_probability`` for range checking.
         
     Returns:
         List of validation messages
@@ -321,6 +322,10 @@ def validate_solution_consistency(
     
     if 's' in parameters and parameters['s'] <= 0:
         messages.append("Separation (s) must be positive")
+
+    rel_prob = kwargs.get("relative_probability")
+    if rel_prob is not None and not 0 <= rel_prob <= 1:
+        messages.append("Relative probability should be between 0 and 1")
     
     # Check for binary lens specific consistency (1S2L, 2S2L models)
     if model_type in ['1S2L', '2S2L']:
