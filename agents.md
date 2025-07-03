@@ -400,7 +400,15 @@ For future automation, consider implementing:
 ### 10.8. Current Release Status
 
 - **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
-- **v0.12.0:** 🔄 In Development - Dossier Generator & Enhanced Validation
+- **v0.12.0:** ✅ Released (2025-07-03) - File-based notes system, HTML dossier generator, export improvements, temp notes file logic, robust CLI/API UX
 - **v0.13.0:** 📋 Planned - High Automation Support
 - **v1.0.0:** 📋 Planned - Official Release
+
+### v0.12.0 Highlights
+- Notes are now always stored as Markdown files, referenced by `notes_path`.
+- CLI supports `--notes-file`, `--notes`, `--append-notes`, and in-editor editing.
+- Python API creates temp notes files in `tmp/` and moves them to canonical location on save.
+- Dossier generator creates a full HTML dashboard and event/solution pages.
+- Export logic includes notes files in the zip and updates paths.
+- Improved consistency and error handling across CLI and API.
 
