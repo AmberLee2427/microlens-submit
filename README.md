@@ -8,7 +8,7 @@
 
 *A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
-[![PyPI - v0.6.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
+[![PyPI - v0.10.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -36,7 +36,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 This package is pre-release. It is currently available on TestPyPI:
 
 ```bash
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.6.0
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.10.0
 ```
 
 The package will be available on PyPI:
