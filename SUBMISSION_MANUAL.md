@@ -102,7 +102,7 @@ Represents a single model fit.
 ```json
 {
   "solution_id": "123e4567-e89b-12d3-a456-426614174000",
-  "model_type": "binary_lens",
+  "model_type": "1S2L",
   "parameters": {"t0": 555.5, "u0": 0.1, "tE": 25.0},
   "physical_parameters": {"M_L": 0.5, "D_L": 7.8},
   "log_likelihood": -1234.56,
