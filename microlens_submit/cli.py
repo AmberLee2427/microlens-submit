@@ -251,12 +251,6 @@ def add_solution(
         sol.notes_path = str(notes_file)
     else:
         sol.notes_path = str(canonical_notes_path.relative_to(project_path))
-        if notes is not None:
-            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
-            canonical_notes_path.write_text(notes, encoding="utf-8")
-        elif not canonical_notes_path.exists():
-            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
-            canonical_notes_path.write_text("", encoding="utf-8")
     if dry_run:
         parsed = {
             "event_id": event_id,
@@ -296,6 +290,17 @@ def add_solution(
         else:
             console.print(Panel("Solution validated successfully!", style="green"))
         return
+    # Only write files if not dry_run
+    if notes_file is not None:
+        # If a notes file is provided, do not overwrite it, just ensure path is set
+        pass
+    else:
+        if notes is not None:
+            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
+            canonical_notes_path.write_text(notes, encoding="utf-8")
+        elif not canonical_notes_path.exists():
+            canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
+            canonical_notes_path.write_text("", encoding="utf-8")
     sub.save()
     validation_messages = sol.validate()
     if validation_messages:
