@@ -1,3 +1,68 @@
+## Release v0.12.0
+
+### What's New
+- **Submission Dossier Generator:** New `generate-dossier` CLI command that creates comprehensive HTML dashboards for submission review
+- **HTML Dashboard:** Generates professional `index.html` with submission overview, event summaries, and solution statistics following Dashboard_Design.md specifications
+- **Tailwind CSS Design:** Modern, responsive design using Tailwind CSS with custom RGES-PIT color palette
+- **Rich Metadata Display:** Shows team information, hardware details, compute statistics, and model type distributions
+- **Progress Tracking:** Visual progress bar showing completion percentage against total challenge events (293)
+- **Event Navigation:** Links to future event-specific pages (structure prepared for v0.13.0 expansion)
+- **Parameter Distribution Placeholders:** Placeholder plots for key parameter distributions with professional styling
+
+### Dossier Features
+- **Summary Cards:** Quick overview of total events, active solutions, and hardware information
+- **Submission Metadata:** Team name, challenge tier, and generation timestamp
+- **Hardware Information:** Display of compute platform details when available
+- **Progress Visualization:** Progress bar showing events processed vs. total challenge events
+- **Events Overview:** Table showing all events with active solution counts and model types
+- **Compute Time Summary:** Total CPU and wall time hours across all solutions
+- **Directory Structure:** Creates organized output with `assets/` and `events/` subdirectories for future expansion
+
+### Usage
+```bash
+microlens-submit generate-dossier /path/to/output/directory
+```
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No new dependencies
+
+## v0.12.0 (2025-07-03)
+
+### Major Features
+- **File-Based Notes System:**
+  - Notes for each solution are now always stored as Markdown files, referenced by `notes_path` in the solution JSON.
+  - New CLI options: `--notes-file` (specify a file), `--notes` (create canonical file), and `--append-notes` (append to notes file).
+  - `microlens-submit notes <solution_id>` opens the notes file in your editor.
+  - Python API: `set_notes()` creates a temp file in `tmp/` if no path is set; on `save()`, temp notes are moved to canonical location.
+  - `notes` property and `view_notes(render_html=True)` for easy notebook viewing.
+
+- **Dossier Generator:**
+  - `microlens-submit generate-dossier` creates a full HTML dashboard (`dossier/index.html`) and event/solution subpages.
+  - All links, assets, and navigation are robust and browser/server compatible.
+  - Markdown notes are rendered in dossier pages.
+
+- **Export Improvements:**
+  - Notes files are now included in the exported zip, with correct archive paths.
+  - Export logic updates `notes_path` in the archive to match the zipped location.
+
+- **CLI & API UX Improvements:**
+  - All solution management (add, edit, append, clear notes) is robust and consistent between CLI and Python API.
+  - UUID solution IDs are used everywhere for uniqueness and safety.
+  - Improved error handling and validation for notes and file paths.
+
+### Other Changes
+- Documentation and tutorial updated for new notes workflow.
+- Test scripts and automation updated for HTML dossier and notes file handling.
+- Minor bugfixes and linter improvements throughout.
+
+<br>
+
 ## Release v0.11.0
 
 ### What's New

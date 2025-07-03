@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microlens-submit"
-version = "0.11.0"
+version = "0.12.0-dev"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
 ]
@@ -26,6 +26,7 @@ dependencies = [
     "pydantic>=2.0",
     "rich>=13.0",
     "PyYAML>=6.0",
+    "markdown >=3.0",
 ]
 
 [project.urls]
@@ -54,3 +55,6 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["microlens_submit*"]
 exclude = ["assets*", "docs*", "tests*"]
+
+[tool.setuptools.package-data]
+microlens_submit = ["assets/rges-pit_logo.png"]

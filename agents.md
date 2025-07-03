@@ -40,7 +40,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ## 3. Development Roadmap & Feature Plan
 
-`microlens-submit` is currently at version 0.11.0. Below is the prioritized roadmap for developing version 1.0.0.
+`microlens-submit` is currently at version 0.12.0-dev. Below is the prioritized roadmap for developing version 1.0.0.
 
 ### v0.12.0 — Dossier Generator & Enhanced Validation (Next Priority)
 
@@ -53,6 +53,8 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Validation status and warnings
     - Physical parameter summaries
     - Relative probability distributions
+    - See Dashboard_Design.md for the proposed `index.html` design plan
+    - Have subpages for event and solution summaries
   - *Why:* Helps participants ensure their submission is complete and professional before final submission.
 
 - **Task 2: Enhanced Physical Parameter Validation**
@@ -353,9 +355,9 @@ twine check dist/*
 
 ### 10.4. Version Numbering Strategy
 
-- **Patch releases (0.11.0 → 0.11.1):** Bug fixes, minor improvements
-- **Minor releases (0.11.0 → 0.12.0):** New features, non-breaking changes
-- **Major releases (0.11.0 → 1.0.0):** Breaking changes, major rewrites
+- **Patch releases (0.12.0 → 0.12.1):** Bug fixes, minor improvements
+- **Minor releases (0.12.0 → 0.13.0):** New features, non-breaking changes
+- **Major releases (0.12.0 → 1.0.0):** Breaking changes, major rewrites
 
 ### 10.5. Release Notes Template
 
@@ -383,7 +385,7 @@ When creating a release, include:
 
 After creating a release:
 
-1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.11.0 → 0.11.1-dev)
+1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.12.0 → 0.12.1-dev)
 2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
 3. **Update Roadmap:** Mark completed tasks in this document
 
@@ -398,7 +400,15 @@ For future automation, consider implementing:
 ### 10.8. Current Release Status
 
 - **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
-- **v0.12.0:** 📋 Planned - Dossier Generator & Enhanced Validation
+- **v0.12.0:** ✅ Released (2025-07-03) - File-based notes system, HTML dossier generator, export improvements, temp notes file logic, robust CLI/API UX
 - **v0.13.0:** 📋 Planned - High Automation Support
 - **v1.0.0:** 📋 Planned - Official Release
+
+### v0.12.0 Highlights
+- Notes are now always stored as Markdown files, referenced by `notes_path`.
+- CLI supports `--notes-file`, `--notes`, `--append-notes`, and in-editor editing.
+- Python API creates temp notes files in `tmp/` and moves them to canonical location on save.
+- Dossier generator creates a full HTML dashboard and event/solution pages.
+- Export logic includes notes files in the zip and updates paths.
+- Improved consistency and error handling across CLI and API.
 
