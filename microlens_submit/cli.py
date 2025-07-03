@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .api import load
+from .dossier import generate_dashboard_html
 
 console = Console()
 app = typer.Typer()
@@ -371,6 +372,26 @@ def export(
                 raise typer.Exit()
     sub.export(str(output_path))
     console.print(Panel(f"Exported submission to {output_path}", style="bold green"))
+
+
+@app.command("generate-dossier")
+def generate_dossier(
+    output_path: Path = typer.Argument(..., help="Directory to save the generated dossier HTML files"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Generate an HTML dossier for the submission.
+    
+    Creates a comprehensive HTML dashboard that provides an overview of the submission,
+    including event summaries, solution statistics, and metadata. The dossier is saved
+    to the specified output directory with the main dashboard as index.html.
+    
+    Args:
+        output_path: Directory where the HTML files will be saved.
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    generate_dashboard_html(sub, output_path)
+    console.print(Panel(f"Dossier generated successfully at {output_path}", style="bold green"))
 
 
 @app.command("list-solutions")

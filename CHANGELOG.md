@@ -1,3 +1,39 @@
+## Release v0.12.0
+
+### What's New
+- **Submission Dossier Generator:** New `generate-dossier` CLI command that creates comprehensive HTML dashboards for submission review
+- **HTML Dashboard:** Generates professional `index.html` with submission overview, event summaries, and solution statistics following Dashboard_Design.md specifications
+- **Tailwind CSS Design:** Modern, responsive design using Tailwind CSS with custom RGES-PIT color palette
+- **Rich Metadata Display:** Shows team information, hardware details, compute statistics, and model type distributions
+- **Progress Tracking:** Visual progress bar showing completion percentage against total challenge events (293)
+- **Event Navigation:** Links to future event-specific pages (structure prepared for v0.13.0 expansion)
+- **Parameter Distribution Placeholders:** Placeholder plots for key parameter distributions with professional styling
+
+### Dossier Features
+- **Summary Cards:** Quick overview of total events, active solutions, and hardware information
+- **Submission Metadata:** Team name, challenge tier, and generation timestamp
+- **Hardware Information:** Display of compute platform details when available
+- **Progress Visualization:** Progress bar showing events processed vs. total challenge events
+- **Events Overview:** Table showing all events with active solution counts and model types
+- **Compute Time Summary:** Total CPU and wall time hours across all solutions
+- **Directory Structure:** Creates organized output with `assets/` and `events/` subdirectories for future expansion
+
+### Usage
+```bash
+microlens-submit generate-dossier /path/to/output/directory
+```
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- No new dependencies
+
+<br>
+
 ## Release v0.11.0
 
 ### What's New

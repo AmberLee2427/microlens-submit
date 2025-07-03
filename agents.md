@@ -53,6 +53,8 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Validation status and warnings
     - Physical parameter summaries
     - Relative probability distributions
+    - See Dashboard_Design.md for the proposed `index.html` design plan
+    - Have subpages for event and solution summaries
   - *Why:* Helps participants ensure their submission is complete and professional before final submission.
 
 - **Task 2: Enhanced Physical Parameter Validation**
