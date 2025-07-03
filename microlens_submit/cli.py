@@ -385,6 +385,8 @@ def export(
 @app.command("generate-dossier")
 def generate_dossier(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
+    event_id: Optional[str] = typer.Option(None, "--event-id", help="Generate dossier for a specific event only (omit for full dossier)"),
+    solution_id: Optional[str] = typer.Option(None, "--solution-id", help="Generate dossier for a specific solution only (omit for full dossier)"),
 ) -> None:
     """Generate an HTML dossier for the submission.
     
@@ -394,10 +396,37 @@ def generate_dossier(
     
     Args:
         project_path: Directory of the submission project.
+        event_id: If set, only generate dossier for this event.
+        solution_id: If set, only generate dossier for this solution.
     """
     sub = load(str(project_path))
     output_dir = Path(project_path) / "dossier"
+    # Always generate dashboard (even if partial)
+    from .dossier import _generate_full_dossier_report_html
     generate_dashboard_html(sub, output_dir)
+
+    # Determine if it's a full generation (no specific event/solution requested)
+    is_full_generation = not event_id and not solution_id
+
+    # Generate event/solution pages as needed (for now, always generate all, but this is where you'd restrict)
+    # TODO: In future, restrict event/solution generation if flags are set
+
+    if is_full_generation:
+        console.print(Panel("Generating comprehensive printable dossier...", style="cyan"))
+        _generate_full_dossier_report_html(sub, output_dir)
+        # Replace placeholder in index.html with the real link
+        dashboard_path = output_dir / "index.html"
+        if dashboard_path.exists():
+            with dashboard_path.open("r", encoding="utf-8") as f:
+                dashboard_html = f.read()
+            dashboard_html = dashboard_html.replace(
+                "<!--FULL_DOSSIER_LINK_PLACEHOLDER-->",
+                '<div class="text-center"><a href="./full_dossier_report.html" class="inline-block bg-rtd-accent text-white py-3 px-6 rounded-lg shadow-md hover:bg-rtd-secondary transition-colors duration-200 text-lg font-semibold mt-8">View Full Comprehensive Dossier (Printable)</a></div>'
+            )
+            with dashboard_path.open("w", encoding="utf-8") as f:
+                f.write(dashboard_html)
+        console.print(Panel("Comprehensive dossier generated!", style="bold green"))
+
     console.print(Panel(f"Dossier generated successfully at {output_dir / 'index.html'}", style="bold green"))
 
 

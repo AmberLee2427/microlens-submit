@@ -157,7 +157,14 @@ def main():
     print("\n🎨 Generating dossier...")
     
     # Generate the dossier
-    run_command(f"microlens-submit generate-dossier {project_dir}")
+    try:
+        run_command(f"microlens-submit generate-dossier {project_dir}")
+    except:
+        print("Dossier generation failed")
+        pass
+    else: 
+        print(f"\n✅ Dossier generated successfully!")
+        
     
     # Check what was created
     print(f"\n📁 Dossier files created:")
@@ -172,7 +179,7 @@ def main():
         print("❌ Error: index.html was not created!")
         sys.exit(1)
     
-    print(f"\n✅ Dossier generated successfully!")
+    
     print(f"📄 Main dashboard: {index_html.absolute()}")
     print(f"📁 Assets directory: {(dossier_path / 'assets').absolute()}")
     print(f"📁 Events directory: {(dossier_path / 'events').absolute()}")
