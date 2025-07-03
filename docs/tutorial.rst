@@ -15,13 +15,20 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     microlens-submit add-solution EVENT123 1S2L \
+     microlens-submit add-solution EVENT123 1S1L \
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+          --log-likelihood -1234.56 \
+          --n-data-points 1250 \
+          --cpu-hours 15.2 \
+          --wall-time-hours 3.8 \
           --lightcurve-plot-path plots/event123_lc.png \
           --lens-plane-plot-path plots/event123_lens.png \
-          --notes "Initial fit"
+          --notes "Initial fit" \
+          --higher-order-effect parallax,finite-source
 
-   You can also load parameters from a JSON file instead of listing them on the
+   **Note:** The ``--notes`` field supports Markdown formatting, allowing you to create rich documentation with headers, lists, code blocks, and links. This is especially useful for creating detailed submission dossiers for evaluators.
+
+   You can also load parameters from a JSON or YAML file instead of listing them on the
    command line. Create ``params.json`` containing your values and run:
 
    .. code-block:: bash
@@ -30,7 +37,61 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --params-file params.json \
           --lightcurve-plot-path plots/event123_lc.png \
           --lens-plane-plot-path plots/event123_lens.png \
-          --notes "Initial fit"
+          --notes "Initial fit" \
+          --higher-order-effect parallax,finite-source
+
+   **Parameter File Formats:**
+
+   **Simple format (parameters only):**
+   
+   .. code-block:: json
+
+     {
+       "t0": 555.5,
+       "u0": 0.1,
+       "tE": 25.0
+     }
+
+   Or in YAML:
+
+   .. code-block:: yaml
+
+     t0: 555.5
+     u0: 0.1
+     tE: 25.0
+
+   **Structured format (parameters + uncertainties):**
+   
+   .. code-block:: json
+
+     {
+       "parameters": {
+         "t0": 555.5,
+         "u0": 0.1,
+         "tE": 25.0
+       },
+       "uncertainties": {
+         "t0": [0.1, 0.1],
+         "u0": 0.02,
+         "tE": [0.3, 0.4]
+       }
+     }
+
+   Or in YAML:
+
+   .. code-block:: yaml
+
+     parameters:
+       t0: 555.5
+       u0: 0.1
+       tE: 25.0
+     uncertainties:
+       t0: [0.1, 0.1]
+       u0: 0.02
+       tE: [0.3, 0.4]
+
+   Uncertainties can be single values (symmetric) or [lower, upper] arrays (asymmetric).
+   Both JSON and YAML formats are supported with the same structure.
 
 3. **Validate without saving**
 
@@ -94,7 +155,37 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit deactivate <solution_id>
 
-9. **Export the final package**
+9. **Edit solution attributes (optional)**
+
+   After creating solutions, you can modify their attributes:
+
+   .. code-block:: bash
+
+     # Update relative probability
+     microlens-submit edit-solution <solution_id> --relative-probability 0.7
+     
+     # Append to notes
+     microlens-submit edit-solution <solution_id> --append-notes "Updated after model comparison"
+     
+     # Update compute info
+     microlens-submit edit-solution <solution_id> --cpu-hours 25.5 --wall-time-hours 6.2
+     
+     # Fix a parameter typo
+     microlens-submit edit-solution <solution_id> --param t0=2459123.6
+     
+     # Update an uncertainty
+     microlens-submit edit-solution <solution_id> --param-uncertainty t0=[0.05,0.05]
+     
+     # Add higher-order effects
+     microlens-submit edit-solution <solution_id> --higher-order-effect parallax,finite-source
+     
+     # Clear an attribute
+     microlens-submit edit-solution <solution_id> --clear-relative-probability
+     
+     # See what would change without saving
+     microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
+
+10. **Export the final package**
 
    .. code-block:: bash
 

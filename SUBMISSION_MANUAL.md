@@ -165,3 +165,5 @@ python validate_submission.py /path/to/your/submission_dir
 ```
 
 The script will report "Submission is valid" on success or print detailed error messages if it finds any problems with your file structure or JSON formatting. Fix any reported errors before creating your final zip archive.
+
+**Note:** The `notes` field supports Markdown formatting, allowing you to create rich documentation with headers, lists, code blocks, tables, and links. This is particularly useful for creating detailed submission dossiers for evaluators.

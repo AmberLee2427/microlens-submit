@@ -1,3 +1,57 @@
+## Release v0.11.0
+
+### What's New
+- **Enhanced Parameter Validation:** Comprehensive docstring for `validate()` method with detailed explanation of all validation checks
+- **Parameter Uncertainty Validation:** New validation logic for parameter uncertainties, including support for asymmetric uncertainties [lower, upper]
+- **Structured Parameter Files:** Support for JSON and YAML files containing both parameters and uncertainties in a single file
+- **Improved CLI:** Enhanced `--params-file` option now supports YAML format and structured parameter files
+- **Code Cleanup:** Removed deprecated `log_prior` field (not used in calculations)
+
+### Structured Parameter File Format
+Parameter files can now use either simple or structured format:
+
+**Simple format (JSON/YAML):**
+```json
+{
+  "t0": 2459123.5,
+  "u0": 0.15,
+  "tE": 20.5
+}
+```
+
+**Structured format (JSON/YAML):**
+```json
+{
+  "parameters": {
+    "t0": 2459123.5,
+    "u0": 0.15,
+    "tE": 20.5
+  },
+  "uncertainties": {
+    "t0": [0.1, 0.1],
+    "u0": 0.02,
+    "tE": [0.3, 0.4]
+  }
+}
+```
+
+### Uncertainty Validation
+- Validates uncertainty values are positive
+- Supports both single values and [lower, upper] asymmetric uncertainties
+- Warns if uncertainties are very large (>50%) or very small (<0.1%) relative to parameter values
+- Checks that uncertainty bounds are properly ordered (lower ≤ upper)
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- **Removed `log_prior` field:** This field was not used in any calculations and has been removed from the API and CLI
+
+### Dependencies
+- Added `PyYAML>=6.0` for YAML file support
+
+<br>
+
 ## Release v0.10.0
 
 ### What's New

@@ -8,7 +8,7 @@
 
 *A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
-[![PyPI - v0.10.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
+[![PyPI - v0.11.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -27,6 +27,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
   all solutions inactive in one call.
 * **Automatic Validation:** Aggressive data validation powered by Pydantic ensures your submission is always compliant with the challenge rules.
 * **Parameter Validation:** Centralized validation logic checks parameter completeness, types, and physical consistency based on model type and higher-order effects.
+* **Rich Documentation:** Notes field supports Markdown formatting for creating detailed, structured documentation and submission dossiers.
 * **Environment Capture:** Automatically records your Python dependencies for each specific model fit, ensuring reproducibility.
 * **Optional Posterior Storage:** Record the path to posterior samples for any solution.
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
@@ -36,7 +37,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 This package is pre-release. It is currently available on TestPyPI:
 
 ```bash
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.10.0
+pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.11.0
 ```
 
 The package will be available on PyPI:

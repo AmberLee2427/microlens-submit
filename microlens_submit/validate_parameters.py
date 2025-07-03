@@ -294,6 +294,75 @@ def validate_parameter_types(
     return messages
 
 
+def validate_parameter_uncertainties(
+    parameters: Dict[str, Any],
+    uncertainties: Optional[Dict[str, Any]] = None
+) -> List[str]:
+    """
+    Validate parameter uncertainties for reasonableness and consistency.
+    
+    Args:
+        parameters: Dictionary of model parameters
+        uncertainties: Dictionary of parameter uncertainties
+        
+    Returns:
+        List of validation messages
+    """
+    messages = []
+    
+    if not uncertainties:
+        return messages
+    
+    for param_name, uncertainty in uncertainties.items():
+        if param_name not in parameters:
+            messages.append(f"Uncertainty provided for unknown parameter '{param_name}'")
+            continue
+            
+        param_value = parameters[param_name]
+        
+        # Handle different uncertainty formats
+        if isinstance(uncertainty, (list, tuple)):
+            # [lower, upper] format
+            if len(uncertainty) != 2:
+                messages.append(f"Uncertainty for '{param_name}' should be [lower, upper] or single value")
+                continue
+            lower, upper = uncertainty
+            if not (isinstance(lower, (int, float)) and isinstance(upper, (int, float))):
+                messages.append(f"Uncertainty bounds for '{param_name}' must be numeric")
+                continue
+            if lower < 0 or upper < 0:
+                messages.append(f"Uncertainty bounds for '{param_name}' must be positive")
+                continue
+            if lower > upper:
+                messages.append(f"Lower uncertainty for '{param_name}' ({lower}) > upper uncertainty ({upper})")
+                continue
+        else:
+            # Single value format
+            if not isinstance(uncertainty, (int, float)):
+                messages.append(f"Uncertainty for '{param_name}' must be numeric")
+                continue
+            if uncertainty < 0:
+                messages.append(f"Uncertainty for '{param_name}' must be positive")
+                continue
+            lower = upper = uncertainty
+        
+        # Check if uncertainty is reasonable relative to parameter value
+        if isinstance(param_value, (int, float)) and param_value != 0:
+            # Calculate relative uncertainty
+            if isinstance(uncertainty, (list, tuple)):
+                rel_uncertainty = max(abs(lower/param_value), abs(upper/param_value))
+            else:
+                rel_uncertainty = abs(uncertainty/param_value)
+            
+            # Warn if uncertainty is very large (>50%) or very small (<0.1%)
+            if rel_uncertainty > 0.5:
+                messages.append(f"Warning: Uncertainty for '{param_name}' is very large ({rel_uncertainty:.1%} of parameter value)")
+            elif rel_uncertainty < 0.001:
+                messages.append(f"Warning: Uncertainty for '{param_name}' is very small ({rel_uncertainty:.1%} of parameter value)")
+    
+    return messages
+
+
 def validate_solution_consistency(
     model_type: str,
     parameters: Dict[str, Any],

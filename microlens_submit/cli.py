@@ -104,7 +104,7 @@ def add_solution(
     params_file: Optional[Path] = typer.Option(
         None,
         "--params-file",
-        help="Path to JSON file with model parameters",
+        help="Path to JSON or YAML file with model parameters and uncertainties",
         callback=_params_file_callback,
     ),
     bands: Optional[List[str]] = typer.Option(
@@ -150,11 +150,20 @@ def add_solution(
         help="Relative probability of this solution",
     ),
     log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
-    log_prior: Optional[float] = typer.Option(None, help="Log prior"),
     n_data_points: Optional[int] = typer.Option(
         None,
         "--n-data-points",
         help="Number of data points used in this solution",
+    ),
+    cpu_hours: Optional[float] = typer.Option(
+        None,
+        "--cpu-hours",
+        help="CPU hours used for this solution",
+    ),
+    wall_time_hours: Optional[float] = typer.Option(
+        None,
+        "--wall-time-hours",
+        help="Wall time hours used for this solution",
     ),
     lightcurve_plot_path: Optional[Path] = typer.Option(
         None, "--lightcurve-plot-path", help="Path to lightcurve plot file"
@@ -162,7 +171,7 @@ def add_solution(
     lens_plane_plot_path: Optional[Path] = typer.Option(
         None, "--lens-plane-plot-path", help="Path to lens plane plot file"
     ),
-    notes: str = typer.Option("", help="Notes for the solution"),
+    notes: str = typer.Option("", help="Notes for the solution (supports Markdown formatting)"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -186,9 +195,10 @@ def add_solution(
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
     params: dict = {}
+    uncertainties: dict = {}
+    
     if params_file is not None:
-        with params_file.open("r", encoding="utf-8") as fh:
-            params = json.load(fh)
+        params, uncertainties = _parse_structured_params_file(params_file)
     else:
         for p in param or []:
             if "=" not in p:
@@ -226,12 +236,13 @@ def add_solution(
     sol.used_postage_stamps = used_postage_stamps
     sol.limb_darkening_model = limb_darkening_model
     sol.limb_darkening_coeffs = _parse_pairs(limb_darkening_coeff)
-    sol.parameter_uncertainties = _parse_pairs(parameter_uncertainty)
+    sol.parameter_uncertainties = _parse_pairs(parameter_uncertainty) or uncertainties
     sol.physical_parameters = _parse_pairs(physical_param)
     sol.log_likelihood = log_likelihood
-    sol.log_prior = log_prior
     sol.relative_probability = relative_probability
     sol.n_data_points = n_data_points
+    if cpu_hours is not None or wall_time_hours is not None:
+        sol.set_compute_info(cpu_hours=cpu_hours, wall_time_hours=wall_time_hours)
     sol.lightcurve_plot_path = (
         str(lightcurve_plot_path) if lightcurve_plot_path else None
     )
@@ -254,9 +265,10 @@ def add_solution(
             "parameter_uncertainties": _parse_pairs(parameter_uncertainty),
             "physical_parameters": _parse_pairs(physical_param),
             "log_likelihood": log_likelihood,
-            "log_prior": log_prior,
             "relative_probability": relative_probability,
             "n_data_points": n_data_points,
+            "cpu_hours": cpu_hours,
+            "wall_time_hours": wall_time_hours,
             "lightcurve_plot_path": (
                 str(lightcurve_plot_path) if lightcurve_plot_path else None
             ),
@@ -613,6 +625,250 @@ def validate_event(
             f"\nFound {len(all_messages)} validation issue(s) across all solutions",
             style="yellow",
         )
+
+
+def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
+    """
+    Parse a structured parameter file that can contain both parameters and uncertainties.
+    
+    Supports both JSON and YAML formats. The file can have either:
+    1. Simple format: {"param1": value1, "param2": value2, ...}
+    2. Structured format: {"parameters": {...}, "uncertainties": {...}}
+    
+    Args:
+        params_file: Path to the parameter file
+        
+    Returns:
+        tuple: (parameters_dict, uncertainties_dict)
+    """
+    import yaml
+    
+    with params_file.open("r", encoding="utf-8") as fh:
+        if params_file.suffix.lower() in ['.yaml', '.yml']:
+            data = yaml.safe_load(fh)
+        else:
+            data = json.load(fh)
+    
+    # Handle structured format
+    if isinstance(data, dict) and ('parameters' in data or 'uncertainties' in data):
+        parameters = data.get('parameters', {})
+        uncertainties = data.get('uncertainties', {})
+    else:
+        # Simple format - all keys are parameters
+        parameters = data
+        uncertainties = {}
+    
+    return parameters, uncertainties
+
+
+@app.command("edit-solution")
+def edit_solution(
+    solution_id: str,
+    relative_probability: Optional[float] = typer.Option(
+        None,
+        "--relative-probability",
+        help="Relative probability of this solution",
+    ),
+    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
+    n_data_points: Optional[int] = typer.Option(
+        None,
+        "--n-data-points",
+        help="Number of data points used in this solution",
+    ),
+    notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
+    append_notes: Optional[str] = typer.Option(
+        None,
+        "--append-notes",
+        help="Append text to existing notes (use --notes to replace instead)",
+    ),
+    clear_notes: bool = typer.Option(False, help="Clear all notes"),
+    clear_relative_probability: bool = typer.Option(False, help="Clear relative probability"),
+    clear_log_likelihood: bool = typer.Option(False, help="Clear log likelihood"),
+    clear_n_data_points: bool = typer.Option(False, help="Clear n_data_points"),
+    clear_parameter_uncertainties: bool = typer.Option(False, help="Clear parameter uncertainties"),
+    clear_physical_parameters: bool = typer.Option(False, help="Clear physical parameters"),
+    cpu_hours: Optional[float] = typer.Option(None, help="CPU hours used"),
+    wall_time_hours: Optional[float] = typer.Option(None, help="Wall time hours used"),
+    param: Optional[List[str]] = typer.Option(
+        None, help="Model parameters as key=value (updates existing parameters)"
+    ),
+    param_uncertainty: Optional[List[str]] = typer.Option(
+        None,
+        "--param-uncertainty",
+        help="Parameter uncertainties as key=value (updates existing uncertainties)"
+    ),
+    higher_order_effect: Optional[List[str]] = typer.Option(
+        None,
+        "--higher-order-effect",
+        help="Higher-order effects (replaces existing effects)",
+    ),
+    clear_higher_order_effects: bool = typer.Option(False, help="Clear all higher-order effects"),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show what would be changed without saving",
+    ),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Edit an existing solution's attributes.
+    
+    This command allows you to modify solution attributes after creation.
+    Use --dry-run to see what would be changed without saving.
+    
+    Args:
+        solution_id: The ID of the solution to edit.
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    
+    # Find the solution
+    target_solution = None
+    target_event_id = None
+    for event_id, event in sub.events.items():
+        if solution_id in event.solutions:
+            target_solution = event.solutions[solution_id]
+            target_event_id = event_id
+            break
+    
+    if target_solution is None:
+        console.print(f"Solution {solution_id} not found", style="bold red")
+        raise typer.Exit(code=1)
+    
+    # Track changes for dry-run
+    changes = []
+    
+    # Handle relative probability
+    if clear_relative_probability:
+        if target_solution.relative_probability is not None:
+            changes.append(f"Clear relative_probability: {target_solution.relative_probability}")
+            target_solution.relative_probability = None
+    elif relative_probability is not None:
+        if target_solution.relative_probability != relative_probability:
+            changes.append(f"Update relative_probability: {target_solution.relative_probability} → {relative_probability}")
+            target_solution.relative_probability = relative_probability
+    
+    # Handle log likelihood
+    if clear_log_likelihood:
+        if target_solution.log_likelihood is not None:
+            changes.append(f"Clear log_likelihood: {target_solution.log_likelihood}")
+            target_solution.log_likelihood = None
+    elif log_likelihood is not None:
+        if target_solution.log_likelihood != log_likelihood:
+            changes.append(f"Update log_likelihood: {target_solution.log_likelihood} → {log_likelihood}")
+            target_solution.log_likelihood = log_likelihood
+    
+    # Handle n_data_points
+    if clear_n_data_points:
+        if target_solution.n_data_points is not None:
+            changes.append(f"Clear n_data_points: {target_solution.n_data_points}")
+            target_solution.n_data_points = None
+    elif n_data_points is not None:
+        if target_solution.n_data_points != n_data_points:
+            changes.append(f"Update n_data_points: {target_solution.n_data_points} → {n_data_points}")
+            target_solution.n_data_points = n_data_points
+    
+    # Handle notes
+    if clear_notes:
+        if target_solution.notes:
+            changes.append(f"Clear notes: '{target_solution.notes}'")
+            target_solution.notes = ""
+    elif append_notes is not None:
+        new_notes = (target_solution.notes + " " + append_notes).strip()
+        changes.append(f"Append to notes: '{append_notes}'")
+        target_solution.notes = new_notes
+    elif notes is not None:
+        if target_solution.notes != notes:
+            changes.append(f"Update notes: '{target_solution.notes}' → '{notes}'")
+            target_solution.notes = notes
+    
+    # Handle clearing optional attributes
+    if clear_parameter_uncertainties:
+        if target_solution.parameter_uncertainties:
+            changes.append("Clear parameter_uncertainties")
+            target_solution.parameter_uncertainties = None
+    
+    if clear_physical_parameters:
+        if target_solution.physical_parameters:
+            changes.append("Clear physical_parameters")
+            target_solution.physical_parameters = None
+    
+    # Handle compute info updates
+    if cpu_hours is not None or wall_time_hours is not None:
+        old_cpu = target_solution.compute_info.get("cpu_hours")
+        old_wall = target_solution.compute_info.get("wall_time_hours")
+        
+        if cpu_hours is not None and old_cpu != cpu_hours:
+            changes.append(f"Update cpu_hours: {old_cpu} → {cpu_hours}")
+        if wall_time_hours is not None and old_wall != wall_time_hours:
+            changes.append(f"Update wall_time_hours: {old_wall} → {wall_time_hours}")
+        
+        target_solution.set_compute_info(
+            cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
+            wall_time_hours=wall_time_hours if wall_time_hours is not None else old_wall
+        )
+    
+    # Handle parameter updates
+    if param:
+        for p in param:
+            if "=" not in p:
+                raise typer.BadParameter(f"Invalid parameter format: {p}")
+            key, value = p.split("=", 1)
+            try:
+                new_value = json.loads(value)
+            except json.JSONDecodeError:
+                new_value = value
+            
+            old_value = target_solution.parameters.get(key)
+            if old_value != new_value:
+                changes.append(f"Update parameter {key}: {old_value} → {new_value}")
+                target_solution.parameters[key] = new_value
+    
+    # Handle uncertainty updates
+    if param_uncertainty:
+        if target_solution.parameter_uncertainties is None:
+            target_solution.parameter_uncertainties = {}
+        
+        for p in param_uncertainty:
+            if "=" not in p:
+                raise typer.BadParameter(f"Invalid uncertainty format: {p}")
+            key, value = p.split("=", 1)
+            try:
+                new_value = json.loads(value)
+            except json.JSONDecodeError:
+                new_value = value
+            
+            old_value = target_solution.parameter_uncertainties.get(key)
+            if old_value != new_value:
+                changes.append(f"Update uncertainty {key}: {old_value} → {new_value}")
+                target_solution.parameter_uncertainties[key] = new_value
+    
+    # Handle higher-order effect updates
+    if clear_higher_order_effects:
+        if target_solution.higher_order_effects:
+            changes.append(f"Clear higher_order_effects: {target_solution.higher_order_effects}")
+            target_solution.higher_order_effects = []
+    elif higher_order_effect:
+        if target_solution.higher_order_effects != higher_order_effect:
+            changes.append(f"Update higher_order_effects: {target_solution.higher_order_effects} → {higher_order_effect}")
+            target_solution.higher_order_effects = higher_order_effect
+    
+    if dry_run:
+        if changes:
+            console.print(Panel(f"Changes for {solution_id} (event {target_event_id})", style="cyan"))
+            for change in changes:
+                console.print(f"  • {change}")
+        else:
+            console.print(Panel("No changes would be made", style="yellow"))
+        return
+    
+    # Save changes
+    if changes:
+        sub.save()
+        console.print(Panel(f"Updated {solution_id} (event {target_event_id})", style="green"))
+        for change in changes:
+            console.print(f"  • {change}")
+    else:
+        console.print(Panel("No changes made", style="yellow"))
 
 
 if __name__ == "__main__":  # pragma: no cover

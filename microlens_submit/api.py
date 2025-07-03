@@ -52,10 +52,14 @@ class Solution(BaseModel):
         parameter_uncertainties: Uncertainties for parameters in ``parameters``.
         physical_parameters: Physical parameters derived from the model.
         log_likelihood: Log-likelihood value of the fit.
-        log_prior: Log-prior value of the fit.
         relative_probability: Optional probability of this solution being the best model.
         n_data_points: Number of data points used in the fit.
         creation_timestamp: UTC timestamp when the solution was created.
+        
+    Note:
+        The ``notes`` field supports Markdown formatting, allowing you to create rich,
+        structured documentation with headers, lists, code blocks, tables, and links.
+        This is particularly useful for creating detailed submission dossiers for evaluators.
     """
 
     solution_id: str
@@ -89,7 +93,6 @@ class Solution(BaseModel):
     parameter_uncertainties: Optional[dict] = None
     physical_parameters: Optional[dict] = None
     log_likelihood: Optional[float] = None
-    log_prior: Optional[float] = None
     relative_probability: Optional[float] = None
     n_data_points: Optional[int] = None
     creation_timestamp: str = Field(
@@ -171,19 +174,59 @@ class Solution(BaseModel):
     def validate(self) -> list[str]:
         """Validate this solution's parameters and configuration.
         
-        This method uses the centralized validation logic to check:
-        - Parameter completeness for the model type
-        - Higher-order effect requirements
-        - Parameter types and value ranges
-        - Physical consistency of parameters
+        This method performs comprehensive validation using centralized validation logic
+        to ensure the solution is complete, consistent, and ready for submission.
+        
+        **Validation Checks:**
+        
+        **Parameter Completeness:**
+        - Ensures all required parameters are present for the given model type
+        - Validates higher-order effect requirements (e.g., parallax needs piEN, piEE)
+        - Checks band-specific flux parameters when bands are specified
+        - Verifies t_ref is provided when required by time-dependent effects
+        
+        **Parameter Types and Values:**
+        - Validates parameter data types (float, int, string)
+        - Checks physically meaningful parameter ranges
+        - Ensures positive values for quantities that must be positive (tE, s, etc.)
+        - Validates mass ratio (q) is between 0 and 1
+        
+        **Physical Consistency:**
+        - Checks for physically impossible parameter combinations
+        - Validates binary lens separation ranges for caustic crossing
+        - Ensures relative_probability is between 0 and 1 when specified
+        
+        **Model-Specific Validation:**
+        - 1S1L: Requires t0, u0, tE
+        - 1S2L: Requires t0, u0, tE, s, q, alpha
+        - 2S1L: Requires t0, u0, tE (core lens parameters)
+        - Higher-order effects: Validates effect-specific parameters
+        
+        **Higher-Order Effects Supported:**
+        - parallax: Requires piEN, piEE, t_ref
+        - finite-source: Requires rho
+        - lens-orbital-motion: Requires dsdt, dadt, t_ref
+        - gaussian-process: Optional ln_K, ln_lambda, ln_period, ln_gamma
+        - fitted-limb-darkening: Optional u1, u2, u3, u4
         
         Returns:
-            list[str]: Human-readable validation messages (empty if all validations pass)
+            list[str]: Human-readable validation messages. Empty list indicates all
+                      validations passed. Messages may include warnings (non-critical)
+                      and errors (critical issues that should be addressed).
+                      
+        Example:
+            >>> solution = event.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1})
+            >>> messages = solution.validate()
+            >>> if messages:
+            ...     print("Validation issues found:")
+            ...     for msg in messages:
+            ...         print(f"  - {msg}")
         """
         from .validate_parameters import (
             check_solution_completeness,
             validate_parameter_types,
-            validate_solution_consistency
+            validate_solution_consistency,
+            validate_parameter_uncertainties
         )
         
         messages = []
@@ -204,6 +247,13 @@ class Solution(BaseModel):
             model_type=self.model_type
         )
         messages.extend(type_messages)
+        
+        # Check parameter uncertainties
+        uncertainty_messages = validate_parameter_uncertainties(
+            parameters=self.parameters,
+            uncertainties=self.parameter_uncertainties
+        )
+        messages.extend(uncertainty_messages)
         
         # Check solution consistency
         consistency_messages = validate_solution_consistency(
@@ -399,6 +449,16 @@ class Submission(BaseModel):
                 if sol.lens_plane_plot_path is None:
                     warnings.append(
                         f"Solution {sol.solution_id} in event {event.event_id} is missing lens_plane_plot_path"
+                    )
+                # Check for missing compute info
+                compute_info = sol.compute_info or {}
+                if "cpu_hours" not in compute_info:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} is missing cpu_hours"
+                    )
+                if "wall_time_hours" not in compute_info:
+                    warnings.append(
+                        f"Solution {sol.solution_id} in event {event.event_id} is missing wall_time_hours"
                     )
 
         return warnings
