@@ -269,9 +269,25 @@ def add_solution(
         console.print(json.dumps(parsed, indent=2))
         console.print(Panel("Schema Output", style="cyan"))
         console.print(sol.model_dump_json(indent=2))
+        # Also run validation and print warnings (but do not save)
+        validation_messages = sol.validate()
+        if validation_messages:
+            console.print(Panel("Validation Warnings", style="yellow"))
+            for msg in validation_messages:
+                console.print(f"  • {msg}")
+        else:
+            console.print(Panel("Solution validated successfully!", style="green"))
         return
 
+    # After adding a solution, immediately validate and print warnings (but always save)
     sub.save()
+    validation_messages = sol.validate()
+    if validation_messages:
+        console.print(Panel("Validation Warnings", style="yellow"))
+        for msg in validation_messages:
+            console.print(f"  • {msg}")
+    else:
+        console.print(Panel("Solution validated successfully!", style="green"))
     console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
 
 
@@ -476,6 +492,112 @@ def compare_solutions(
     console.print(table)
     if note:
         console.print(note, style="yellow")
+
+
+@app.command("validate-solution")
+def validate_solution(
+    solution_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Validate a specific solution's parameters and configuration.
+    
+    This command uses the centralized validation logic to check:
+    - Parameter completeness for the model type
+    - Higher-order effect requirements
+    - Parameter types and value ranges
+    - Physical consistency of parameters
+    
+    Args:
+        solution_id: The ID of the solution to validate.
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    
+    # Find the solution
+    target_solution = None
+    target_event_id = None
+    for event_id, event in sub.events.items():
+        if solution_id in event.solutions:
+            target_solution = event.solutions[solution_id]
+            target_event_id = event_id
+            break
+    
+    if target_solution is None:
+        console.print(f"Solution {solution_id} not found", style="bold red")
+        raise typer.Exit(code=1)
+    
+    # Run validation
+    messages = target_solution.validate()
+    
+    if not messages:
+        console.print(Panel("✅ All validations passed!", style="bold green"))
+    else:
+        console.print(Panel(f"Validation Results for {solution_id}", style="yellow"))
+        for msg in messages:
+            console.print(f"  • {msg}")
+
+
+@app.command("validate-submission")
+def validate_submission(
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Validate the entire submission for missing or incomplete information.
+    
+    This command performs comprehensive validation of all active solutions
+    and returns a list of warnings describing potential issues.
+    
+    Args:
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    warnings = sub.validate()
+    
+    if not warnings:
+        console.print(Panel("✅ All validations passed!", style="bold green"))
+    else:
+        console.print(Panel("Validation Warnings", style="yellow"))
+        for warning in warnings:
+            console.print(f"  • {warning}")
+        
+        console.print(f"\nFound {len(warnings)} validation issue(s)", style="yellow")
+
+
+@app.command("validate-event")
+def validate_event(
+    event_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Validate all solutions for a specific event.
+    
+    Args:
+        event_id: Identifier of the event to validate.
+        project_path: Directory of the submission project.
+    """
+    sub = load(str(project_path))
+    
+    if event_id not in sub.events:
+        console.print(f"Event {event_id} not found", style="bold red")
+        raise typer.Exit(code=1)
+    
+    event = sub.events[event_id]
+    all_messages = []
+    
+    console.print(Panel(f"Validating Event: {event_id}", style="cyan"))
+    
+    for solution in event.solutions.values():
+        messages = solution.validate()
+        if messages:
+            console.print(f"\n[bold]Solution {solution.solution_id}:[/bold]")
+            for msg in messages:
+                console.print(f"  • {msg}")
+                all_messages.append(f"{solution.solution_id}: {msg}")
+        else:
+            console.print(f"✅ Solution {solution.solution_id}: All validations passed")
+    
+    if not all_messages:
+        console.print(Panel("✅ All solutions passed validation!", style="bold green"))
+    else:
+        console.print(f"\nFound {len(all_messages)} validation issue(s) across all solutions", style="yellow")
 
 
 if __name__ == "__main__":  # pragma: no cover

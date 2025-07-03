@@ -40,10 +40,29 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
           --dry-run
 
-   This prints the parsed input and resulting schema output without writing
-   anything to disk.
+   This prints the parsed input, resulting schema output, and validation results
+   without writing anything to disk. Any parameter validation warnings will be
+   displayed. This is especially useful for checking relative probability
+   assignments before saving.
 
-4. **Attach a posterior file (optional)**
+4. **Validate existing solutions**
+
+   .. code-block:: bash
+
+      # Validate a specific solution
+      microlens-submit validate-solution <solution_id>
+      
+      # Validate all solutions for an event
+      microlens-submit validate-event EVENT123
+      
+      # Validate the entire submission
+      microlens-submit validate-submission
+
+   These commands check parameter completeness, types, and physical consistency
+   based on the model type and higher-order effects. They also validate that
+   relative probabilities for active solutions in each event sum to 1.0.
+
+5. **Attach a posterior file (optional)**
 
    After generating a posterior sample (e.g., an MCMC chain), store the file
    within your project and record its relative path using the Python API::
@@ -56,26 +75,26 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
       >>> sub.save()
 
-5. **Add a competing solution**
+6. **Add a competing solution**
 
    .. code-block:: bash
 
      microlens-submit add-solution EVENT123 1S1L \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
-6. **List your solutions**
+7. **List your solutions**
 
    .. code-block:: bash
 
       microlens-submit list-solutions EVENT123
 
-7. **Deactivate the less-good solution**
+8. **Deactivate the less-good solution**
 
    .. code-block:: bash
 
       microlens-submit deactivate <solution_id>
 
-8. **Export the final package**
+9. **Export the final package**
 
    .. code-block:: bash
 

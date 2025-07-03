@@ -1,3 +1,23 @@
+## Release v0.10.0
+
+### What's New
+- **Centralized Parameter Validation:** Added comprehensive validation logic that checks parameter completeness, types, and physical consistency based on model type and higher-order effects.
+- **CLI Validation Commands:** New commands `validate-solution`, `validate-event`, and `validate-submission` for checking solutions and submissions.
+- **Automatic Validation:** Solutions are automatically validated when added via CLI, with warnings displayed but saving never blocked.
+- **Enhanced Dry-Run:** `--dry-run` now includes validation results, showing warnings before saving.
+- **Validation Module:** New `validate_parameters.py` module with extensible validation logic for different model types and effects.
+
+### Bug Fixes
+- None
+
+### Breaking Changes
+- None
+
+### Dependencies
+- N/A
+
+<br>
+
 ## Release v0.9.0
 
 ### What's New

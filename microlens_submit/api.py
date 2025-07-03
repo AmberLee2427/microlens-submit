@@ -360,6 +360,26 @@ class Submission(BaseModel):
             active = [sol for sol in event.solutions.values() if sol.is_active]
             if not active:
                 warnings.append(f"Event {event.event_id} has no active solutions")
+            else:
+                # Check relative probabilities for active solutions
+                if len(active) > 1:
+                    # Multiple active solutions - check if probabilities sum to 1.0
+                    total_prob = sum(sol.relative_probability or 0.0 for sol in active)
+                    
+                    if total_prob > 0.0 and abs(total_prob - 1.0) > 1e-6:  # Allow small floating point errors
+                        warnings.append(
+                            f"Event {event.event_id}: Relative probabilities for active solutions sum to {total_prob:.3f}, "
+                            f"should sum to 1.0. Solutions: {[sol.solution_id[:8] + '...' for sol in active]}"
+                        )
+                elif len(active) == 1:
+                    # Single active solution - probability should be 1.0 or None
+                    sol = active[0]
+                    if sol.relative_probability is not None and abs(sol.relative_probability - 1.0) > 1e-6:
+                        warnings.append(
+                            f"Event {event.event_id}: Single active solution has relative_probability {sol.relative_probability:.3f}, "
+                            f"should be 1.0 or None"
+                        )
+            
             for sol in active:
                 # Use the new centralized validation
                 solution_messages = sol.validate()

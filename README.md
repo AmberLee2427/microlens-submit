@@ -26,6 +26,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 * **Active Solution Control:** Quickly list just the active solutions or mark
   all solutions inactive in one call.
 * **Automatic Validation:** Aggressive data validation powered by Pydantic ensures your submission is always compliant with the challenge rules.
+* **Parameter Validation:** Centralized validation logic checks parameter completeness, types, and physical consistency based on model type and higher-order effects.
 * **Environment Capture:** Automatically records your Python dependencies for each specific model fit, ensuring reproducibility.
 * **Optional Posterior Storage:** Record the path to posterior samples for any solution.
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
@@ -65,7 +66,10 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
    parsed input without saving anything.
 3. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
 4. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
-5. Export your final submission: `microlens-submit export final_submission.zip`
+5. Validate solutions and check for issues: `microlens-submit validate-solution <solution_id>`
+6. Export your final submission: `microlens-submit export final_submission.zip`
+
+**Note:** When you add a solution, it's automatically validated and any warnings are displayed. Use `--dry-run` to check validation without saving.
 
 ### Using the Python API
 
