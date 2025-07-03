@@ -191,4 +191,29 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit export submission.zip
 
+11. **Preview your submission dossier**
+
+   .. code-block:: bash
+
+      microlens-submit generate-dossier
+
+   This will create a human-readable HTML dashboard at ``dossier/index.html`` inside your project directory. Open this file in your web browser to preview your submission as evaluators will see it.
+
+   You can also serve the dossier with a simple local server:
+
+   .. code-block:: bash
+
+      cd dossier
+      python3 -m http.server
+
+   Then open ``http://localhost:8000`` in your browser.
+
+   The dossier includes:
+   - Team and submission metadata
+   - Solution summaries and statistics
+   - Progress bar and compute time
+   - Event table and parameter distribution placeholders
+
+   **Note:** The dossier is for your review only and is not included in the exported submission zip.
+
 

@@ -54,3 +54,6 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["microlens_submit*"]
 exclude = ["assets*", "docs*", "tests*"]
+
+[tool.setuptools.package-data]
+microlens_submit = ["assets/rges-pit_logo.png"]

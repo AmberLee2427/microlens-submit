@@ -962,3 +962,28 @@ def test_markdown_notes_in_list_and_compare():
         assert result.exit_code == 0
         # Notes are not shown in compare-solutions, but ensure command runs and solution is present
         assert sol.solution_id[:8] in result.stdout
+
+
+def test_cli_generate_dossier():
+    """Test generate-dossier command creates dossier/index.html with expected content."""
+    from microlens_submit import __version__
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(app, ["init", "--team-name", "DossierTesters", "--tier", "standard"])
+        assert result.exit_code == 0
+        # Add a solution
+        result = runner.invoke(app, [
+            "add-solution", "evt", "1S1L",
+            "--param", "t0=555.5",
+            "--param", "u0=0.1",
+            "--param", "tE=25.0",
+        ])
+        assert result.exit_code == 0
+        # Generate dossier
+        result = runner.invoke(app, ["generate-dossier"])
+        assert result.exit_code == 0
+        dossier_index = Path("dossier/index.html")
+        assert dossier_index.exists()
+        html = dossier_index.read_text(encoding="utf-8")
+        assert "DossierTesters" in html
+        assert f"microlens-submit v{__version__}" in html

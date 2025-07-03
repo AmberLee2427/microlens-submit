@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/AmberLee2427/microlens-submit">
-    <img src="./assets/rges-pit_logo.png" alt="logo" width="300"/>
+    <img src="./microlens_submit/assets/rges-pit_logo.png" alt="logo" width="300"/>
   </a>
 </p>
 
