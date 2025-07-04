@@ -387,8 +387,8 @@ def test_cli_compare_solutions_skips_zero_data_points():
         assert result.exit_code == 0
         # Should only show the valid solution in the table
         # The output now includes "Relative probabilities calculated using BIC" 
-        # so we count "Relative Prob" (the truncated column header) instead
-        assert result.stdout.count("Relative Prob") == 1
+        # so we count "Relative" (the truncated column header) instead
+        assert result.stdout.count("Relative") == 1
 
 
 def test_params_file_option_and_bands():
