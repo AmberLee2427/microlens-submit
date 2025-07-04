@@ -201,3 +201,14 @@
   .wy-nav-side {
     background: var(--rtd-color-secondary) !important;
   }
+
+  /* Collapsed sidebar nav text color */
+  .wy-menu-vertical > li > a {
+    color: var(--rtd-color-background) !important;
+  }
+
+  /* Sidebar nav item background on hover */
+  .wy-menu-vertical > li > a:hover {
+    background: var(--rtd-color-text) !important;
+    color: var(--rtd-color-secondary) !important;
+  }
