@@ -50,6 +50,8 @@ import zipfile
 import json
 import subprocess
 import sys
+import tempfile
+import pytest
 
 from microlens_submit.api import load
 
@@ -571,7 +573,6 @@ def test_solution_aliases(tmp_path):
     sol_dup1 = evt_dup.add_solution("1S1L", {"t0": 2459123.5}, alias="duplicate")
     sol_dup2 = evt_dup.add_solution("1S2L", {"t0": 2459123.5}, alias="duplicate")  # Duplicate alias
     
-    import pytest
     with pytest.raises(ValueError, match="Duplicate alias"):
         sub2.save()  # This should trigger validation and raise the error
 
@@ -764,3 +765,63 @@ def test_cli_add_and_edit_alias(tmp_path):
     sub2 = load(str(project))
     sol2 = sub2.get_event("EVENT001").solutions[sol.solution_id]
     assert sol2.alias == "cli_renamed"
+
+
+def test_remove_solution_and_event():
+    """Test the remove_solution and remove_event functionality."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        submission = load(tmpdir)
+        
+        # Create an event with solutions
+        event = submission.get_event("TEST_EVENT")
+        solution1 = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+        solution2 = event.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5})
+        
+        # Set notes on one solution (creates tmp file)
+        solution1.set_notes("# Test notes")
+        
+        # Test removing an unsaved solution
+        assert len(event.solutions) == 2
+        removed = event.remove_solution(solution1.solution_id)
+        assert removed is True
+        assert len(event.solutions) == 1
+        assert solution1.solution_id not in event.solutions
+        
+        # Test removing all solutions
+        removed_count = event.remove_all_solutions()
+        assert removed_count == 1
+        assert len(event.solutions) == 0
+        
+        # Test removing the event
+        event = submission.get_event("TEST_EVENT")  # Recreate
+        solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
+        assert len(submission.events) == 1
+        removed = submission.remove_event("TEST_EVENT")
+        assert removed is True
+        assert len(submission.events) == 0
+        
+        # Test safety features with saved solutions
+        event = submission.get_event("SAVED_EVENT")
+        solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+        submission.save()  # Make solution saved
+        
+        # Should fail without force
+        with pytest.raises(ValueError, match="Cannot remove saved solution"):
+            event.remove_solution(solution.solution_id)
+        
+        # Should work with force
+        removed = event.remove_solution(solution.solution_id, force=True)
+        assert removed is True
+        
+        # Test event removal safety
+        event = submission.get_event("SAVED_EVENT2")
+        solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+        submission.save()
+        
+        # Should fail without force
+        with pytest.raises(ValueError, match="Cannot remove event"):
+            submission.remove_event("SAVED_EVENT2")
+        
+        # Should work with force
+        removed = submission.remove_event("SAVED_EVENT2", force=True)
+        assert removed is True

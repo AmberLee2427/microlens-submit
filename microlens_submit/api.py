@@ -91,6 +91,7 @@ class Solution(BaseModel):
         relative_probability: Optional probability of this solution being the best model.
         n_data_points: Number of data points used in the fit.
         creation_timestamp: UTC timestamp when the solution was created.
+        saved: Flag indicating whether the solution has been persisted to disk.
 
 
     Example:
@@ -177,6 +178,7 @@ class Solution(BaseModel):
     creation_timestamp: str = Field(
         default_factory=lambda: datetime.utcnow().isoformat()
     )
+    saved: bool = Field(default=False, exclude=True)
 
     def set_compute_info(
         self,
@@ -440,6 +442,10 @@ class Solution(BaseModel):
         and sets notes_path. On Submission.save(), temporary notes files are
         moved to the canonical location.
         
+        ⚠️  WARNING: This method writes files immediately. If you're testing and
+        don't want to create files, consider using a temporary project directory
+        or checking the content before calling this method.
+        
         Args:
             content: The markdown content to write to the notes file.
             project_root: Optional project root path for resolving relative
@@ -470,6 +476,11 @@ class Solution(BaseModel):
             This method supports markdown formatting. The notes will be
             rendered as HTML in the dossier with syntax highlighting
             for code blocks.
+            
+            For testing purposes, you can:
+            1. Use a temporary project directory: load("./tmp_test_project")
+            2. Check the content before calling: print("Notes content:", content)
+            3. Use a dry-run approach by setting notes_path manually
         """
         if not self.notes_path:
             # Use tmp/ for unsaved notes
@@ -636,13 +647,23 @@ class Event(BaseModel):
             unique UUID. You can modify the solution attributes after creation
             and then save the submission to persist changes. If an alias is
             provided, it will be validated for uniqueness when the submission
-            is saved.
+            is saved. Remember to call submission.save() to persist the solution
+            to disk.
         """
         solution_id = str(uuid.uuid4())
         sol = Solution(
             solution_id=solution_id, model_type=model_type, parameters=parameters, alias=alias
         )
         self.solutions[solution_id] = sol
+        
+        # Provide feedback about the created solution
+        alias_info = f" with alias '{alias}'" if alias else ""
+        print(f"✅ Created solution {solution_id[:8]}...{alias_info}")
+        print(f"   Model: {model_type}, Parameters: {len(parameters)}")
+        if alias:
+            print(f"   ⚠️  Note: Alias '{alias}' will be validated for uniqueness when saved")
+        print(f"   💾 Remember to call submission.save() to persist to disk")
+        
         return sol
 
     def get_solution(self, solution_id: str) -> Solution:
@@ -718,6 +739,202 @@ class Event(BaseModel):
         for sol in self.solutions.values():
             sol.is_active = False
 
+    def run_validation(self) -> list[str]:
+        """Validate all active solutions in this event.
+        
+        This method performs validation on all active solutions in the event,
+        including parameter validation, physical consistency checks, and
+        event-specific validation like relative probability sums.
+        
+        Returns:
+            list[str]: Human-readable validation messages. Empty list indicates
+                      all validations passed. Messages may include warnings
+                      (non-critical) and errors (critical issues).
+                      
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Validate the event
+            >>> warnings = event.run_validation()
+            >>> if warnings:
+            ...     print("Event validation issues:")
+            ...     for msg in warnings:
+            ...         print(f"  - {msg}")
+            ... else:
+            ...     print("✅ Event is valid!")
+            
+        Note:
+            This method validates all active solutions regardless of whether
+            they have been saved to disk. It does not check alias uniqueness
+            across the entire submission (use submission.run_validation() for that).
+            Always validate before saving or exporting.
+        """
+        warnings = []
+        
+        # Get all active solutions (saved or unsaved)
+        active = [sol for sol in self.solutions.values() if sol.is_active]
+        
+        if not active:
+            warnings.append(f"Event {self.event_id} has no active solutions")
+            return warnings
+        
+        # Check relative probabilities for active solutions
+        if len(active) > 1:
+            # Multiple active solutions - check if probabilities sum to 1.0
+            total_prob = sum(sol.relative_probability or 0.0 for sol in active)
+            
+            if total_prob > 0.0 and abs(total_prob - 1.0) > 1e-6:  # Allow small floating point errors
+                warnings.append(
+                    f"Relative probabilities for active solutions sum to {total_prob:.3f}, "
+                    f"should sum to 1.0. Solutions: {[sol.solution_id[:8] + '...' for sol in active]}"
+                )
+        elif len(active) == 1:
+            # Single active solution - probability should be 1.0 or None
+            sol = active[0]
+            if sol.relative_probability is not None and abs(sol.relative_probability - 1.0) > 1e-6:
+                warnings.append(
+                    f"Single active solution has relative_probability {sol.relative_probability:.3f}, "
+                    f"should be 1.0 or None"
+                )
+        
+        # Validate each active solution
+        for sol in active:
+            # Use the centralized validation
+            solution_messages = sol.run_validation()
+            for msg in solution_messages:
+                warnings.append(f"Solution {sol.solution_id}: {msg}")
+            
+            # Additional checks for missing metadata
+            if sol.log_likelihood is None:
+                warnings.append(f"Solution {sol.solution_id} is missing log_likelihood")
+            if sol.lightcurve_plot_path is None:
+                warnings.append(f"Solution {sol.solution_id} is missing lightcurve_plot_path")
+            if sol.lens_plane_plot_path is None:
+                warnings.append(f"Solution {sol.solution_id} is missing lens_plane_plot_path")
+            
+            # Check for missing compute info
+            compute_info = sol.compute_info or {}
+            if "cpu_hours" not in compute_info:
+                warnings.append(f"Solution {sol.solution_id} is missing cpu_hours")
+            if "wall_time_hours" not in compute_info:
+                warnings.append(f"Solution {sol.solution_id} is missing wall_time_hours")
+        
+        return warnings
+
+    def remove_solution(self, solution_id: str, force: bool = False) -> bool:
+        """Completely remove a solution from this event.
+        
+        ⚠️  WARNING: This permanently removes the solution from memory and any
+        associated files. This action cannot be undone. Use deactivate() instead
+        if you want to keep the solution but exclude it from exports.
+        
+        Args:
+            solution_id: Identifier of the solution to remove.
+            force: If True, skip confirmation prompts and remove immediately.
+                  If False, will warn about data loss.
+            
+        Returns:
+            bool: True if solution was removed, False if not found or cancelled.
+            
+        Raises:
+            ValueError: If solution is saved and force=False (to prevent accidental
+                      removal of persisted data).
+            
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Remove an unsaved solution (safe)
+            >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
+            >>> removed = event.remove_solution(solution.solution_id)
+            >>> print(f"Removed: {removed}")
+            >>> 
+            >>> # Remove a saved solution (requires force=True)
+            >>> saved_solution = event.get_solution("existing_uuid")
+            >>> if saved_solution.saved:
+            ...     removed = event.remove_solution(saved_solution.solution_id, force=True)
+            ...     print(f"Force removed saved solution: {removed}")
+            
+        Note:
+            This method:
+            1. Removes the solution from the event's solutions dict
+            2. Cleans up any temporary notes files in tmp/
+            3. For saved solutions, requires force=True to prevent accidents
+            4. Cannot be undone - use deactivate() if you want to keep the data
+        """
+        if solution_id not in self.solutions:
+            return False
+            
+        solution = self.solutions[solution_id]
+        
+        # Safety check for saved solutions
+        if solution.saved and not force:
+            raise ValueError(
+                f"Cannot remove saved solution {solution_id[:8]}... without force=True. "
+                f"Use solution.deactivate() to exclude from exports instead, or "
+                f"call remove_solution(solution_id, force=True) to force removal."
+            )
+        
+        # Clean up temporary files
+        if solution.notes_path and not solution.saved:
+            notes_path = Path(solution.notes_path)
+            if notes_path.parts and notes_path.parts[0] == "tmp":
+                # Remove temporary notes file
+                full_path = Path(self.submission.project_path) / notes_path if self.submission else notes_path
+                try:
+                    if full_path.exists():
+                        full_path.unlink()
+                        print(f"🗑️  Removed temporary notes file: {notes_path}")
+                except OSError as e:
+                    print(f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}")
+        
+        # Remove from solutions dict
+        del self.solutions[solution_id]
+        
+        print(f"🗑️  Removed solution {solution_id[:8]}... from event {self.event_id}")
+        return True
+
+    def remove_all_solutions(self, force: bool = False) -> int:
+        """Remove all solutions from this event.
+        
+        ⚠️  WARNING: This permanently removes ALL solutions from this event.
+        This action cannot be undone. Use clear_solutions() instead if you want
+        to keep the solutions but exclude them from exports.
+        
+        Args:
+            force: If True, skip confirmation prompts and remove immediately.
+                  If False, will warn about data loss.
+            
+        Returns:
+            int: Number of solutions removed.
+            
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Remove all solutions (use with caution!)
+            >>> removed_count = event.remove_all_solutions(force=True)
+            >>> print(f"Removed {removed_count} solutions from event {event.event_id}")
+            
+        Note:
+            This is equivalent to calling remove_solution() for each solution
+            in the event. Use clear_solutions() if you want to keep the data.
+        """
+        solution_ids = list(self.solutions.keys())
+        removed_count = 0
+        
+        for solution_id in solution_ids:
+            try:
+                if self.remove_solution(solution_id, force=force):
+                    removed_count += 1
+            except ValueError as e:
+                if not force:
+                    print(f"⚠️  Skipped saved solution {solution_id[:8]}... (use force=True to remove)")
+                else:
+                    # Force=True should override the saved check
+                    if self.remove_solution(solution_id, force=True):
+                        removed_count += 1
+        
+        return removed_count
+
     @classmethod
     def _from_dir(cls, event_dir: Path, submission: "Submission") -> "Event":
         """Load an event from disk."""
@@ -733,6 +950,8 @@ class Event(BaseModel):
             for sol_file in solutions_dir.glob("*.json"):
                 with sol_file.open("r", encoding="utf-8") as fh:
                     sol = Solution.model_validate_json(fh.read())
+                # Mark loaded solutions as saved since they came from disk
+                sol.saved = True
                 event.solutions[sol.solution_id] = sol
         return event
 
@@ -1107,6 +1326,96 @@ class Submission(BaseModel):
         
         return None
 
+    def get_solution_status(self) -> dict:
+        """Get a summary of solution status across all events.
+        
+        Returns:
+            Dictionary with counts of saved/unsaved solutions and any issues.
+            
+        Example:
+            >>> submission = load("./my_project")
+            >>> status = submission.get_solution_status()
+            >>> print(f"Saved: {status['saved']}, Unsaved: {status['unsaved']}")
+            >>> if status['duplicate_aliases']:
+            ...     print("Duplicate aliases found:", status['duplicate_aliases'])
+        """
+        status = {
+            'saved': 0,
+            'unsaved': 0,
+            'total': 0,
+            'events': {},
+            'duplicate_aliases': []
+        }
+        
+        # Check for duplicate aliases
+        alias_errors = self._validate_alias_uniqueness()
+        status['duplicate_aliases'] = alias_errors
+        
+        for event_id, event in self.events.items():
+            event_status = {
+                'saved': 0,
+                'unsaved': 0,
+                'total': len(event.solutions),
+                'solutions': {}
+            }
+            
+            for sol_id, solution in event.solutions.items():
+                sol_status = {
+                    'saved': solution.saved,
+                    'alias': solution.alias,
+                    'model_type': solution.model_type,
+                    'is_active': solution.is_active
+                }
+                event_status['solutions'][sol_id[:8] + '...'] = sol_status
+                
+                if solution.saved:
+                    event_status['saved'] += 1
+                    status['saved'] += 1
+                else:
+                    event_status['unsaved'] += 1
+                    status['unsaved'] += 1
+                
+                status['total'] += 1
+            
+            status['events'][event_id] = event_status
+        
+        return status
+
+    def print_solution_status(self) -> None:
+        """Print a human-readable summary of solution status.
+        
+        Shows which solutions are saved vs unsaved, and any validation issues.
+        
+        Example:
+            >>> submission = load("./my_project")
+            >>> submission.print_solution_status()
+        """
+        status = self.get_solution_status()
+        
+        print(f"📊 Solution Status Summary:")
+        print(f"   Total solutions: {status['total']}")
+        print(f"   Saved to disk: {status['saved']}")
+        print(f"   Unsaved (in memory): {status['unsaved']}")
+        
+        if status['unsaved'] > 0:
+            print(f"   💾 Call submission.save() to persist unsaved solutions")
+        
+        if status['duplicate_aliases']:
+            print(f"   ❌ Alias conflicts found:")
+            for error in status['duplicate_aliases']:
+                print(f"      {error}")
+            print(f"   💡 Resolve conflicts before saving")
+        
+        for event_id, event_status in status['events'].items():
+            print(f"\n📁 Event {event_id}:")
+            print(f"   Solutions: {event_status['saved']} saved, {event_status['unsaved']} unsaved")
+            
+            for sol_id, sol_status in event_status['solutions'].items():
+                status_icon = "✅" if sol_status['saved'] else "⏳"
+                alias_info = f" (alias: {sol_status['alias']})" if sol_status['alias'] else ""
+                active_info = "" if sol_status['is_active'] else " [inactive]"
+                print(f"   {status_icon} {sol_id} - {sol_status['model_type']}{alias_info}{active_info}")
+
     def save(self) -> None:
         """Persist the current state of the submission to ``project_path``.
         
@@ -1142,7 +1451,16 @@ class Submission(BaseModel):
         # Validate alias uniqueness before saving
         alias_errors = self._validate_alias_uniqueness()
         if alias_errors:
+            print("❌ Save failed due to alias validation errors:")
+            for error in alias_errors:
+                print(f"   {error}")
+            print("💡 Solutions with duplicate aliases remain in memory but are not saved")
+            print("   Use different aliases or remove aliases to resolve conflicts")
             raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
+        
+        # Count unsaved solutions for feedback
+        unsaved_count = sum(1 for event in self.events.values() 
+                           for sol in event.solutions.values() if not sol.saved)
         
         project = Path(self.project_path)
         events_dir = project / "events"
@@ -1170,10 +1488,25 @@ class Submission(BaseModel):
         alias_lookup = self._build_alias_lookup()
         self._save_alias_lookup(alias_lookup)
         
-        # Save all events
+        # Save all events and mark solutions as saved
         for event in self.events.values():
             event.submission = self
             event._save()
+            # Mark all solutions in this event as saved
+            for sol in event.solutions.values():
+                sol.saved = True
+        
+        # Provide feedback
+        if unsaved_count > 0:
+            print(f"✅ Successfully saved {unsaved_count} new solution(s) to disk")
+        else:
+            print("✅ Successfully saved submission to disk")
+        
+        # Show alias information if any were saved
+        saved_aliases = [f"{event_id} {sol.alias}" for event_id, event in self.events.items() 
+                        for sol in event.solutions.values() if sol.alias and sol.saved]
+        if saved_aliases:
+            print(f"📋 Saved aliases: {', '.join(saved_aliases)}")
 
     def export(self, output_path: str) -> None:
         """Create a zip archive of all active solutions.
@@ -1326,6 +1659,81 @@ class Submission(BaseModel):
                                 file_path,
                                 arcname=f"{sol_dir_arc}/{Path(path).name}",
                             )
+
+    def remove_event(self, event_id: str, force: bool = False) -> bool:
+        """Completely remove an event and all its solutions from the submission.
+        
+        ⚠️  WARNING: This permanently removes the event and ALL its solutions from
+        memory and any associated files. This action cannot be undone. Use
+        event.clear_solutions() instead if you want to keep the event but exclude
+        all solutions from exports.
+        
+        Args:
+            event_id: Identifier of the event to remove.
+            force: If True, skip confirmation prompts and remove immediately.
+                  If False, will warn about data loss.
+            
+        Returns:
+            bool: True if event was removed, False if not found.
+            
+        Raises:
+            ValueError: If event has saved solutions and force=False (to prevent
+                      accidental removal of persisted data).
+            
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Remove an event with only unsaved solutions (safe)
+            >>> event = submission.get_event("TEST_EVENT")
+            >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
+            >>> removed = submission.remove_event("TEST_EVENT")
+            >>> print(f"Removed event: {removed}")
+            >>> 
+            >>> # Remove an event with saved solutions (requires force=True)
+            >>> removed = submission.remove_event("EXISTING_EVENT", force=True)
+            >>> print(f"Force removed event with saved solutions: {removed}")
+            
+        Note:
+            This method:
+            1. Removes the event from the submission's events dict
+            2. Cleans up any temporary files from unsaved solutions
+            3. For events with saved solutions, requires force=True to prevent accidents
+            4. Cannot be undone - use event.clear_solutions() if you want to keep the data
+        """
+        if event_id not in self.events:
+            return False
+            
+        event = self.events[event_id]
+        
+        # Check if any solutions are saved
+        has_saved_solutions = any(sol.saved for sol in event.solutions.values())
+        
+        if has_saved_solutions and not force:
+            saved_count = sum(1 for sol in event.solutions.values() if sol.saved)
+            raise ValueError(
+                f"Cannot remove event '{event_id}' with {saved_count} saved solutions without force=True. "
+                f"Use event.clear_solutions() to exclude all solutions from exports instead, or "
+                f"call remove_event(event_id, force=True) to force removal."
+            )
+        
+        # Clean up temporary files from unsaved solutions
+        for solution in event.solutions.values():
+            if not solution.saved and solution.notes_path:
+                notes_path = Path(solution.notes_path)
+                if notes_path.parts and notes_path.parts[0] == "tmp":
+                    full_path = Path(self.project_path) / notes_path
+                    try:
+                        if full_path.exists():
+                            full_path.unlink()
+                            print(f"🗑️  Removed temporary notes file: {notes_path}")
+                    except OSError as e:
+                        print(f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}")
+        
+        # Remove from events dict
+        del self.events[event_id]
+        
+        print(f"🗑️  Removed event '{event_id}' with {len(event.solutions)} solutions")
+        return True
 
 
 def load(project_path: str) -> Submission:
