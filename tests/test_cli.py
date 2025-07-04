@@ -385,8 +385,10 @@ def test_cli_compare_solutions_skips_zero_data_points():
 
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
-        # Should only show the valid solution
-        assert result.stdout.count("Relative") == 1
+        # Should only show the valid solution in the table
+        # The output now includes "Relative probabilities calculated using BIC" 
+        # so we count "Relative Prob" (the truncated column header) instead
+        assert result.stdout.count("Relative Prob") == 1
 
 
 def test_params_file_option_and_bands():
@@ -621,6 +623,12 @@ def test_cli_validate_submission():
                 "--param",
                 "tE=25.0",
             ],
+        )
+        assert result.exit_code == 0
+        
+        # Set repo URL to make validation pass
+        result = runner.invoke(
+            app, ["set-repo-url", "https://github.com/test/team"]
         )
         assert result.exit_code == 0
         
