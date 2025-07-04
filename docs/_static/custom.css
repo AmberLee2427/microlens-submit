@@ -238,3 +238,16 @@ h1, h2 {
 .wy-menu-vertical .caption {
     color: #fff !important;
 }
+
+/* Breadcrumb navigation bar */
+.wy-breadcrumbs {
+    background: var(--rtd-color-secondary) !important;
+}
+
+.wy-breadcrumbs li {
+    color: var(--rtd-color-background) !important;
+}
+
+.wy-breadcrumbs li a {
+    color: var(--rtd-color-background) !important;
+}
