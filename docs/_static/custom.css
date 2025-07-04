@@ -239,12 +239,29 @@ h1, h2 {
     color: #fff !important;
 }
 
-/* Style the EthicalAds ad box to match the sidebar */
-.ethical-rtd {
+/* Style the ad box to match the sidebar */
+.wy-nav-side .ethical-rtd,
+.wy-nav-side .ethical-sidebar-ad,
+.wy-nav-side .ethical-ad,
+.wy-nav-side #ethical-ad-placement,
+.wy-nav-side [id^="ethical-ad"] {
     background: var(--rtd-color-secondary) !important;
     border-radius: 8px !important;
     color: var(--rtd-color-background) !important;
+    box-shadow: none !important;
+    border: none !important;
 }
-.ethical-rtd * {
+.wy-nav-side .ethical-rtd *,
+.wy-nav-side .ethical-sidebar-ad *,
+.wy-nav-side .ethical-ad *,
+.wy-nav-side #ethical-ad-placement *,
+.wy-nav-side [id^="ethical-ad"] * {
+    background: transparent !important;
     color: var(--rtd-color-background) !important;
+}
+
+.wy-nav-side iframe {
+  background: var(--rtd-color-secondary) !important;
+  border-radius: 8px !important;
+  border: none !important;
 }
