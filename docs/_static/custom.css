@@ -123,7 +123,7 @@
 
   /* Admonition boxes (note, warning, tip, etc.) */
   .admonition {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-background) !important;
     border: 2px solid var(--rtd-color-secondary) !important;
     border-radius: 6px !important;
     margin: 1em 0 !important;
@@ -182,7 +182,7 @@
   
   /* Example boxes */
   .example {
-    background: var(--rtd-color-primary) !important;
+    background: var(--rtd-color-background) !important;
     border: 2px solid var(--rtd-color-secondary) !important;
     border-radius: 6px !important;
     margin: 1em 0 !important;
