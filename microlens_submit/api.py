@@ -57,8 +57,8 @@ class Solution(BaseModel):
     This data model stores everything required to describe a single
     microlensing solution, including the numeric parameters of the fit and
     metadata about how it was produced. Instances are normally created via
-    `Event.add_solution` and persisted to disk when
-    `Submission.save` is called.
+    :meth:`Event.add_solution` and persisted to disk when
+    :meth:`Submission.save` is called.
 
     Attributes:
         solution_id: Unique identifier for the solution (auto-generated UUID).
