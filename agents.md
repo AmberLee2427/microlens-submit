@@ -42,7 +42,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 `microlens-submit` is currently at version 0.12.0-dev. Below is the prioritized roadmap for developing version 1.0.0.
 
-### v0.12.0 — Dossier Generator & Enhanced Validation (Next Priority)
+### v0.12.1 — Enhanced CLI & Documentation (Current Release)
 
 - **Task 1: Submission Dossier Generator**
   - *Goal:* Allow participants to preview exactly what evaluators will receive.
@@ -400,15 +400,19 @@ For future automation, consider implementing:
 ### 10.8. Current Release Status
 
 - **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
-- **v0.12.0:** ✅ Released (2025-07-03) - File-based notes system, HTML dossier generator, export improvements, temp notes file logic, robust CLI/API UX
+- **v0.12.1:** ✅ Released (2025-07-03) - File-based notes system, HTML dossier generator, export improvements, temp notes file logic, robust CLI/API UX
 - **v0.13.0:** 📋 Planned - High Automation Support
 - **v1.0.0:** 📋 Planned - Official Release
 
-### v0.12.0 Highlights
-- Notes are now always stored as Markdown files, referenced by `notes_path`.
-- CLI supports `--notes-file`, `--notes`, `--append-notes`, and in-editor editing.
-- Python API creates temp notes files in `tmp/` and moves them to canonical location on save.
-- Dossier generator creates a full HTML dashboard and event/solution pages.
-- Export logic includes notes files in the zip and updates paths.
-- Improved consistency and error handling across CLI and API.
+### v0.12.1 Highlights
+- **New CLI Commands:** `set-hardware-info` for managing computational resources
+- **Parameter File Support:** YAML and JSON parameter files with `--params-file`
+- **Enhanced GitHub Integration:** Logo packaging, repo URL management, commit links
+- **Higher-Order Effects:** Comprehensive CLI support for all microlensing effects
+- **Full Dossier Report:** Single printable HTML with all submission content
+- **Google-Style Documentation:** Complete docstring coverage with examples
+- **Improved Validation:** Professional output format with better error messages
+- **Hardware Info Management:** CLI and API support for reproducibility tracking
+
+- **v0.12.1:** ✅ Released (2025-07-03) - Enhanced CLI commands, hardware info management, parameter file support, comprehensive documentation, GitHub integration, higher-order effects support, improved validation, full dossier report generation
 

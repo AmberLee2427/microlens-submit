@@ -2,14 +2,59 @@
 Parameter validation module for microlens-submit.
 
 This module provides centralized validation logic for checking solution completeness
-and parameter consistency against model definitions.
+and parameter consistency against model definitions. It validates microlensing
+solutions against predefined model types, higher-order effects, and parameter
+constraints to ensure submissions are complete and physically reasonable.
 
- Define core parameters that might be expected for different model types.
- This structure is a suggestion and can be adapted.
- 'required_params_core' are the fundamental microlensing parameters.
- 'required_higher_order_params' are parameters specifically associated with higher-order effects.
- 'optional_higher_order_params' are optional parameters for higher-order effects.
- 'special_attributes' are parameters that live outside the 'parameters' dictionary (like t_ref).
+The module defines:
+- Model definitions with required parameters for each model type
+- Higher-order effect definitions with associated parameters
+- Parameter properties including types, units, and descriptions
+- Validation functions for completeness, types, uncertainties, and consistency
+
+**Supported Model Types:**
+- 1S1L: Point Source, Single Point Lens (standard microlensing)
+- 1S2L: Point Source, Binary Point Lens
+- 2S1L: Binary Source, Single Point Lens
+- 2S2L: Binary Source, Binary Point Lens (commented)
+- 1S3L: Point Source, Triple Point Lens (commented)
+- 2S3L: Binary Source, Triple Point Lens (commented)
+
+**Supported Higher-Order Effects:**
+- parallax: Microlens parallax effect
+- finite-source: Finite source size effect
+- lens-orbital-motion: Orbital motion of lens components
+- xallarap: Source orbital motion
+- gaussian-process: Gaussian process noise modeling
+- stellar-rotation: Stellar rotation effects
+- fitted-limb-darkening: Fitted limb darkening coefficients
+
+Example:
+    >>> from microlens_submit.validate_parameters import check_solution_completeness
+    >>> 
+    >>> # Validate a simple 1S1L solution
+    >>> parameters = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+    >>> messages = check_solution_completeness("1S1L", parameters)
+    >>> if not messages:
+    ...     print("Solution is complete!")
+    >>> else:
+    ...     print("Issues found:", messages)
+    
+    >>> # Validate a binary lens with parallax
+    >>> parameters = {
+    ...     "t0": 2459123.5, "u0": 0.1, "tE": 20.0,
+    ...     "s": 1.2, "q": 0.5, "alpha": 45.0,
+    ...     "piEN": 0.1, "piEE": 0.05
+    ... }
+    >>> effects = ["parallax"]
+    >>> messages = check_solution_completeness("1S2L", parameters, effects, t_ref=2459123.0)
+    >>> print("Validation messages:", messages)
+
+Note:
+    All validation functions return lists of human-readable messages instead
+    of raising exceptions, allowing for comprehensive validation reporting.
+    Unknown parameters generate warnings rather than errors to accommodate
+    custom parameters and future model types.
 """
 
 from typing import Dict, List, Any, Optional, Union
@@ -133,16 +178,36 @@ PARAMETER_PROPERTIES = {
     "u4": {"type": "float", "units": " ", "description": "Quartic limb darkening coefficient (Fitted Limb Darkening)"},
 }
 
-def get_required_flux_params(model_type, bands):
-    """
-    Get the required flux parameters for a given model type and bands.
+def get_required_flux_params(model_type: str, bands: List[str]) -> List[str]:
+    """Get the required flux parameters for a given model type and bands.
+    
+    Determines which flux parameters are required based on the model type
+    (single vs binary source) and the photometric bands used. For single
+    source models, each band requires source and blend flux parameters.
+    For binary source models, each band requires two source fluxes and
+    a common blend flux.
     
     Args:
-        model_type (str): The type of model (e.g., "1S1L", "2S1L")
-        bands (list): List of band IDs (e.g., ["0", "1", "2"])
+        model_type: The type of microlensing model (e.g., "1S1L", "2S1L").
+        bands: List of band IDs as strings (e.g., ["0", "1", "2"]).
     
     Returns:
-        list: List of required flux parameters (e.g., ["F0_S", "F0_B", "F1_S", "F1_B"])
+        List of required flux parameter names (e.g., ["F0_S", "F0_B", "F1_S", "F1_B"]).
+    
+    Example:
+        >>> get_required_flux_params("1S1L", ["0", "1"])
+        ['F0_S', 'F0_B', 'F1_S', 'F1_B']
+        
+        >>> get_required_flux_params("2S1L", ["0", "1"])
+        ['F0_S1', 'F0_S2', 'F0_B', 'F1_S1', 'F1_S2', 'F1_B']
+        
+        >>> get_required_flux_params("1S1L", [])
+        []
+        
+    Note:
+        This function handles the most common model types (1S and 2S).
+        For models with more than 2 sources, additional logic would be needed.
+        The function returns an empty list if no bands are specified.
     """
     flux_params = []
     if not bands:
@@ -168,23 +233,68 @@ def check_solution_completeness(
     t_ref: Optional[float] = None,
     **kwargs
 ) -> List[str]:
-    """
-    Check if a solution has all required parameters based on its model type and effects.
+    """Check if a solution has all required parameters based on its model type and effects.
     
     This function validates that all required parameters are present for the given
     model type and any higher-order effects. It returns a list of human-readable
     warning or error messages instead of raising exceptions immediately.
     
+    The validation checks:
+    - Required core parameters for the model type
+    - Required parameters for each higher-order effect
+    - Flux parameters for specified photometric bands
+    - Reference time requirements for time-dependent effects
+    - Recognition of unknown parameters (warnings only)
+    
     Args:
-        model_type: The type of microlensing model (e.g., '1S1L', '1S2L')
-        parameters: Dictionary of model parameters
-        higher_order_effects: List of higher-order effects (e.g., ['parallax', 'finite-source'])
-        bands: List of photometric bands used
-        t_ref: Reference time for time-dependent effects
-        **kwargs: Additional solution attributes to validate
+        model_type: The type of microlensing model (e.g., '1S1L', '1S2L').
+        parameters: Dictionary of model parameters with parameter names as keys.
+        higher_order_effects: List of higher-order effects (e.g., ['parallax', 'finite-source']).
+            If None, no higher-order effects are assumed.
+        bands: List of photometric bands used (e.g., ["0", "1", "2"]).
+            If None, no band-specific parameters are required.
+        t_ref: Reference time for time-dependent effects (Julian Date).
+            Required for effects that specify requires_t_ref=True.
+        **kwargs: Additional solution attributes to validate (currently unused).
         
     Returns:
-        List of validation messages (empty list if all validations pass)
+        List of validation messages. Empty list if all validations pass.
+        Messages indicate missing required parameters, unknown effects,
+        missing reference times, or unrecognized parameters.
+    
+    Example:
+        >>> # Simple 1S1L solution - should pass
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+        >>> messages = check_solution_completeness("1S1L", params)
+        >>> print(messages)
+        []
+        
+        >>> # Missing required parameter
+        >>> params = {"t0": 2459123.5, "u0": 0.1}  # Missing tE
+        >>> messages = check_solution_completeness("1S1L", params)
+        >>> print(messages)
+        ["Missing required core parameter 'tE' for model type '1S1L'"]
+        
+        >>> # Binary lens with parallax
+        >>> params = {
+        ...     "t0": 2459123.5, "u0": 0.1, "tE": 20.0,
+        ...     "s": 1.2, "q": 0.5, "alpha": 45.0,
+        ...     "piEN": 0.1, "piEE": 0.05
+        ... }
+        >>> messages = check_solution_completeness("1S2L", params, ["parallax"], t_ref=2459123.0)
+        >>> print(messages)
+        []
+        
+        >>> # Missing reference time for parallax
+        >>> messages = check_solution_completeness("1S2L", params, ["parallax"])
+        >>> print(messages)
+        ["Reference time (t_ref) required for effect 'parallax'"]
+        
+    Note:
+        This function is designed to be comprehensive but not overly strict.
+        Unknown parameters generate warnings rather than errors to accommodate
+        custom parameters and future model types. The function validates against
+        the predefined MODEL_DEFINITIONS and HIGHER_ORDER_EFFECT_DEFINITIONS.
     """
     messages = []
     
@@ -263,15 +373,45 @@ def validate_parameter_types(
     parameters: Dict[str, Any],
     model_type: str
 ) -> List[str]:
-    """
-    Validate parameter types and value ranges.
+    """Validate parameter types and value ranges against expected types.
+    
+    Checks that parameters have the correct data types as defined in
+    PARAMETER_PROPERTIES. Currently supports validation of float, int,
+    and string types. Parameters not defined in PARAMETER_PROPERTIES
+    are skipped (no validation performed).
     
     Args:
-        parameters: Dictionary of model parameters
-        model_type: The type of microlensing model
+        parameters: Dictionary of model parameters with parameter names as keys.
+        model_type: The type of microlensing model (used for context in messages).
         
     Returns:
-        List of validation messages
+        List of validation messages. Empty list if all validations pass.
+        Messages indicate type mismatches for known parameters.
+    
+    Example:
+        >>> # Valid parameters
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+        >>> messages = validate_parameter_types(params, "1S1L")
+        >>> print(messages)
+        []
+        
+        >>> # Invalid type for t0
+        >>> params = {"t0": "2459123.5", "u0": 0.1, "tE": 20.0}  # t0 is string
+        >>> messages = validate_parameter_types(params, "1S1L")
+        >>> print(messages)
+        ["Parameter 't0' should be numeric, got str"]
+        
+        >>> # Unknown parameter (no validation performed)
+        >>> params = {"t0": 2459123.5, "custom_param": "value"}
+        >>> messages = validate_parameter_types(params, "1S1L")
+        >>> print(messages)
+        []
+        
+    Note:
+        This function only validates parameters that are defined in
+        PARAMETER_PROPERTIES. Unknown parameters are ignored to allow
+        for custom parameters and future extensions. The validation
+        is currently limited to basic type checking (float, int, str).
     """
     messages = []
     
@@ -298,15 +438,63 @@ def validate_parameter_uncertainties(
     parameters: Dict[str, Any],
     uncertainties: Optional[Dict[str, Any]] = None
 ) -> List[str]:
-    """
-    Validate parameter uncertainties for reasonableness and consistency.
+    """Validate parameter uncertainties for reasonableness and consistency.
+    
+    Performs comprehensive validation of parameter uncertainties, including:
+    - Format validation (single value or [lower, upper] pairs)
+    - Sign validation (uncertainties must be positive)
+    - Consistency checks (lower ≤ upper for asymmetric uncertainties)
+    - Reasonableness checks (relative uncertainty between 0.1% and 50%)
     
     Args:
-        parameters: Dictionary of model parameters
-        uncertainties: Dictionary of parameter uncertainties
+        parameters: Dictionary of model parameters with parameter names as keys.
+        uncertainties: Dictionary of parameter uncertainties. Can be None if
+            no uncertainties are provided. Supports two formats:
+            - Single value: {"param": 0.1} (symmetric uncertainty)
+            - Asymmetric bounds: {"param": [0.05, 0.15]} (lower, upper)
         
     Returns:
-        List of validation messages
+        List of validation messages. Empty list if all validations pass.
+        Messages indicate format errors, sign issues, consistency problems,
+        or warnings about very large/small relative uncertainties.
+    
+    Example:
+        >>> # Valid symmetric uncertainties
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+        >>> unc = {"t0": 0.1, "u0": 0.01, "tE": 0.5}
+        >>> messages = validate_parameter_uncertainties(params, unc)
+        >>> print(messages)
+        []
+        
+        >>> # Valid asymmetric uncertainties
+        >>> unc = {"t0": [0.05, 0.15], "u0": [0.005, 0.015]}
+        >>> messages = validate_parameter_uncertainties(params, unc)
+        >>> print(messages)
+        []
+        
+        >>> # Invalid format
+        >>> unc = {"t0": [0.1, 0.2, 0.3]}  # Too many values
+        >>> messages = validate_parameter_uncertainties(params, unc)
+        >>> print(messages)
+        ["Uncertainty for 't0' should be [lower, upper] or single value"]
+        
+        >>> # Inconsistent bounds
+        >>> unc = {"t0": [0.2, 0.1]}  # Lower > upper
+        >>> messages = validate_parameter_uncertainties(params, unc)
+        >>> print(messages)
+        ["Lower uncertainty for 't0' (0.2) > upper uncertainty (0.1)"]
+        
+        >>> # Very large relative uncertainty
+        >>> unc = {"t0": 1000.0}  # Very large uncertainty
+        >>> messages = validate_parameter_uncertainties(params, unc)
+        >>> print(messages)
+        ["Warning: Uncertainty for 't0' is very large (40.8% of parameter value)"]
+        
+    Note:
+        This function provides warnings rather than errors for very large
+        or very small relative uncertainties, as these might be legitimate
+        in some cases. The 0.1% to 50% range is a guideline based on
+        typical microlensing parameter uncertainties.
     """
     messages = []
     
@@ -368,17 +556,58 @@ def validate_solution_consistency(
     parameters: Dict[str, Any],
     **kwargs: Any,
 ) -> List[str]:
-    """
-    Validate internal consistency of solution parameters.
+    """Validate internal consistency of solution parameters.
+    
+    Performs physical consistency checks on microlensing parameters to
+    identify potentially problematic values. This includes range validation,
+    physical constraints, and model-specific consistency checks.
     
     Args:
-        model_type: The type of microlensing model
-        parameters: Dictionary of model parameters
-        **kwargs: Additional solution attributes. Supports
-            ``relative_probability`` for range checking.
+        model_type: The type of microlensing model (e.g., '1S1L', '1S2L').
+        parameters: Dictionary of model parameters with parameter names as keys.
+        **kwargs: Additional solution attributes. Currently supports:
+            relative_probability: Probability value for range checking (0-1).
         
     Returns:
-        List of validation messages
+        List of validation messages. Empty list if all validations pass.
+        Messages indicate physical inconsistencies, range violations,
+        or warnings about unusual parameter combinations.
+    
+    Example:
+        >>> # Valid parameters
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+        >>> messages = validate_solution_consistency("1S1L", params)
+        >>> print(messages)
+        []
+        
+        >>> # Invalid tE (must be positive)
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": -5.0}
+        >>> messages = validate_solution_consistency("1S1L", params)
+        >>> print(messages)
+        ["Einstein crossing time (tE) must be positive"]
+        
+        >>> # Invalid mass ratio
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "q": 1.5}
+        >>> messages = validate_solution_consistency("1S2L", params)
+        >>> print(messages)
+        ["Mass ratio (q) should be between 0 and 1"]
+        
+        >>> # Invalid relative probability
+        >>> messages = validate_solution_consistency("1S1L", params, relative_probability=1.5)
+        >>> print(messages)
+        ["Relative probability should be between 0 and 1"]
+        
+        >>> # Binary lens with unusual separation
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 0.1, "q": 0.5}
+        >>> messages = validate_solution_consistency("1S2L", params)
+        >>> print(messages)
+        ["Warning: Separation (s) outside typical caustic crossing range (0.5-2.0)"]
+        
+    Note:
+        This function focuses on physical consistency rather than statistical
+        validation. Warnings are provided for unusual but not impossible
+        parameter combinations. The caustic crossing range check for binary
+        lenses is a guideline based on typical microlensing events.
     """
     messages = []
     

@@ -1,3 +1,122 @@
+## Release v0.12.1
+
+**Release Date:** 2025-07-03
+
+### 🎉 Major New Features
+
+#### **Hardware Information Management**
+- **New CLI command:** `set-hardware-info` for managing computational resource details
+- **Flexible options:** CPU, memory, platform, Nexus image support
+- **Update capabilities:** Modify existing info or clear and replace
+- **Dry run support:** Preview changes before applying
+- **Dossier integration:** Hardware info displays correctly in generated HTML
+
+#### **Parameter File Support**
+- **YAML and JSON support:** `--params-file` option for structured parameter input
+- **Uncertainty handling:** Support for parameter uncertainties in structured format
+- **Example files:** Comprehensive example parameter files in `tests/`
+- **Validation integration:** Proper validation for parameter file formats
+
+#### **Enhanced GitHub Integration**
+- **GitHub logo packaging:** Properly included in pip install and dossier generation
+- **Repository URL management:** Both CLI (`set-repo-url`) and API support
+- **Dossier integration:** Displays repo name and links to commits in solution pages
+- **Auto-detection:** Automatic GitHub URL detection during project initialization
+
+#### **Higher-Order Effects Support**
+- **Comprehensive CLI support:** `--higher-order-effect` option for multiple effects
+- **Full effect list:** parallax, finite-source, lens-orbital-motion, limb-darkening, xallarap, stellar-rotation, fitted-limb-darkening, gaussian-process
+- **Validation integration:** Proper validation for different model types and effects
+- **Documentation:** Complete examples and usage patterns
+
+### 🔧 CLI Improvements
+
+#### **New Commands**
+- `set-hardware-info` - Manage hardware information for reproducibility
+- Enhanced `set-repo-url` - Improved GitHub repository URL management
+
+#### **Enhanced Existing Commands**
+- `add-solution` - Added `--params-file` support for structured parameter input
+- `edit-solution` - Improved parameter and metadata editing capabilities
+- `validate-submission` - Enhanced validation output with framed results
+- `generate-dossier` - Improved HTML generation with better styling
+
+### 📚 Documentation Enhancements
+
+#### **Google-Style Docstrings**
+- **Complete coverage:** All modules now have comprehensive Google-style docstrings
+- **Usage examples:** Clear, practical examples for all functions and classes
+- **Helpful notes:** Additional context and best practices throughout
+- **API documentation:** Detailed class descriptions with examples
+
+#### **Enhanced Tutorials**
+- **Updated CLI syntax:** Corrected model type names (1S1L instead of single_lens)
+- **Parameter file examples:** Shows both YAML and JSON usage patterns
+- **Advanced features:** Demonstrates GitHub integration and higher-order effects
+- **Troubleshooting:** Added comprehensive troubleshooting sections
+
+#### **Sphinx Configuration**
+- **Improved autodoc:** Better Napoleon settings for Google-style docstrings
+- **Enhanced theme:** Better ReadTheDocs theme configuration
+- **Intersphinx mappings:** Added links to Python and other documentation
+- **Asset management:** Proper handling of logos and static files
+
+### 🎨 Dossier Generation Improvements
+
+#### **Full Dossier Report**
+- **Comprehensive printable version:** Single HTML file with all content
+- **Section organization:** Clear event and solution sections with navigation
+- **Professional styling:** Enhanced Tailwind CSS with better typography
+- **Asset management:** Proper logo and icon handling
+
+#### **Enhanced Styling**
+- **Better responsive design:** Improved mobile and tablet layouts
+- **Professional branding:** RGES-PIT logo and GitHub integration
+- **Syntax highlighting:** Code blocks in notes with highlight.js
+- **Print optimization:** Better layout for printed reports
+
+### 🔍 Validation Enhancements
+
+#### **Improved Output Format**
+- **Framed results:** Professional validation output with clear formatting
+- **Better error messages:** More helpful guidance for fixing issues
+- **Comprehensive checks:** Enhanced validation for all submission components
+- **User-friendly feedback:** Clear next steps for resolving issues
+
+#### **Enhanced Checks**
+- **Repository URL validation:** Strict GitHub URL validation with helpful error messages
+- **Hardware info validation:** Checks for missing hardware information
+- **Solution completeness:** Comprehensive parameter and metadata validation
+- **Relative probability consistency:** Better handling of probability calculations
+
+### 🛠️ Developer Experience
+
+#### **Better Error Handling**
+- **Clear error messages:** More informative error messages throughout
+- **Graceful fallbacks:** Better handling of missing or invalid data
+- **Validation feedback:** Detailed feedback for fixing issues
+
+#### **Improved Testing**
+- **Comprehensive test coverage:** Better test coverage for new features
+- **Example files:** Test parameter files and documentation examples
+- **CI integration:** Enhanced continuous integration testing
+
+### 🐛 Bug Fixes
+
+- **Model type validation:** Fixed validation for all supported model types
+- **Parameter parsing:** Improved handling of complex parameter formats
+- **File path handling:** Better cross-platform file path management
+- **Dossier generation:** Fixed issues with asset copying and HTML generation
+
+### 📦 Packaging Improvements
+
+- **Asset inclusion:** Proper packaging of logos and static files
+- **Dependency management:** Updated dependency specifications
+- **Build configuration:** Improved setuptools configuration
+- **Distribution:** Better source and wheel distribution
+
+---
+
 ## Release v0.12.0
 
 ### What's New

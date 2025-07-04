@@ -61,6 +61,11 @@ def main():
     # Initialize the project
     run_command(f"microlens-submit init --team-name 'Test Team Alpha' --tier 'advanced' {project_dir}")
     
+    print("\n🔗 Setting GitHub repository URL...")
+    
+    # Set the GitHub repository URL
+    run_command(f"microlens-submit set-repo-url https://github.com/AmberLee2427/microlens-submit.git {project_dir}")
+    
     print("\n📊 Adding sample solutions...")
     
     # Add a simple 1S1L solution
@@ -76,7 +81,7 @@ def main():
         --notes "# Single Lens Solution\n\nThis is a simple point source, point lens fit for EVENT001." """)
     
     # Add a solution with elaborate markdown notes for testing
-    elaborate_md = "example_note.md"
+    elaborate_md = "../tests/example_note.md"
     escaped_md = elaborate_md.replace('"', '\\"').replace('\n', '\\n')
     run_command(f'microlens-submit add-solution EVENT001 1S1L {project_dir} '
                 f'--param t0=2459123.6 '

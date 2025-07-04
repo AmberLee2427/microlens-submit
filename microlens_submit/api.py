@@ -2,8 +2,39 @@ from __future__ import annotations
 
 """Core API for microlens-submit.
 
-The :class:`Submission` class provides a method :meth:`Submission.export` that
-creates the final zip archive using ``zipfile.ZIP_DEFLATED`` compression.
+This module provides the core data models and API for managing microlensing
+challenge submissions. The main classes are:
+
+- :class:`Submission`: Top-level container for a submission project
+- :class:`Event`: Container for solutions to a single microlensing event  
+- :class:`Solution`: Individual model fit with parameters and metadata
+
+The :class:`Submission` class provides methods for validation, export, and
+persistence. The :func:`load` function is the main entry point for loading
+or creating submission projects.
+
+Example:
+    >>> from microlens_submit import load
+    >>> 
+    >>> # Load or create a submission project
+    >>> submission = load("./my_project")
+    >>> 
+    >>> # Set submission metadata
+    >>> submission.team_name = "Team Alpha"
+    >>> submission.tier = "advanced"
+    >>> submission.repo_url = "https://github.com/team/repo"
+    >>> 
+    >>> # Add an event and solution
+    >>> event = submission.get_event("EVENT001")
+    >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+    >>> solution.log_likelihood = -1234.56
+    >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
+    >>> 
+    >>> # Save the submission
+    >>> submission.save()
+    >>> 
+    >>> # Export for submission
+    >>> submission.export("submission.zip")
 """
 
 import logging
@@ -21,45 +52,80 @@ from pydantic import BaseModel, Field
 
 
 class Solution(BaseModel):
-    """Container for an individual model fit.
+    """Container for an individual microlensing model fit.
 
     This data model stores everything required to describe a single
     microlensing solution, including the numeric parameters of the fit and
-    metadata about how it was produced.  Instances are normally created via
+    metadata about how it was produced. Instances are normally created via
     :meth:`Event.add_solution` and persisted to disk when
     :meth:`Submission.save` is called.
 
     Attributes:
-        solution_id: Unique identifier for the solution.
-        model_type: Specific lens/source configuration such as ``"1S1L"`` or
-            ``"2S1L"``.
-        bands: Photometric bands used in the fit.
-        higher_order_effects: List of physical effects modeled (e.g.,
-            ``"parallax"``).
-        t_ref: Reference time for time-dependent effects.
+        solution_id: Unique identifier for the solution (auto-generated UUID).
+        model_type: Specific lens/source configuration such as "1S1L" or "1S2L".
+        bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
+        higher_order_effects: List of physical effects modeled (e.g., ["parallax"]).
+        t_ref: Reference time for time-dependent effects (Julian Date).
         parameters: Dictionary of model parameters used for the fit.
         is_active: Flag indicating whether the solution should be included in
             the final submission export.
-        compute_info: Metadata about the computing environment.  Populated by
+        compute_info: Metadata about the computing environment, populated by
             :meth:`set_compute_info`.
         posterior_path: Optional path to a file containing posterior samples.
-        notes_path: Path to the markdown notes file
-        used_astrometry: Whether astrometric information was used when fitting
-            this solution.
+        lightcurve_plot_path: Optional path to the lightcurve plot file.
+        lens_plane_plot_path: Optional path to the lens plane plot file.
+        notes_path: Path to the markdown notes file for this solution.
+        used_astrometry: Whether astrometric information was used when fitting.
         used_postage_stamps: Whether postage stamp data was used.
         limb_darkening_model: Name of the limb darkening model employed.
         limb_darkening_coeffs: Mapping of limb darkening coefficients.
-        parameter_uncertainties: Uncertainties for parameters in ``parameters``.
+        parameter_uncertainties: Uncertainties for parameters in parameters.
         physical_parameters: Physical parameters derived from the model.
         log_likelihood: Log-likelihood value of the fit.
         relative_probability: Optional probability of this solution being the best model.
         n_data_points: Number of data points used in the fit.
         creation_timestamp: UTC timestamp when the solution was created.
         
+    Example:
+        >>> from microlens_submit import load
+        >>> 
+        >>> # Load a submission and get an event
+        >>> submission = load("./my_project")
+        >>> event = submission.get_event("EVENT001")
+        >>> 
+        >>> # Create a simple 1S1L solution
+        >>> solution = event.add_solution("1S1L", {
+        ...     "t0": 2459123.5,  # Time of closest approach
+        ...     "u0": 0.1,       # Impact parameter
+        ...     "tE": 20.0       # Einstein crossing time
+        ... })
+        >>> 
+        >>> # Add metadata
+        >>> solution.log_likelihood = -1234.56
+        >>> solution.n_data_points = 1250
+        >>> solution.relative_probability = 0.8
+        >>> solution.higher_order_effects = ["parallax"]
+        >>> solution.t_ref = 2459123.0
+        >>> 
+        >>> # Record compute information
+        >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
+        >>> 
+        >>> # Add notes
+        >>> solution.set_notes("# My Solution Notes\n\nThis is a simple point lens fit.")
+        >>> 
+        >>> # Validate the solution
+        >>> messages = solution.validate()
+        >>> if messages:
+        ...     print("Validation issues:", messages)
+        
     Note:
-        The ``notes_path`` field supports Markdown formatting, allowing you to create rich,
+        The notes_path field supports Markdown formatting, allowing you to create rich,
         structured documentation with headers, lists, code blocks, tables, and links.
         This is particularly useful for creating detailed submission dossiers for evaluators.
+        
+        The validate() method performs comprehensive validation of parameters,
+        higher-order effects, and physical consistency. Always validate solutions
+        before submission.
     """
 
     solution_id: str
@@ -108,12 +174,30 @@ class Solution(BaseModel):
 
         When called, this method populates :attr:`compute_info` with timing
         information as well as a list of installed Python packages and the
-        current Git state.  It is safe to call multiple times—previous values
+        current Git state. It is safe to call multiple times—previous values
         will be overwritten.
 
         Args:
             cpu_hours: Total CPU time consumed by the model fit in hours.
             wall_time_hours: Real-world time consumed by the fit in hours.
+
+        Example:
+            >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
+            >>> 
+            >>> # Record compute information
+            >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
+            >>> 
+            >>> # The compute_info now contains:
+            >>> # - cpu_hours: 2.5
+            >>> # - wall_time_hours: 0.5
+            >>> # - dependencies: [list of installed packages]
+            >>> # - git_info: {commit, branch, is_dirty}
+            
+        Note:
+            This method automatically captures the current Python environment
+            (via pip freeze) and Git state (commit, branch, dirty status).
+            If Git is not available or not a repository, git_info will be None.
+            If pip is not available, dependencies will be an empty list.
         """
 
         if cpu_hours is not None:
@@ -164,11 +248,42 @@ class Solution(BaseModel):
             self.compute_info["git_info"] = None
 
     def deactivate(self) -> None:
-        """Mark this solution as inactive."""
+        """Mark this solution as inactive.
+        
+        Inactive solutions are excluded from submission exports and dossier
+        generation. This is useful for keeping alternative fits without
+        including them in the final submission.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> solution.deactivate()
+            >>> 
+            >>> # The solution is now inactive and won't be included in exports
+            >>> submission.save()  # Persist the change
+            
+        Note:
+            This method only changes the is_active flag. The solution data
+            remains intact and can be reactivated later using activate().
+        """
         self.is_active = False
 
     def activate(self) -> None:
-        """Mark this solution as active."""
+        """Mark this solution as active.
+        
+        Active solutions are included in submission exports and dossier
+        generation. This is the default state for new solutions.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> solution.activate()
+            >>> 
+            >>> # The solution is now active and will be included in exports
+            >>> submission.save()  # Persist the change
+            
+        Note:
+            This method only changes the is_active flag. The solution data
+            remains intact.
+        """
         self.is_active = True
 
     def validate(self) -> list[str]:
@@ -209,6 +324,9 @@ class Solution(BaseModel):
         - gaussian-process: Optional ln_K, ln_lambda, ln_period, ln_gamma
         - fitted-limb-darkening: Optional u1, u2, u3, u4
         
+        Args:
+            None
+            
         Returns:
             list[str]: Human-readable validation messages. Empty list indicates all
                       validations passed. Messages may include warnings (non-critical)
@@ -221,6 +339,13 @@ class Solution(BaseModel):
             ...     print("Validation issues found:")
             ...     for msg in messages:
             ...         print(f"  - {msg}")
+            ... else:
+            ...     print("Solution is valid!")
+            
+        Note:
+            Always validate solutions before submission. The validation logic
+            is centralized and covers all model types and higher-order effects.
+            Some warnings may be non-critical but should be reviewed.
         """
         from .validate_parameters import (
             check_solution_completeness,
@@ -270,6 +395,14 @@ class Solution(BaseModel):
 
         Args:
             event_path: Directory of the parent event within the project.
+
+        Example:
+            >>> # This is called automatically by Event._save()
+            >>> event._save()  # This calls solution._save() for each solution
+            
+        Note:
+            This is an internal method. Solutions are automatically saved
+            when the parent event is saved via submission.save().
         """
         solutions_dir = event_path / "solutions"
         solutions_dir.mkdir(parents=True, exist_ok=True)
@@ -278,7 +411,28 @@ class Solution(BaseModel):
             fh.write(self.model_dump_json(indent=2))
 
     def get_notes(self, project_root: Optional[Path] = None) -> str:
-        """Read notes from the notes file, if present."""
+        """Read notes from the notes file, if present.
+        
+        Args:
+            project_root: Optional project root path for resolving relative
+                notes_path. If None, uses the current working directory.
+        
+        Returns:
+            str: The contents of the notes file as a string, or empty string
+                if no notes file exists or notes_path is not set.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> notes = solution.get_notes(project_root=Path("./my_project"))
+            >>> print(notes)
+            # My Solution Notes
+            
+            This is a detailed description of my fit...
+            
+        Note:
+            This method handles both absolute and relative notes_path values.
+            If notes_path is relative, it's resolved against project_root.
+        """
         if not self.notes_path:
             return ""
         path = Path(self.notes_path)
@@ -289,10 +443,42 @@ class Solution(BaseModel):
         return ""
 
     def set_notes(self, content: str, project_root: Optional[Path] = None) -> None:
-        """
-        Write notes to the notes file, creating it if needed.
-        If notes_path is not set, create a temp file in tmp/<solution_id>.md and set notes_path.
-        On Submission.save(), temp notes files are moved to the canonical location.
+        """Write notes to the notes file, creating it if needed.
+        
+        If notes_path is not set, creates a temporary file in tmp/<solution_id>.md
+        and sets notes_path. On Submission.save(), temporary notes files are
+        moved to the canonical location.
+        
+        Args:
+            content: The markdown content to write to the notes file.
+            project_root: Optional project root path for resolving relative
+                notes_path. If None, uses the current working directory.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> 
+            >>> # Set notes with markdown content
+            >>> solution.set_notes('''
+            ... # My Solution Notes
+            ... 
+            ... This is a detailed description of my microlensing fit.
+            ... 
+            ... ## Parameters
+            ... - t0: Time of closest approach
+            ... - u0: Impact parameter
+            ... - tE: Einstein crossing time
+            ... 
+            ... ## Notes
+            ... The fit shows clear evidence of a binary lens...
+            ... ''', project_root=Path("./my_project"))
+            >>> 
+            >>> # The notes are now saved and can be read back
+            >>> notes = solution.get_notes(project_root=Path("./my_project"))
+            
+        Note:
+            This method supports markdown formatting. The notes will be
+            rendered as HTML in the dossier with syntax highlighting
+            for code blocks.
         """
         if not self.notes_path:
             # Use tmp/ for unsaved notes
@@ -308,18 +494,58 @@ class Solution(BaseModel):
 
     @property
     def notes(self) -> str:
-        """Return the Markdown notes string from the notes file (read-only)."""
+        """Return the Markdown notes string from the notes file (read-only).
+        
+        Returns:
+            str: The contents of the notes file as a string, or empty string
+                if no notes file exists.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> print(solution.notes)
+            # My Solution Notes
+            
+            This is a detailed description of my fit...
+            
+        Note:
+            This is a read-only property. Use set_notes() to modify the notes.
+            The property uses the current working directory to resolve relative
+            notes_path. For more control, use get_notes() with project_root.
+        """
         return self.get_notes()
 
     def view_notes(self, render_html: bool = True, project_root: Optional[Path] = None) -> str:
-        """
-        Return the notes as Markdown (default) or rendered HTML (for Jupyter/IPython).
-
+        """Return the notes as Markdown or rendered HTML.
+        
         Args:
-            render_html: If True, return HTML using markdown.markdown. If False, return Markdown string.
-            project_root: Optionally specify the project root for relative notes_path resolution.
+            render_html: If True, return HTML using markdown.markdown with
+                extensions for tables and fenced code blocks. If False,
+                return the raw Markdown string.
+            project_root: Optionally specify the project root for relative
+                notes_path resolution.
+        
         Returns:
-            str: Markdown or HTML string.
+            str: Markdown or HTML string depending on render_html parameter.
+        
+        Example:
+            >>> solution = event.get_solution("solution_uuid")
+            >>> 
+            >>> # Get raw markdown
+            >>> md = solution.view_notes(render_html=False)
+            >>> print(md)
+            # My Solution Notes
+            
+            >>> # Get rendered HTML (useful for Jupyter/IPython)
+            >>> html = solution.view_notes(render_html=True)
+            >>> print(html)
+            <h1>My Solution Notes</h1>
+            <p>...</p>
+            
+        Note:
+            When render_html=True, the markdown is rendered with extensions
+            for tables, fenced code blocks, and other advanced features.
+            This is particularly useful for displaying notes in Jupyter
+            notebooks or other HTML contexts.
         """
         md = self.get_notes(project_root=project_root)
         if render_html:
@@ -332,7 +558,7 @@ class Event(BaseModel):
     """A collection of solutions for a single microlensing event.
 
     Events act as containers that group one or more :class:`Solution` objects
-    under a common ``event_id``.  They are created on demand via
+    under a common ``event_id``. They are created on demand via
     :meth:`Submission.get_event` and are written to disk when the parent
     submission is saved.
 
@@ -340,6 +566,37 @@ class Event(BaseModel):
         event_id: Identifier used to reference the event within the project.
         solutions: Mapping of solution IDs to :class:`Solution` instances.
         submission: The parent :class:`Submission` or ``None`` if detached.
+        
+    Example:
+        >>> from microlens_submit import load
+        >>> 
+        >>> # Load a submission and get/create an event
+        >>> submission = load("./my_project")
+        >>> event = submission.get_event("EVENT001")
+        >>> 
+        >>> # Add multiple solutions to the event
+        >>> solution1 = event.add_solution("1S1L", {
+        ...     "t0": 2459123.5, "u0": 0.1, "tE": 20.0
+        ... })
+        >>> solution2 = event.add_solution("1S2L", {
+        ...     "t0": 2459123.5, "u0": 0.1, "tE": 20.0,
+        ...     "s": 1.2, "q": 0.5, "alpha": 45.0
+        ... })
+        >>> 
+        >>> # Get active solutions
+        >>> active_solutions = event.get_active_solutions()
+        >>> print(f"Event {event.event_id} has {len(active_solutions)} active solutions")
+        >>> 
+        >>> # Deactivate a solution
+        >>> solution1.deactivate()
+        >>> 
+        >>> # Save the submission (includes all events and solutions)
+        >>> submission.save()
+        
+    Note:
+        Events are automatically created when you call submission.get_event()
+        with a new event_id. All solutions for an event are stored together
+        in the project directory structure.
     """
 
     event_id: str
@@ -350,14 +607,33 @@ class Event(BaseModel):
         """Create and attach a new solution to this event.
 
         Parameters are stored as provided and the new solution is returned for
-        further modification.
+        further modification. A unique solution_id is automatically generated.
 
         Args:
-            model_type: Short label describing the model type.
-            parameters: Dictionary of model parameters.
+            model_type: Short label describing the model type (e.g., "1S1L", "1S2L").
+            parameters: Dictionary of model parameters for the fit.
 
         Returns:
             Solution: The newly created solution instance.
+
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Create a simple point lens solution
+            >>> solution = event.add_solution("1S1L", {
+            ...     "t0": 2459123.5,  # Time of closest approach
+            ...     "u0": 0.1,       # Impact parameter
+            ...     "tE": 20.0       # Einstein crossing time
+            ... })
+            >>> 
+            >>> # The solution is automatically added to the event
+            >>> print(f"Event now has {len(event.solutions)} solutions")
+            >>> print(f"Solution ID: {solution.solution_id}")
+            
+        Note:
+            The solution is automatically marked as active and assigned a
+            unique UUID. You can modify the solution attributes after creation
+            and then save the submission to persist changes.
         """
         solution_id = str(uuid.uuid4())
         sol = Solution(
@@ -374,17 +650,68 @@ class Event(BaseModel):
 
         Returns:
             Solution: The corresponding solution.
+
+        Raises:
+            KeyError: If the solution_id is not found in this event.
+
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Get a specific solution
+            >>> solution = event.get_solution("solution_uuid_here")
+            >>> print(f"Model type: {solution.model_type}")
+            >>> print(f"Parameters: {solution.parameters}")
+            
+        Note:
+            Use this method to retrieve existing solutions. If you need to
+            create a new solution, use add_solution() instead.
         """
         return self.solutions[solution_id]
 
     def get_active_solutions(self) -> list[Solution]:
-        """Return all solutions currently marked as active."""
-
+        """Return all solutions currently marked as active.
+        
+        Returns:
+            list[Solution]: List of all active solutions in this event.
+            
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Get only active solutions
+            >>> active_solutions = event.get_active_solutions()
+            >>> print(f"Event has {len(active_solutions)} active solutions")
+            >>> 
+            >>> # Only active solutions are included in exports
+            >>> for solution in active_solutions:
+            ...     print(f"- {solution.solution_id}: {solution.model_type}")
+            
+        Note:
+            Only active solutions are included in submission exports and
+            dossier generation. Use deactivate() to exclude solutions from
+            the final submission.
+        """
         return [sol for sol in self.solutions.values() if sol.is_active]
 
     def clear_solutions(self) -> None:
-        """Deactivate every solution associated with this event."""
-
+        """Deactivate every solution associated with this event.
+        
+        This method marks all solutions in the event as inactive, effectively
+        removing them from submission exports and dossier generation.
+        
+        Example:
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # Deactivate all solutions in this event
+            >>> event.clear_solutions()
+            >>> 
+            >>> # Now no solutions are active
+            >>> active_solutions = event.get_active_solutions()
+            >>> print(f"Active solutions: {len(active_solutions)}")  # 0
+            
+        Note:
+            This only deactivates solutions; they are not deleted. You can
+            reactivate individual solutions using solution.activate().
+        """
         for sol in self.solutions.values():
             sol.is_active = False
 
@@ -424,16 +751,55 @@ class Submission(BaseModel):
     """Top-level object representing an on-disk submission project.
 
     A ``Submission`` manages a collection of :class:`Event` objects and handles
-    serialization to the project directory.  Users typically obtain an instance
+    serialization to the project directory. Users typically obtain an instance
     via :func:`load` and then interact with events and solutions before calling
     :meth:`save` or :meth:`export`.
 
     Attributes:
         project_path: Root directory where submission files are stored.
         team_name: Name of the participating team.
-        tier: Challenge tier for the submission.
+        tier: Challenge tier for the submission (e.g., "basic", "advanced").
         hardware_info: Optional dictionary describing the compute platform.
         events: Mapping of event IDs to :class:`Event` instances.
+        repo_url: GitHub repository URL for the team codebase.
+        
+    Example:
+        >>> from microlens_submit import load
+        >>> 
+        >>> # Load or create a submission project
+        >>> submission = load("./my_project")
+        >>> 
+        >>> # Set submission metadata
+        >>> submission.team_name = "Team Alpha"
+        >>> submission.tier = "advanced"
+        >>> submission.repo_url = "https://github.com/team/microlens-submit"
+        >>> 
+        >>> # Add events and solutions
+        >>> event1 = submission.get_event("EVENT001")
+        >>> solution1 = event1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+        >>> 
+        >>> event2 = submission.get_event("EVENT002")
+        >>> solution2 = event2.add_solution("1S2L", {"t0": 2459156.2, "u0": 0.08, "tE": 35.7, "s": 0.95, "q": 0.0005, "alpha": 78.3})
+        >>> 
+        >>> # Validate the submission
+        >>> warnings = submission.validate()
+        >>> if warnings:
+        ...     print("Validation warnings:")
+        ...     for warning in warnings:
+        ...         print(f"  - {warning}")
+        ... else:
+        ...     print("✅ Submission is valid!")
+        >>> 
+        >>> # Save the submission
+        >>> submission.save()
+        >>> 
+        >>> # Export for submission
+        >>> submission.export("submission.zip")
+        
+    Note:
+        The submission project structure is automatically created when you
+        first call load() with a new directory. All data is stored in JSON
+        format with a clear directory structure for events and solutions.
     """
 
     project_path: str = Field(default="", exclude=True)
@@ -441,21 +807,47 @@ class Submission(BaseModel):
     tier: str = ""
     hardware_info: Optional[dict] = None
     events: Dict[str, Event] = Field(default_factory=dict)
+    repo_url: Optional[str] = None
 
     def validate(self) -> list[str]:
         """Check the submission for missing or incomplete information.
 
         The method performs lightweight validation and returns a list of
-        warnings describing potential issues.  It does not raise exceptions and
+        warnings describing potential issues. It does not raise exceptions and
         can be used to provide user feedback prior to exporting.
 
         Returns:
-            list[str]: Human-readable warning messages.
+            list[str]: Human-readable warning messages. Empty list indicates
+                      no issues found.
+
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Validate the submission
+            >>> warnings = submission.validate()
+            >>> if warnings:
+            ...     print("Validation warnings:")
+            ...     for warning in warnings:
+            ...         print(f"  - {warning}")
+            ... else:
+            ...     print("✅ Submission is valid!")
+            
+        Note:
+            This method checks for common issues like missing repo_url,
+            inactive events, incomplete solution data, and validation
+            problems in individual solutions. Always validate before
+            exporting your submission.
         """
 
         warnings: list[str] = []
         if not self.hardware_info:
             warnings.append("Hardware info is missing")
+
+        # Check for missing or invalid repo_url
+        if not self.repo_url or not isinstance(self.repo_url, str) or not self.repo_url.strip():
+            warnings.append("repo_url (GitHub repository URL) is missing from submission.json")
+        elif not ("github.com" in self.repo_url):
+            warnings.append(f"repo_url does not appear to be a valid GitHub URL: {self.repo_url}")
 
         for event in self.events.values():
             active = [sol for sol in event.solutions.values() if sol.is_active]
@@ -524,6 +916,22 @@ class Submission(BaseModel):
 
         Returns:
             Event: The corresponding event object.
+
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Get an existing event or create a new one
+            >>> event = submission.get_event("EVENT001")
+            >>> 
+            >>> # The event is automatically added to the submission
+            >>> print(f"Submission has {len(submission.events)} events")
+            >>> print(f"Event {event.event_id} has {len(event.solutions)} solutions")
+            
+        Note:
+            Events are created on-demand when you first access them. This
+            allows you to work with events without explicitly creating them
+            first. The event is automatically saved when you call
+            submission.save().
         """
         if event_id not in self.events:
             self.events[event_id] = Event(event_id=event_id, submission=self)
@@ -534,7 +942,25 @@ class Submission(BaseModel):
 
         This helper reads a few well-known files from the Roman Science
         Platform environment to infer CPU model, available memory and the image
-        identifier.  Missing information is silently ignored.
+        identifier. Missing information is silently ignored.
+
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Auto-detect Nexus platform information
+            >>> submission.autofill_nexus_info()
+            >>> 
+            >>> # Check what was detected
+            >>> if submission.hardware_info:
+            ...     print("Hardware info:", submission.hardware_info)
+            ... else:
+            ...     print("No hardware info detected")
+            
+        Note:
+            This method is designed for the Roman Science Platform environment.
+            It reads from /proc/cpuinfo, /proc/meminfo, and JUPYTER_IMAGE_SPEC
+            environment variable. If these are not available (e.g., on a
+            different platform), the method will silently skip them.
         """
 
         if self.hardware_info is None:
@@ -569,7 +995,31 @@ class Submission(BaseModel):
             logging.debug("Failed to read /proc/meminfo: %s", exc)
 
     def save(self) -> None:
-        """Persist the current state of the submission to ``project_path``."""
+        """Persist the current state of the submission to ``project_path``.
+        
+        This method writes all submission data to disk, including events,
+        solutions, and metadata. It also handles moving temporary notes
+        files to their canonical locations.
+        
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Make changes to the submission
+            >>> submission.team_name = "Team Alpha"
+            >>> event = submission.get_event("EVENT001")
+            >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+            >>> 
+            >>> # Save all changes to disk
+            >>> submission.save()
+            >>> 
+            >>> # All data is now persisted in the project directory
+            
+        Note:
+            This method creates the project directory structure if it doesn't
+            exist and moves any temporary notes files from tmp/ to their
+            canonical locations in events/{event_id}/solutions/{solution_id}.md.
+            Always call save() after making changes to persist them.
+        """
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
@@ -597,10 +1047,37 @@ class Submission(BaseModel):
         """Create a zip archive of all active solutions.
 
         The archive is created using ``zipfile.ZIP_DEFLATED`` compression to
-        minimize file size.
+        minimize file size. Only active solutions are included in the export.
 
         Args:
             output_path: Destination path for the zip archive.
+
+        Raises:
+            ValueError: If referenced files (plots, posterior data) don't exist.
+            OSError: If unable to create the zip file.
+
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Validate before export
+            >>> warnings = submission.validate()
+            >>> if warnings:
+            ...     print("Fix validation issues before export:", warnings)
+            ... else:
+            ...     # Export the submission
+            ...     submission.export("my_submission.zip")
+            ...     print("Submission exported to my_submission.zip")
+            
+        Note:
+            The export includes:
+            - submission.json with metadata
+            - All active solutions with parameters
+            - Notes files for each solution
+            - Referenced files (plots, posterior data)
+            
+            Relative probabilities are automatically calculated for solutions
+            that don't have them set, using BIC if sufficient data is available.
+            Only active solutions are included in the export.
         """
         project = Path(self.project_path)
         with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -723,7 +1200,7 @@ def load(project_path: str) -> Submission:
     """Load an existing submission or create a new one.
 
     The directory specified by ``project_path`` becomes the working
-    directory for all subsequent operations.  If the directory does not
+    directory for all subsequent operations. If the directory does not
     exist, a new project structure is created automatically.
 
     Args:
@@ -732,12 +1209,36 @@ def load(project_path: str) -> Submission:
     Returns:
         Submission: The loaded or newly created submission instance.
 
+    Raises:
+        OSError: If unable to create the project directory or read files.
+        ValueError: If existing submission.json is invalid.
+
     Example:
         >>> from microlens_submit import load
-        >>> sub = load("./my_project")
-        >>> evt = sub.get_event("event-001")
-        >>> evt.add_solution("point_lens", {"t0": 123.4})
-        >>> sub.save()
+        >>> 
+        >>> # Load existing project
+        >>> submission = load("./existing_project")
+        >>> print(f"Team: {submission.team_name}")
+        >>> print(f"Events: {len(submission.events)}")
+        >>> 
+        >>> # Create new project
+        >>> submission = load("./new_project")
+        >>> submission.team_name = "Team Beta"
+        >>> submission.tier = "basic"
+        >>> submission.save()
+        >>> 
+        >>> # The project structure is automatically created:
+        >>> # ./new_project/
+        >>> # ├── submission.json
+        >>> # └── events/
+        >>> #     └── (event directories created as needed)
+        
+    Note:
+        This is the main entry point for working with submission projects.
+        The function automatically creates the project directory structure
+        if it doesn't exist, making it safe to use with new projects.
+        All subsequent operations (adding events, solutions, etc.) work
+        with the returned Submission instance.
     """
     project = Path(project_path)
     events_dir = project / "events"

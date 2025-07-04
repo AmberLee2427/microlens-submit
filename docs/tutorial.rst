@@ -1,17 +1,50 @@
 Getting Started: A Step-by-Step Tutorial
 =======================================
 
-This quick guide walks you through the typical workflow using the ``microlens-submit`` CLI.
+This comprehensive guide walks you through the complete workflow using the ``microlens-submit`` CLI, from initial project setup to final submission export.
+
+**Prerequisites**
+~~~~~~~~~~~~~~~~~
+
+- Python 3.8 or higher
+- ``microlens-submit`` installed (``pip install microlens-submit``)
+- Basic familiarity with command-line interfaces
+- Understanding of microlensing parameters and models
+
+**Workflow Overview**
+~~~~~~~~~~~~~~~~~~~~~
+
+The typical workflow consists of these main steps:
+
+1. **Project Initialization**: Set up your submission project structure
+2. **Solution Addition**: Add microlensing solutions with parameters and metadata
+3. **Validation**: Check your solutions for completeness and consistency
+4. **Documentation**: Add notes and generate review materials
+5. **Export**: Create the final submission package
+
+**Step-by-Step Guide**
+~~~~~~~~~~~~~~~~~~~~~~
 
 If your terminal does not support ANSI escape codes, add ``--no-color`` to disable colored output.
 
 1. **Initialize your project**
 
+   Start by creating a new submission project with your team information:
+
    .. code-block:: bash
 
       microlens-submit init --team-name "Your Team" --tier "standard" /path/to/project
 
+   This creates the project directory structure and initializes the submission metadata.
+
+   **Options:**
+   - ``--team-name``: Your team's name (required)
+   - ``--tier``: Challenge tier ("standard" or "advanced")
+   - Project path: Where to create the project directory
+
 2. **Add your first solution**
+
+   Add a microlensing solution with all required parameters:
 
    .. code-block:: bash
 
@@ -25,6 +58,18 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
           --lens-plane-plot-path plots/event123_lens.png \
           --notes "Initial fit" \
           --higher-order-effect parallax,finite-source
+
+   **Required Parameters:**
+   - Event ID: Unique identifier for the microlensing event
+   - Model type: Microlensing model (1S1L, 1S2L, 2S1L, etc.)
+   - Model parameters: Specific to the model type
+
+   **Optional Metadata:**
+   - Log-likelihood and data points for statistical analysis
+   - Compute information for resource tracking
+   - Plot paths for visualization files
+   - Notes for documentation
+   - Higher-order effects for advanced models
 
    **Note:**
    The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
@@ -47,6 +92,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    **Tip:**
    - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
    - The notes file is included in the exported zip and rendered in the HTML dossier.
+
+   **Parameter File Support:**
 
    You can also load parameters from a JSON or YAML file instead of listing them on the
    command line. Create ``params.json`` containing your values and run:
@@ -115,6 +162,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
 3. **Validate without saving**
 
+   Test your solution before committing it to disk:
+
    .. code-block:: bash
 
      microlens-submit add-solution EVENT123 1S2L \
@@ -127,6 +176,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    assignments before saving.
 
 4. **Validate existing solutions**
+
+   Check your solutions for completeness and consistency:
 
    .. code-block:: bash
 
@@ -158,6 +209,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
 6. **Add a competing solution**
 
+   Add alternative models for comparison:
+
    .. code-block:: bash
 
      microlens-submit add-solution EVENT123 1S1L \
@@ -165,11 +218,15 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
 7. **List your solutions**
 
+   Review all solutions for an event:
+
    .. code-block:: bash
 
       microlens-submit list-solutions EVENT123
 
 8. **Deactivate the less-good solution**
+
+   Mark solutions as inactive (they remain in the project but aren't exported):
 
    .. code-block:: bash
 
@@ -207,33 +264,144 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
 10. **Export the final package**
 
-   .. code-block:: bash
+    Create the submission package for upload:
 
-      microlens-submit export submission.zip
+    .. code-block:: bash
+
+       microlens-submit export submission.zip
+
+    This creates a zip file containing all active solutions and associated files,
+    ready for submission to the challenge organizers.
 
 11. **Preview your submission dossier**
 
-   .. code-block:: bash
+    Generate a human-readable HTML dashboard for review:
 
-      microlens-submit generate-dossier
+    .. code-block:: bash
 
-   This will create a human-readable HTML dashboard at ``dossier/index.html`` inside your project directory. Open this file in your web browser to preview your submission as evaluators will see it.
+       microlens-submit generate-dossier
 
-   You can also serve the dossier with a simple local server:
+    This will create a human-readable HTML dashboard at ``dossier/index.html`` inside your project directory. Open this file in your web browser to preview your submission as evaluators will see it.
 
-   .. code-block:: bash
+    You can also serve the dossier with a simple local server:
 
-      cd dossier
-      python3 -m http.server
+    .. code-block:: bash
 
-   Then open ``http://localhost:8000`` in your browser.
+       cd dossier
+       python3 -m http.server
 
-   The dossier includes:
-   - Team and submission metadata
-   - Solution summaries and statistics
-   - Progress bar and compute time
-   - Event table and parameter distribution placeholders
+    Then open ``http://localhost:8000`` in your browser.
 
-   **Note:** The dossier is for your review only and is not included in the exported submission zip.
+    The dossier includes:
+    - Team and submission metadata
+    - Solution summaries and statistics
+    - Progress bar and compute time
+    - Event table and parameter distribution placeholders
+
+    **Note:** The dossier is for your review only and is not included in the exported submission zip.
+
+**Advanced Features**
+~~~~~~~~~~~~~~~~~~~~
+
+**GitHub Integration:**
+
+Set your repository URL for automatic linking in the dossier:
+
+.. code-block:: bash
+
+   microlens-submit set-repo-url https://github.com/your-team/microlens-analysis.git
+
+**Solution Comparison:**
+
+Compare solutions using BIC-based relative probabilities:
+
+.. code-block:: bash
+
+   microlens-submit compare-solutions EVENT123
+
+**Parameter File Management:**
+
+Use structured parameter files for complex models:
+
+.. code-block:: bash
+
+   # Create a parameter file with uncertainties
+   cat > params.yaml << EOF
+   parameters:
+     t0: 2459123.5
+     u0: 0.15
+     tE: 20.5
+     q: 0.001
+     s: 1.15
+     alpha: 45.2
+   uncertainties:
+     t0: [0.1, 0.1]
+     u0: 0.02
+     tE: [0.3, 0.4]
+     q: 0.0001
+     s: 0.05
+     alpha: 2.0
+   EOF
+   
+   # Use the parameter file
+   microlens-submit add-solution EVENT123 1S2L --params-file params.yaml
+
+**Project Management:**
+
+Manage multiple events and solutions efficiently:
+
+.. code-block:: bash
+
+   # List all events
+   ls events/
+   
+   # Check project status
+   microlens-submit validate-submission
+   
+   # View project structure
+   tree -I '*.pyc|__pycache__'
+
+**Troubleshooting**
+~~~~~~~~~~~~~~~~~~
+
+**Common Issues and Solutions:**
+
+1. **Validation Errors:**
+   - Check that all required parameters are provided for your model type
+   - Ensure relative probabilities sum to 1.0 for active solutions
+   - Verify parameter types (numbers vs strings)
+
+2. **File Path Issues:**
+   - Use relative paths from the project root
+   - Ensure referenced files exist before adding solutions
+   - Check file permissions for reading/writing
+
+3. **Model Type Errors:**
+   - Verify model type spelling (1S1L, 1S2L, 2S1L, etc.)
+   - Check that parameters match the model type requirements
+   - Ensure higher-order effects are compatible with the model
+
+4. **Export Problems:**
+   - Make sure at least one solution is active per event
+   - Check that all referenced files exist
+   - Verify the export path is writable
+
+**Getting Help**
+~~~~~~~~~~~~~~~
+
+- **Documentation**: This tutorial and the API reference
+- **Jupyter Notebooks**: Interactive examples in the docs directory
+- **GitHub Issues**: Report bugs or request features
+- **Validation Messages**: Read the detailed error messages for guidance
+
+**Best Practices**
+~~~~~~~~~~~~~~~~~
+
+1. **Use dry-run**: Always test with ``--dry-run`` before saving
+2. **Validate regularly**: Check your submission frequently during development
+3. **Document thoroughly**: Add detailed notes to explain your analysis
+4. **Version control**: Use git to track changes to your project
+5. **Backup regularly**: Keep copies of your project directory
+6. **Test export**: Verify your submission package before final submission
 
 

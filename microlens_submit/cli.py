@@ -1,4 +1,40 @@
-"""Command line interface for microlens-submit."""
+"""Command line interface for microlens-submit.
+
+This module provides a comprehensive CLI for managing microlensing challenge
+submissions. It includes commands for project initialization, solution management,
+validation, dossier generation, and export functionality.
+
+The CLI is built using Typer and provides rich, colored output with helpful
+error messages and validation feedback. All commands support both interactive
+and scripted usage patterns.
+
+**Key Commands:**
+- init: Create new submission projects
+- add-solution: Add microlensing solutions with parameters
+- validate-submission: Check submission completeness
+- generate-dossier: Create HTML documentation
+- export: Create submission archives
+
+**Example Workflow:**
+    # Initialize a new project
+    microlens-submit init --team-name "Team Alpha" --tier "advanced" ./my_project
+    
+    # Add a solution
+    microlens-submit add-solution EVENT001 1S1L ./my_project \
+        --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
+        --log-likelihood -1234.56 --cpu-hours 2.5
+    
+    # Validate and generate dossier
+    microlens-submit validate-submission ./my_project
+    microlens-submit generate-dossier ./my_project
+    
+    # Export for submission
+    microlens-submit export submission.zip ./my_project
+
+**Note:**
+    All commands that modify data automatically save changes to disk.
+    Use --dry-run flags to preview changes without saving.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +43,7 @@ import math
 from pathlib import Path
 from typing import List, Optional, Literal
 import os
+import subprocess
 
 import typer
 from rich.console import Console
@@ -23,12 +60,48 @@ app = typer.Typer()
 
 @app.command("version")
 def version() -> None:
-    """Show the version of microlens-submit."""
+    """Show the version of microlens-submit.
+    
+    Displays the current version of the microlens-submit package.
+    
+    Example:
+        >>> microlens-submit version
+        microlens-submit version 0.12.0-dev
+        
+    Note:
+        This command is useful for verifying the installed version
+        and for debugging purposes.
+    """
     console.print(f"microlens-submit version {__version__}")
 
 
 def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
-    """Convert CLI key=value options into a dictionary."""
+    """Convert CLI key=value options into a dictionary.
+    
+    Parses command-line arguments in the format "key=value" and converts
+    them to a Python dictionary. Handles JSON parsing for numeric and
+    boolean values, falling back to string values.
+    
+    Args:
+        pairs: List of strings in "key=value" format, or None.
+    
+    Returns:
+        dict: Parsed key-value pairs, or None if pairs is None/empty.
+    
+    Raises:
+        typer.BadParameter: If any pair is not in "key=value" format.
+    
+    Example:
+        >>> _parse_pairs(["t0=2459123.5", "u0=0.1", "active=true"])
+        {'t0': 2459123.5, 'u0': 0.1, 'active': True}
+        
+        >>> _parse_pairs(["name=test", "value=123"])
+        {'name': 'test', 'value': 123}
+        
+    Note:
+        This function attempts to parse values as JSON first (for numbers,
+        booleans, etc.), then falls back to string values if JSON parsing fails.
+    """
     if not pairs:
         return None
     out: dict = {}
@@ -44,7 +117,33 @@ def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
 
 
 def _params_file_callback(ctx: typer.Context, value: Optional[Path]) -> Optional[Path]:
-    """Validate mutually exclusive parameter options."""
+    """Validate mutually exclusive parameter options.
+    
+    Ensures that --params-file and --param options are not used together,
+    as they are mutually exclusive ways of specifying parameters.
+    
+    Args:
+        ctx: Typer context containing other parameter values.
+        value: The value of the --params-file option.
+    
+    Returns:
+        Path: The validated file path, or None.
+    
+    Raises:
+        typer.BadParameter: If both --params-file and --param are specified,
+            or if neither is specified when required.
+    
+    Example:
+        # This would raise an error:
+        # microlens-submit add-solution EVENT001 1S1L --param t0=123 --params-file params.json
+        
+        # This is valid:
+        # microlens-submit add-solution EVENT001 1S1L --params-file params.json
+        
+    Note:
+        This is a Typer callback function used for parameter validation.
+        It's automatically called when processing command-line arguments.
+    """
     param_vals = ctx.params.get("param")
     if value is not None and param_vals:
         raise typer.BadParameter("Cannot use --param with --params-file")
@@ -58,7 +157,23 @@ def main(
     ctx: typer.Context,
     no_color: bool = typer.Option(False, "--no-color", help="Disable colored output"),
 ) -> None:
-    """Handle global CLI options."""
+    """Handle global CLI options.
+    
+    Sets up global configuration for the CLI, including color output
+    preferences that apply to all commands.
+    
+    Args:
+        ctx: Typer context for command execution.
+        no_color: If True, disable colored output for all commands.
+    
+    Example:
+        # Disable colors for all commands
+        microlens-submit --no-color init --team-name "Team" --tier "basic" ./project
+        
+    Note:
+        This is a Typer callback that runs before any command execution.
+        It's used to configure global settings like color output.
+    """
     if no_color:
         global console
         console = Console(color_system=None)
@@ -70,16 +185,57 @@ def init(
     tier: str = typer.Option(..., help="Challenge tier"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Create a new submission project in ``project_path``.
-
+    """Create a new submission project in the specified directory.
+    
+    Initializes a new microlensing submission project with the given team name
+    and tier. The project directory structure is created automatically, and
+    the submission.json file is initialized with basic metadata.
+    
+    This command also attempts to auto-detect the GitHub repository URL
+    from the current git configuration and provides helpful feedback.
+    
     Args:
-        team_name: Name of the team.
-        tier: Challenge tier.
+        team_name: Name of the participating team (e.g., "Team Alpha").
+        tier: Challenge tier level (e.g., "basic", "advanced").
         project_path: Directory where the project will be created.
+            Defaults to current directory if not specified.
+    
+    Raises:
+        OSError: If unable to create the project directory or write files.
+    
+    Example:
+        # Create project in current directory
+        microlens-submit init --team-name "Team Alpha" --tier "advanced"
+        
+        # Create project in specific directory
+        microlens-submit init --team-name "Team Beta" --tier "basic" ./my_submission
+        
+        # Project structure created:
+        # ./my_submission/
+        # ├── submission.json
+        # └── events/
+        
+    Note:
+        If the project directory already exists, it will be used as-is.
+        If a git repository is detected, the GitHub URL will be automatically
+        set. Otherwise, a warning is shown and you can set it later with
+        set-repo-url command.
     """
     sub = load(str(project_path))
     sub.team_name = team_name
     sub.tier = tier
+    # Try to auto-detect repo_url
+    try:
+        repo_url = subprocess.check_output([
+            'git', 'config', '--get', 'remote.origin.url'
+        ], stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        repo_url = None
+    if repo_url:
+        sub.repo_url = repo_url
+        console.print(f"[green]Auto-detected GitHub repo URL:[/green] {repo_url}")
+    else:
+        console.print("[yellow]Could not auto-detect a GitHub repository URL. Please add it using 'microlens-submit set-repo-url <url> <project_dir>'.[/yellow]")
     sub.save()
     console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
 
@@ -90,8 +246,33 @@ def nexus_init(
     tier: str = typer.Option(..., help="Challenge tier"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Create a project and record Roman Nexus environment details."""
-
+    """Create a project and record Roman Nexus environment details.
+    
+    This command combines the functionality of init() with automatic
+    detection of Roman Science Platform environment information. It
+    populates hardware_info with CPU details, memory information, and
+    the Nexus image identifier.
+    
+    Args:
+        team_name: Name of the participating team (e.g., "Team Alpha").
+        tier: Challenge tier level (e.g., "basic", "advanced").
+        project_path: Directory where the project will be created.
+            Defaults to current directory if not specified.
+    
+    Example:
+        # Initialize project with Nexus platform info
+        microlens-submit nexus-init --team-name "Team Alpha" --tier "advanced" ./project
+        
+        # This will automatically detect:
+        # - CPU model from /proc/cpuinfo
+        # - Memory from /proc/meminfo  
+        # - Nexus image from JUPYTER_IMAGE_SPEC
+        
+    Note:
+        This command is specifically designed for the Roman Science Platform
+        environment. It will silently skip any environment information that
+        cannot be detected (e.g., if running outside of Nexus).
+    """
     init(team_name=team_name, tier=tier, project_path=project_path)
     sub = load(str(project_path))
     sub.autofill_nexus_info()
@@ -189,7 +370,100 @@ def add_solution(
     ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Add a new solution entry for ``event_id``. Now supports file-based notes."""
+    """Add a new solution entry for a microlensing event.
+    
+    Creates a new solution with the specified model type and parameters,
+    automatically generating a unique solution ID. The solution is added
+    to the specified event and saved to disk.
+    
+    **Model Types Supported:**
+    - 1S1L: Single source, single lens (point source, point lens)
+    - 1S2L: Single source, binary lens
+    - 2S1L: Binary source, single lens
+    - 2S2L: Binary source, binary lens
+    - 1S3L: Single source, triple lens
+    - 2S3L: Binary source, triple lens
+    - other: Custom model type
+    
+    **Parameter Specification:**
+    Parameters can be specified either via individual --param options
+    or using a structured file with --params-file. The file can be JSON
+    or YAML format and can include both parameters and uncertainties.
+    
+    **Higher-Order Effects:**
+    - parallax: Annual parallax effect
+    - finite-source: Finite source size effects
+    - lens-orbital-motion: Lens orbital motion
+    - limb-darkening: Limb darkening effects
+    - xallarap: Xallarap (source orbital motion)
+    - stellar-rotation: Stellar rotation effects
+    - fitted-limb-darkening: Fitted limb darkening coefficients
+    - gaussian-process: Gaussian process noise modeling
+    - other: Custom higher-order effects
+    
+    Args:
+        event_id: Identifier for the microlensing event (e.g., "EVENT001").
+        model_type: Type of microlensing model used for the fit.
+        param: Model parameters as key=value pairs (e.g., "t0=2459123.5").
+        params_file: Path to JSON/YAML file containing parameters and uncertainties.
+        bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
+        higher_order_effect: List of higher-order physical effects included.
+        t_ref: Reference time for time-dependent effects (Julian Date).
+        used_astrometry: Whether astrometric data was used in the fit.
+        used_postage_stamps: Whether postage stamp data was used.
+        limb_darkening_model: Name of the limb darkening model employed.
+        limb_darkening_coeff: Limb darkening coefficients as key=value pairs.
+        parameter_uncertainty: Parameter uncertainties as key=value pairs.
+        physical_param: Derived physical parameters as key=value pairs.
+        relative_probability: Probability of this solution being the best model.
+        log_likelihood: Log-likelihood value of the fit.
+        n_data_points: Number of data points used in the fit.
+        cpu_hours: Total CPU time consumed by the fit.
+        wall_time_hours: Real-world time consumed by the fit.
+        lightcurve_plot_path: Path to the lightcurve plot file.
+        lens_plane_plot_path: Path to the lens plane plot file.
+        notes: Markdown-formatted notes for the solution.
+        notes_file: Path to a Markdown file containing solution notes.
+        dry_run: If True, display the solution without saving.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        typer.BadParameter: If parameter format is invalid or model type is unsupported.
+        OSError: If unable to write files or create directories.
+    
+    Example:
+        # Simple 1S1L solution with inline parameters
+        microlens-submit add-solution EVENT001 1S1L ./project \
+            --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
+            --log-likelihood -1234.56 --n-data-points 1250 \
+            --cpu-hours 2.5 --wall-time-hours 0.5 \
+            --relative-probability 0.8 \
+            --notes "# Simple Point Lens Fit\n\nThis is a basic 1S1L solution."
+        
+        # Binary lens solution with higher-order effects
+        microlens-submit add-solution EVENT002 1S2L ./project \
+            --param t0=2459156.2 --param u0=0.08 --param tE=35.7 \
+            --param q=0.0005 --param s=0.95 --param alpha=78.3 \
+            --higher-order-effect parallax --higher-order-effect finite-source \
+            --t-ref 2459156.0 --log-likelihood -2156.78 \
+            --cpu-hours 28.5 --wall-time-hours 7.2
+        
+        # Using a parameter file
+        microlens-submit add-solution EVENT003 1S1L ./project \
+            --params-file parameters.json \
+            --log-likelihood -987.65 --cpu-hours 8.1
+        
+        # Dry run to preview without saving
+        microlens-submit add-solution EVENT001 1S1L ./project \
+            --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
+            --dry-run
+        
+    Note:
+        The solution is automatically assigned a unique UUID and marked as active.
+        If notes are provided, they are saved as a Markdown file in the project
+        structure. Use --dry-run to preview the solution before saving.
+        The command automatically validates the solution and displays any warnings.
+    """
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
     params: dict = {}
@@ -317,11 +591,30 @@ def deactivate(
     solution_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Mark ``solution_id`` as inactive so it is excluded from exports.
-
+    """Mark a solution as inactive so it is excluded from exports.
+    
+    Deactivates a solution by setting its is_active flag to False. Inactive
+    solutions are excluded from submission exports and dossier generation,
+    but their data remains intact and can be reactivated later.
+    
     Args:
-        solution_id: The ID of the solution to deactivate.
+        solution_id: The unique identifier of the solution to deactivate.
         project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the solution is not found in any event.
+    
+    Example:
+        # Deactivate a specific solution
+        microlens-submit deactivate abc12345-def6-7890-ghij-klmnopqrstuv ./project
+        
+        # The solution is now inactive and won't be included in exports
+        microlens-submit export submission.zip ./project  # Excludes inactive solutions
+        
+    Note:
+        This command only changes the active status. The solution data remains
+        intact and can be reactivated using the activate command. Use this to
+        keep alternative fits without including them in the final submission.
     """
     sub = load(str(project_path))
     for event in sub.events.values():
@@ -339,11 +632,29 @@ def activate(
     solution_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Mark ``solution_id`` as active so it is included in exports.
-
+    """Mark a solution as active so it is included in exports.
+    
+    Activates a solution by setting its is_active flag to True. Active
+    solutions are included in submission exports and dossier generation.
+    This is the default state for newly created solutions.
+    
     Args:
-        solution_id: The ID of the solution to activate.
+        solution_id: The unique identifier of the solution to activate.
         project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the solution is not found in any event.
+    
+    Example:
+        # Activate a previously deactivated solution
+        microlens-submit activate abc12345-def6-7890-ghij-klmnopqrstuv ./project
+        
+        # The solution is now active and will be included in exports
+        microlens-submit export submission.zip ./project  # Includes active solutions
+        
+    Note:
+        This command only changes the active status. Use this to reactivate
+        solutions that were previously deactivated using the deactivate command.
     """
     sub = load(str(project_path))
     for event in sub.events.values():
@@ -363,10 +674,45 @@ def export(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Generate a zip archive containing all active solutions.
-
+    
+    Creates a compressed zip file containing the complete submission data,
+    including all active solutions, parameters, notes, and referenced files.
+    The archive is suitable for submission to the challenge organizers.
+    
+    Before creating the export, the command validates the submission and
+    displays any warnings. If validation issues are found, the user is
+    prompted to continue or cancel the export (unless --force is used).
+    
     Args:
-        output_path: Path to the resulting zip file.
+        output_path: Path where the zip archive will be created.
+        force: If True, skip validation prompts and continue with export.
         project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If validation fails and user cancels export.
+        ValueError: If referenced files (plots, posterior data) don't exist.
+        OSError: If unable to create the zip file.
+    
+    Example:
+        # Export with validation prompts
+        microlens-submit export submission.zip ./project
+        
+        # Force export without prompts
+        microlens-submit export submission.zip --force ./project
+        
+        # Export to specific directory
+        microlens-submit export /path/to/submissions/my_submission.zip ./project
+        
+    Note:
+        Only active solutions are included in the export. Inactive solutions
+        are excluded even if they exist in the project. The export includes:
+        - submission.json with metadata
+        - All active solutions with parameters
+        - Notes files for each solution
+        - Referenced files (plots, posterior data)
+        
+        Relative probabilities are automatically calculated for solutions
+        that don't have them set, using BIC if sufficient data is available.
     """
     sub = load(str(project_path))
     warnings = sub.validate()
@@ -394,10 +740,47 @@ def generate_dossier(
     including event summaries, solution statistics, and metadata. The dossier is saved
     to the `dossier/` subdirectory of the project directory with the main dashboard as index.html.
     
+    The dossier includes:
+    - Main dashboard (index.html) with submission overview and statistics
+    - Individual event pages for each event with solution tables
+    - Individual solution pages with parameters, notes, and metadata
+    - Full comprehensive dossier (full_dossier_report.html) for printing
+    
+    All pages use Tailwind CSS for styling and include syntax highlighting for
+    code blocks in participant notes.
+    
     Args:
         project_path: Directory of the submission project.
-        event_id: If set, only generate dossier for this event.
-        solution_id: If set, only generate dossier for this solution.
+        event_id: If specified, only generate dossier for this event.
+        solution_id: If specified, only generate dossier for this solution.
+    
+    Raises:
+        OSError: If unable to create output directory or write files.
+        ValueError: If submission data is invalid or missing required fields.
+    
+    Example:
+        # Generate complete dossier for all events and solutions
+        microlens-submit generate-dossier ./project
+        
+        # Generate dossier for specific event only
+        microlens-submit generate-dossier --event-id EVENT001 ./project
+        
+        # Generate dossier for specific solution only
+        microlens-submit generate-dossier --solution-id abc12345-def6-7890-ghij-klmnopqrstuv ./project
+        
+        # Files created:
+        # ./project/dossier/
+        # ├── index.html (main dashboard)
+        # ├── full_dossier_report.html (printable version)
+        # ├── EVENT001.html (event page)
+        # ├── solution_id.html (solution pages)
+        # └── assets/ (logos and icons)
+        
+    Note:
+        The dossier is generated in the dossier/ subdirectory of the project.
+        The main dashboard provides navigation to individual event and solution pages.
+        The full dossier report combines all content into a single printable document.
+        GitHub repository links are included if available in the submission metadata.
     """
     sub = load(str(project_path))
     output_dir = Path(project_path) / "dossier"
@@ -435,7 +818,38 @@ def list_solutions(
     event_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Display a table of solutions for ``event_id``."""
+    """Display a table of solutions for a specific event.
+    
+    Shows a formatted table containing all solutions for the specified event,
+    including their model types, active status, and notes snippets. The table
+    is displayed using rich formatting with color-coded status indicators.
+    
+    Args:
+        event_id: Identifier of the event to list solutions for.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the event is not found in the project.
+    
+    Example:
+        # List all solutions for EVENT001
+        microlens-submit list-solutions EVENT001 ./project
+        
+        # Output shows:
+        # ┌─────────────────────────────────────────────────────────┬──────────┬────────┬─────────────────┐
+        # │ Solution ID                                             │ Model    │ Status │ Notes           │
+        # │                                                         │ Type     │        │                 │
+        # ├─────────────────────────────────────────────────────────┼──────────┼────────┼─────────────────┤
+        # │ abc12345-def6-7890-ghij-klmnopqrstuv                   │ 1S1L     │ Active │ Simple point... │
+        # │ def67890-abc1-2345-klmn-opqrstuvwxyz                   │ 1S2L     │ Active │ Binary lens...  │
+        # └─────────────────────────────────────────────────────────┴──────────┴────────┴─────────────────┘
+        
+    Note:
+        The table shows both active and inactive solutions. Active solutions
+        are marked in green, inactive solutions in red. Notes are truncated
+        to fit the table display. Use the solution ID to reference specific
+        solutions in other commands.
+    """
     sub = load(str(project_path))
     if event_id not in sub.events:
         console.print(f"Event {event_id} not found", style="bold red")
@@ -457,8 +871,45 @@ def compare_solutions(
     event_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Rank active solutions for ``event_id`` using the Bayesian Information Criterion."""
-
+    """Rank active solutions for an event using the Bayesian Information Criterion.
+    
+    Compares all active solutions for the specified event using BIC to rank
+    them by relative probability. The BIC is calculated as:
+    
+        BIC = k * ln(n) - 2 * ln(L)
+    
+    where k is the number of parameters, n is the number of data points,
+    and L is the likelihood. Lower BIC values indicate better models.
+    
+    The command displays a table with solution rankings and automatically
+    calculates relative probabilities for solutions that don't have them set.
+    
+    Args:
+        event_id: Identifier of the event to compare solutions for.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the event is not found in the project.
+    
+    Example:
+        # Compare solutions for EVENT001
+        microlens-submit compare-solutions EVENT001 ./project
+        
+        # Output shows:
+        # ┌─────────────────────────────────────────────────────────┬──────────┬─────────────────────┬─────────┬─────────────────┬─────────┬─────────────────┐
+        # │ Solution ID                                             │ Model    │ Higher-Order        │ # Params│ Log-Likelihood  │ BIC     │ Relative Prob   │
+        # │                                                         │ Type     │ Effects             │ (k)     │                 │         │                 │
+        # ├─────────────────────────────────────────────────────────┼──────────┼─────────────────────┼─────────┼─────────────────┼─────────┼─────────────────┤
+        # │ abc12345-def6-7890-ghij-klmnopqrstuv                   │ 1S1L     │ -                   │ 3       │ -1234.56        │ 2475.12 │ 0.600           │
+        # │ def67890-abc1-2345-klmn-opqrstuvwxyz                   │ 1S2L     │ parallax,finite-... │ 6       │ -1189.34        │ 2394.68 │ 0.400           │
+        # └─────────────────────────────────────────────────────────┴──────────┴─────────────────────┴─────────┴─────────────────┴─────────┴─────────────────┘
+        
+    Note:
+        Only active solutions with valid log_likelihood and n_data_points
+        are included in the comparison. Solutions missing these values are
+        skipped with a warning. Relative probabilities are automatically
+        calculated using BIC if not already set.
+    """
     sub = load(str(project_path))
     if event_id not in sub.events:
         console.print(f"Event {event_id} not found", style="bold red")
@@ -569,18 +1020,41 @@ def validate_solution(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate a specific solution's parameters and configuration.
-
+    
     This command uses the centralized validation logic to check:
     - Parameter completeness for the model type
     - Higher-order effect requirements
     - Parameter types and value ranges
     - Physical consistency of parameters
-
+    
+    The validation provides detailed feedback about any issues found,
+    helping ensure solutions are complete and ready for submission.
+    
     Args:
-        solution_id: The ID of the solution to validate.
+        solution_id: The unique identifier of the solution to validate.
         project_path: Directory of the submission project.
-
-    The associated event ID is displayed in the output.
+    
+    Raises:
+        typer.Exit: If the solution is not found in any event.
+    
+    Example:
+        # Validate a specific solution
+        microlens-submit validate-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project
+        
+        # Output shows:
+        # ✅ All validations passed for abc12345-def6-7890-ghij-klmnopqrstuv (event EVENT001)
+        
+        # Or if issues are found:
+        # ┌─────────────────────────────────────────────────────────────────────────────┐
+        # │ Validation Results for abc12345-def6-7890-ghij-klmnopqrstuv (event EVENT001) │
+        # └─────────────────────────────────────────────────────────────────────────────┘
+        #   • Missing required parameter 'tE' for model type '1S1L'
+        #   • Parameter 'u0' has invalid value: -0.5 (must be positive)
+        
+    Note:
+        The validation checks are comprehensive and cover all model types
+        and higher-order effects. Always validate solutions before submission
+        to catch any issues early.
     """
     sub = load(str(project_path))
 
@@ -623,23 +1097,66 @@ def validate_submission(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate the entire submission for missing or incomplete information.
-
+    
     This command performs comprehensive validation of all active solutions
-    and returns a list of warnings describing potential issues.
-
+    and returns a list of warnings describing potential issues. It checks
+    for common problems like missing metadata, incomplete solutions, and
+    validation issues in individual solutions.
+    
+    The validation is particularly strict about the GitHub repository URL,
+    which is required for submission. If repo_url is missing or invalid,
+    the command will exit with an error.
+    
     Args:
         project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If repo_url is missing or invalid (exit code 1).
+    
+    Example:
+        # Validate the entire submission
+        microlens-submit validate-submission ./project
+        
+        # Output if all validations pass:
+        # ┌─────────────────────────────────────┐
+        # │ ✅ All validations passed!          │
+        # └─────────────────────────────────────┘
+        
+        # Output if issues are found:
+        # ┌─────────────────────────────────────┐
+        # │ Validation Warnings                 │
+        # └─────────────────────────────────────┘
+        #   • Hardware info is missing
+        #   • Event EVENT001: Solution abc12345 is missing log_likelihood
+        #   • Solution def67890 in event EVENT002: Missing required parameter 'tE'
+        
+    Note:
+        This command checks for:
+        - Missing or invalid repo_url (GitHub repository URL)
+        - Missing hardware information
+        - Events with no active solutions
+        - Solutions with missing required metadata
+        - Individual solution validation issues
+        - Relative probability consistency
+        
+        Always run this command before exporting your submission to ensure
+        all required information is present and valid.
     """
     sub = load(str(project_path))
     warnings = sub.validate()
 
+    # Check for missing repo_url
+    repo_url_warning = next((w for w in warnings if 'repo_url' in w.lower() or 'github' in w.lower()), None)
+    if repo_url_warning:
+        console.print(Panel(f"[red]Error: {repo_url_warning}\nPlease add your GitHub repository URL using 'microlens-submit set-repo-url <url> <project_dir>'.[/red]", style="bold red"))
+        raise typer.Exit(code=1)
+
     if not warnings:
-        console.print(Panel("✅ All validations passed!", style="bold green"))
+        console.print(Panel("\u2705 All validations passed!", style="bold green"))
     else:
         console.print(Panel("Validation Warnings", style="yellow"))
         for warning in warnings:
-            console.print(f"  • {warning}")
-
+            console.print(f"  \u2022 {warning}")
         console.print(f"\nFound {len(warnings)} validation issue(s)", style="yellow")
 
 
@@ -649,10 +1166,40 @@ def validate_event(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate all solutions for a specific event.
-
+    
+    Runs validation on all solutions (both active and inactive) for the
+    specified event. This provides a focused validation check for a single
+    event, useful when working on specific events or debugging issues.
+    
     Args:
         event_id: Identifier of the event to validate.
         project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the event is not found in the project.
+    
+    Example:
+        # Validate all solutions for EVENT001
+        microlens-submit validate-event EVENT001 ./project
+        
+        # Output shows:
+        # ┌─────────────────────────────────────┐
+        # │ Validating Event: EVENT001          │
+        # └─────────────────────────────────────┘
+        # 
+        # Solution abc12345-def6-7890-ghij-klmnopqrstuv:
+        #   • Missing required parameter 'tE' for model type '1S1L'
+        # 
+        # ✅ Solution def67890-abc1-2345-klmn-opqrstuvwxyz: All validations passed
+        
+        # ┌─────────────────────────────────────┐
+        # │ ✅ All solutions passed validation! │
+        # └─────────────────────────────────────┘
+        
+    Note:
+        This command validates all solutions in the event, regardless of
+        their active status. It's useful for checking solutions that might
+        be inactive but could be reactivated later.
     """
     sub = load(str(project_path))
 
@@ -685,18 +1232,51 @@ def validate_event(
 
 
 def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
-    """
-    Parse a structured parameter file that can contain both parameters and uncertainties.
+    """Parse a structured parameter file that can contain both parameters and uncertainties.
     
     Supports both JSON and YAML formats. The file can have either:
     1. Simple format: {"param1": value1, "param2": value2, ...}
     2. Structured format: {"parameters": {...}, "uncertainties": {...}}
     
     Args:
-        params_file: Path to the parameter file
-        
+        params_file: Path to the parameter file (JSON or YAML format).
+    
     Returns:
-        tuple: (parameters_dict, uncertainties_dict)
+        tuple: (parameters_dict, uncertainties_dict) - Two dictionaries containing
+               the parsed parameters and their uncertainties.
+    
+    Raises:
+        OSError: If the file cannot be read.
+        json.JSONDecodeError: If JSON parsing fails.
+        yaml.YAMLError: If YAML parsing fails.
+    
+    Example:
+        # Simple format (all keys are parameters)
+        # params.json:
+        # {
+        #   "t0": 2459123.5,
+        #   "u0": 0.1,
+        #   "tE": 20.0
+        # }
+        
+        # Structured format (separate parameters and uncertainties)
+        # params.yaml:
+        # parameters:
+        #   t0: 2459123.5
+        #   u0: 0.1
+        #   tE: 20.0
+        # uncertainties:
+        #   t0: 0.1
+        #   u0: 0.01
+        #   tE: 0.5
+        
+        params, uncertainties = _parse_structured_params_file(Path("params.json"))
+        
+    Note:
+        This function automatically detects the file format based on the file
+        extension (.json, .yaml, .yml). For structured format, both parameters
+        and uncertainties sections are optional - missing sections return empty
+        dictionaries.
     """
     import yaml
     
@@ -768,7 +1348,88 @@ def edit_solution(
     ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Edit an existing solution's attributes, including file-based notes."""
+    """Edit an existing solution's attributes, including file-based notes.
+    
+    This command allows you to modify various attributes of an existing solution
+    without having to recreate it. It supports updating parameters, metadata,
+    notes, and compute information. The command provides detailed feedback about
+    what changes were made.
+    
+    **Notes Management:**
+    - Use --notes to replace existing notes with new content
+    - Use --append-notes to add text to existing notes
+    - Use --notes-file to reference an external Markdown file
+    - Use --clear-notes to remove all notes
+    
+    **Parameter Updates:**
+    - Use --param to update individual model parameters
+    - Use --param-uncertainty to update parameter uncertainties
+    - Use --higher-order-effect to replace all higher-order effects
+    
+    **Metadata Updates:**
+    - Use --relative-probability, --log-likelihood, --n-data-points
+    - Use --cpu-hours and --wall-time-hours to update compute info
+    - Use --clear-* flags to remove specific fields
+    
+    Args:
+        solution_id: The unique identifier of the solution to edit.
+        relative_probability: New relative probability value.
+        log_likelihood: New log-likelihood value.
+        n_data_points: New number of data points value.
+        notes: New notes content (replaces existing notes).
+        notes_file: Path to external notes file.
+        append_notes: Text to append to existing notes.
+        clear_notes: If True, clear all notes.
+        clear_relative_probability: If True, clear relative probability.
+        clear_log_likelihood: If True, clear log likelihood.
+        clear_n_data_points: If True, clear n_data_points.
+        clear_parameter_uncertainties: If True, clear parameter uncertainties.
+        clear_physical_parameters: If True, clear physical parameters.
+        cpu_hours: New CPU hours value.
+        wall_time_hours: New wall time hours value.
+        param: Model parameters as key=value pairs (updates existing).
+        param_uncertainty: Parameter uncertainties as key=value pairs.
+        higher_order_effect: Higher-order effects (replaces existing).
+        clear_higher_order_effects: If True, clear all higher-order effects.
+        dry_run: If True, show changes without saving.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the solution is not found.
+        typer.BadParameter: If parameter format is invalid.
+    
+    Example:
+        # Update solution metadata
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --log-likelihood -1200.0 \
+            --relative-probability 0.8 \
+            --cpu-hours 3.5
+        
+        # Update model parameters
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --param t0=2459123.6 --param u0=0.12
+        
+        # Replace notes
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --notes "# Updated Solution Notes\n\nThis is the updated description."
+        
+        # Append to existing notes
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --append-notes "\n\n## Additional Analysis\n\nFurther investigation shows..."
+        
+        # Clear specific fields
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --clear-relative-probability --clear-notes
+        
+        # Dry run to preview changes
+        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
+            --log-likelihood -1200.0 --dry-run
+        
+    Note:
+        This command only modifies the specified fields. Unspecified fields
+        remain unchanged. Use --dry-run to preview changes before applying them.
+        The command automatically saves changes to disk after successful updates.
+    """
     sub = load(str(project_path))
     target_solution = None
     target_event_id = None
@@ -902,7 +1563,36 @@ def edit_solution(
 
 @app.command("notes")
 def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), help="Project directory")) -> None:
-    """Open the notes file for a solution in $EDITOR (or nano/vi fallback)."""
+    """Open the notes file for a solution in the default text editor.
+    
+    Launches the system's default text editor (or a fallback) to edit the
+    notes file for the specified solution. This provides a convenient way
+    to edit solution notes without having to manually locate the file.
+    
+    The command uses the $EDITOR environment variable if set, otherwise
+    falls back to nano, then vi. The notes file is created if it doesn't
+    exist.
+    
+    Args:
+        solution_id: The unique identifier of the solution to edit notes for.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        typer.Exit: If the solution is not found or no editor is available.
+    
+    Example:
+        # Edit notes for a specific solution
+        microlens-submit notes abc12345-def6-7890-ghij-klmnopqrstuv ./project
+        
+        # This will open the notes file in your default editor:
+        # ./project/events/EVENT001/solutions/abc12345-def6-7890-ghij-klmnopqrstuv.md
+        
+    Note:
+        The notes file is opened in the system's default text editor.
+        If $EDITOR is not set, the command tries nano, then vi as fallbacks.
+        The notes file supports Markdown formatting and will be rendered
+        as HTML in the dossier with syntax highlighting for code blocks.
+    """
     sub = load(str(project_path))
     for event in sub.events.values():
         if solution_id in event.solutions:
@@ -929,6 +1619,184 @@ def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), 
             return
     console.print(f"Solution {solution_id} not found", style="bold red")
     raise typer.Exit(code=1)
+
+
+@app.command()
+def set_repo_url(
+    repo_url: str = typer.Argument(..., help="GitHub repository URL (e.g. https://github.com/owner/repo)"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Set or update the GitHub repository URL in the submission metadata.
+    
+    Updates the repo_url field in submission.json with the provided GitHub
+    repository URL. This URL is required for submission validation and is
+    displayed in the generated dossier.
+    
+    The command accepts various GitHub URL formats:
+    - HTTPS: https://github.com/owner/repo
+    - SSH: git@github.com:owner/repo.git
+    - With or without .git extension
+    
+    Args:
+        repo_url: GitHub repository URL in any standard format.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        OSError: If unable to write to submission.json.
+    
+    Example:
+        # Set repository URL using HTTPS format
+        microlens-submit set-repo-url https://github.com/team-alpha/microlens-submit ./project
+        
+        # Set repository URL using SSH format
+        microlens-submit set-repo-url git@github.com:team-alpha/microlens-submit.git ./project
+        
+        # Update existing repository URL
+        microlens-submit set-repo-url https://github.com/team-alpha/new-repo ./project
+        
+    Note:
+        The repository URL is used for:
+        - Submission validation (required field)
+        - Display in the generated dossier
+        - Linking to specific commits in solution pages
+        
+        The URL should point to the repository containing your analysis code
+        and submission preparation scripts.
+    """
+    sub = load(str(project_path))
+    sub.repo_url = repo_url
+    sub.save()
+    console.print(Panel(f"Set repo_url to {repo_url} in {project_path}/submission.json", style="bold green"))
+
+
+@app.command("set-hardware-info")
+def set_hardware_info(
+    cpu: Optional[str] = typer.Option(None, "--cpu", help="CPU model/description"),
+    cpu_details: Optional[str] = typer.Option(None, "--cpu-details", help="Detailed CPU information"),
+    memory_gb: Optional[float] = typer.Option(None, "--memory-gb", help="Memory in GB"),
+    ram_gb: Optional[float] = typer.Option(None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"),
+    platform: Optional[str] = typer.Option(None, "--platform", help="Platform description (e.g., 'Local Analysis', 'Roman Nexus')"),
+    nexus_image: Optional[str] = typer.Option(None, "--nexus-image", help="Roman Nexus image identifier"),
+    clear: bool = typer.Option(False, "--clear", help="Clear all existing hardware info"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be changed without saving"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Set or update hardware information in the submission metadata.
+    
+    Updates the hardware_info field in submission.json with computational
+    resource details. This information is displayed in the generated dossier
+    and helps with reproducibility and resource tracking.
+    
+    The command accepts various hardware information fields and can be used
+    to update existing information or set it for the first time.
+    
+    Args:
+        cpu: Basic CPU model/description (e.g., "Intel Xeon E5-2680 v4").
+        cpu_details: Detailed CPU information (takes precedence over --cpu).
+        memory_gb: Memory in gigabytes (e.g., 64.0).
+        ram_gb: RAM in gigabytes (alternative to --memory-gb).
+        platform: Platform description (e.g., "Local Analysis", "Roman Nexus").
+        nexus_image: Roman Nexus image identifier.
+        clear: If True, clear all existing hardware info before setting new values.
+        dry_run: If True, show what would be changed without saving.
+        project_path: Directory of the submission project.
+    
+    Raises:
+        OSError: If unable to write to submission.json.
+    
+    Example:
+        # Set basic hardware info
+        microlens-submit set-hardware-info --cpu "Intel Xeon E5-2680 v4" --memory-gb 64 ./project
+        
+        # Set detailed platform info
+        microlens-submit set-hardware-info --platform "Local Analysis" --cpu-details "Intel Xeon E5-2680 v4 @ 2.4GHz" ./project
+        
+        # Set Roman Nexus info
+        microlens-submit set-hardware-info --platform "Roman Nexus" --nexus-image "roman-science-platform:latest" ./project
+        
+        # Update existing info
+        microlens-submit set-hardware-info --memory-gb 128 ./project
+        
+        # Clear and set new info
+        microlens-submit set-hardware-info --clear --cpu "AMD EPYC" --memory-gb 256 ./project
+        
+        # Dry run to preview changes
+        microlens-submit set-hardware-info --cpu "Intel i7" --memory-gb 32 --dry-run ./project
+        
+    Note:
+        Hardware information is used for:
+        - Display in the generated dossier
+        - Reproducibility documentation
+        - Resource usage tracking
+        
+        The --cpu-details option takes precedence over --cpu if both are provided.
+        The --memory-gb and --ram-gb options are equivalent; use whichever is clearer.
+        Use --clear to replace all existing hardware info with new values.
+    """
+    sub = load(str(project_path))
+    
+    # Initialize hardware_info if it doesn't exist
+    if sub.hardware_info is None:
+        sub.hardware_info = {}
+    
+    changes = []
+    old_hardware_info = sub.hardware_info.copy()
+    
+    # Clear existing info if requested
+    if clear:
+        if sub.hardware_info:
+            changes.append("Clear all existing hardware info")
+            sub.hardware_info = {}
+    
+    # Set new values
+    if cpu_details is not None:
+        if sub.hardware_info.get('cpu_details') != cpu_details:
+            changes.append(f"Set cpu_details: {cpu_details}")
+            sub.hardware_info['cpu_details'] = cpu_details
+    elif cpu is not None:
+        if sub.hardware_info.get('cpu') != cpu:
+            changes.append(f"Set cpu: {cpu}")
+            sub.hardware_info['cpu'] = cpu
+    
+    if memory_gb is not None:
+        if sub.hardware_info.get('memory_gb') != memory_gb:
+            changes.append(f"Set memory_gb: {memory_gb}")
+            sub.hardware_info['memory_gb'] = memory_gb
+    elif ram_gb is not None:
+        if sub.hardware_info.get('ram_gb') != ram_gb:
+            changes.append(f"Set ram_gb: {ram_gb}")
+            sub.hardware_info['ram_gb'] = ram_gb
+    
+    if platform is not None:
+        if sub.hardware_info.get('platform') != platform:
+            changes.append(f"Set platform: {platform}")
+            sub.hardware_info['platform'] = platform
+    
+    if nexus_image is not None:
+        if sub.hardware_info.get('nexus_image') != nexus_image:
+            changes.append(f"Set nexus_image: {nexus_image}")
+            sub.hardware_info['nexus_image'] = nexus_image
+    
+    # Show dry run results
+    if dry_run:
+        if changes:
+            console.print(Panel("Hardware info changes (dry run):", style="cyan"))
+            for change in changes:
+                console.print(f"  • {change}")
+            console.print(f"\nNew hardware_info: {sub.hardware_info}")
+        else:
+            console.print(Panel("No changes would be made", style="yellow"))
+        return
+    
+    # Apply changes
+    if changes:
+        sub.save()
+        console.print(Panel(f"Updated hardware info in {project_path}/submission.json", style="bold green"))
+        for change in changes:
+            console.print(f"  • {change}")
+        console.print(f"\nCurrent hardware_info: {sub.hardware_info}")
+    else:
+        console.print(Panel("No changes made", style="yellow"))
 
 
 if __name__ == "__main__":  # pragma: no cover

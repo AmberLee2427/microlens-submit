@@ -1,3 +1,51 @@
+"""
+Test suite for microlens-submit API functionality.
+
+This module contains comprehensive tests for the core API classes and functionality
+of microlens-submit. It tests the complete lifecycle of submission management,
+including creation, persistence, validation, and export operations.
+
+**Test Coverage:**
+- Submission lifecycle (create, save, load, validate)
+- Event and solution management
+- Compute information handling
+- File path persistence and export
+- Active/inactive solution filtering
+- Parameter validation and warnings
+- Relative probability calculations
+
+**Key Test Areas:**
+- Data persistence across save/load cycles
+- Export functionality with external files
+- Solution activation/deactivation
+- Validation warnings and error conditions
+- Compute time tracking and metadata
+- Higher-order effects and model parameters
+
+Example:
+    >>> import pytest
+    >>> from pathlib import Path
+    >>> from microlens_submit.api import load
+    >>> 
+    >>> # Run a specific test
+    >>> def test_basic_functionality(tmp_path):
+    ...     project = tmp_path / "test_project"
+    ...     sub = load(str(project))
+    ...     sub.team_name = "Test Team"
+    ...     sub.tier = "test"
+    ...     sub.save()
+    ...     
+    ...     # Verify persistence
+    ...     new_sub = load(str(project))
+    ...     assert new_sub.team_name == "Test Team"
+    ...     assert new_sub.tier == "test"
+
+Note:
+    All tests use pytest's tmp_path fixture for isolated testing.
+    Tests verify both the API functionality and data persistence.
+    The test suite ensures backward compatibility and data integrity.
+"""
+
 import zipfile
 import json
 
@@ -5,6 +53,27 @@ from microlens_submit.api import load
 
 
 def test_full_lifecycle(tmp_path):
+    """Test complete submission lifecycle from creation to persistence.
+    
+    Verifies that a complete submission can be created, saved, and reloaded
+    with all data intact. This includes events, solutions, compute information,
+    and metadata persistence.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies the complete workflow:
+        >>> # 1. Create submission with team info
+        >>> # 2. Add events and solutions
+        >>> # 3. Set compute information
+        >>> # 4. Save to disk
+        >>> # 5. Reload and verify all data
+    
+    Note:
+        This is a fundamental test that ensures the core persistence
+        mechanism works correctly for all submission components.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     sub.team_name = "Test Team"
@@ -29,7 +98,24 @@ def test_full_lifecycle(tmp_path):
 
 
 def test_compute_info_hours(tmp_path):
-    """CPU and wall time are persisted."""
+    """Test that CPU and wall time are correctly persisted.
+    
+    Verifies that compute information including CPU hours and wall time
+    are properly saved and restored when loading a submission.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting compute info with specific hours
+        >>> # 2. Saving the submission
+        >>> # 3. Reloading and checking values match
+    
+    Note:
+        Compute information is critical for submission evaluation
+        and must be accurately preserved across save/load cycles.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
@@ -44,6 +130,24 @@ def test_compute_info_hours(tmp_path):
 
 
 def test_deactivate_and_export(tmp_path):
+    """Test that deactivated solutions are excluded from exports.
+    
+    Verifies that when solutions are deactivated, they are properly
+    excluded from submission exports while remaining in the project.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating active and inactive solutions
+        >>> # 2. Exporting the submission
+        >>> # 3. Checking only active solutions are included
+    
+    Note:
+        Deactivated solutions remain in the project for potential
+        reactivation but are excluded from final submissions.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("test-event")
@@ -68,6 +172,25 @@ def test_deactivate_and_export(tmp_path):
 
 
 def test_export_includes_external_files(tmp_path):
+    """Test that external files are properly included in exports.
+    
+    Verifies that referenced files (posterior data, plots) are correctly
+    included in submission exports with proper path handling.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating solution with external file references
+        >>> # 2. Creating the referenced files
+        >>> # 3. Exporting and checking file inclusion
+        >>> # 4. Verifying path updates in solution JSON
+    
+    Note:
+        External files are copied into the export archive and their
+        paths in the solution JSON are updated to reflect the new locations.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
@@ -97,6 +220,24 @@ def test_export_includes_external_files(tmp_path):
 
 
 def test_get_active_solutions(tmp_path):
+    """Test filtering of active solutions from events.
+    
+    Verifies that the get_active_solutions() method correctly returns
+    only solutions that have not been deactivated.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating multiple solutions
+        >>> # 2. Deactivating one solution
+        >>> # 3. Checking only active solutions are returned
+    
+    Note:
+        This method is used extensively for submission validation
+        and export operations to ensure only active solutions are processed.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
@@ -111,6 +252,26 @@ def test_get_active_solutions(tmp_path):
 
 
 def test_clear_solutions(tmp_path):
+    """Test that clear_solutions() deactivates all solutions.
+    
+    Verifies that the clear_solutions() method deactivates all solutions
+    in an event without removing them from the project.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating multiple solutions
+        >>> # 2. Calling clear_solutions()
+        >>> # 3. Checking all solutions are deactivated
+        >>> # 4. Verifying solutions still exist in project
+    
+    Note:
+        clear_solutions() is a convenience method that deactivates
+        all solutions rather than deleting them, allowing for easy
+        reactivation if needed.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
@@ -129,6 +290,24 @@ def test_clear_solutions(tmp_path):
 
 
 def test_posterior_path_persists(tmp_path):
+    """Test that posterior file paths are correctly persisted.
+    
+    Verifies that posterior file paths are properly saved and restored
+    when loading a submission.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting a posterior file path
+        >>> # 2. Saving the submission
+        >>> # 3. Reloading and checking path matches
+    
+    Note:
+        Posterior file paths are important for submission evaluation
+        and must be accurately preserved across save/load cycles.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
@@ -142,6 +321,24 @@ def test_posterior_path_persists(tmp_path):
 
 
 def test_new_fields_persist(tmp_path):
+    """Test that new solution fields are correctly persisted.
+    
+    Verifies that newer solution fields (bands, higher-order effects,
+    reference times) are properly saved and restored.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting various new fields on a solution
+        >>> # 2. Saving the submission
+        >>> # 3. Reloading and checking all fields match
+    
+    Note:
+        This test ensures backward compatibility when new fields
+        are added to the solution schema.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
@@ -159,6 +356,24 @@ def test_new_fields_persist(tmp_path):
 
 
 def test_plot_paths_persist(tmp_path):
+    """Test that plot file paths are correctly persisted.
+    
+    Verifies that lightcurve and lens plane plot paths are properly
+    saved and restored when loading a submission.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting plot file paths
+        >>> # 2. Saving the submission
+        >>> # 3. Reloading and checking paths match
+    
+    Note:
+        Plot paths are important for submission documentation
+        and must be accurately preserved across save/load cycles.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("event")
@@ -174,6 +389,25 @@ def test_plot_paths_persist(tmp_path):
 
 
 def test_relative_probability_export(tmp_path):
+    """Test that relative probabilities are correctly handled in exports.
+    
+    Verifies that relative probabilities are properly exported and that
+    automatic calculation works for solutions without explicit values.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting explicit relative probability on one solution
+        >>> # 2. Leaving another solution without relative probability
+        >>> # 3. Exporting and checking automatic calculation
+    
+    Note:
+        When solutions lack explicit relative probabilities, they are
+        automatically calculated based on BIC values if sufficient
+        data is available.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
@@ -197,6 +431,24 @@ def test_relative_probability_export(tmp_path):
 
 
 def test_validate_warnings(tmp_path):
+    """Test that validation generates appropriate warnings.
+    
+    Verifies that the validation system correctly identifies and reports
+    various issues with submissions.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating submission with known issues
+        >>> # 2. Running validation
+        >>> # 3. Checking that expected warnings are generated
+    
+    Note:
+        Validation warnings help users identify issues before submission
+        and ensure data completeness and correctness.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt1 = sub.get_event("evt1")
@@ -215,6 +467,24 @@ def test_validate_warnings(tmp_path):
 
 
 def test_relative_probability_range(tmp_path):
+    """Test that relative probability validation works correctly.
+    
+    Verifies that the validation system correctly identifies relative
+    probability values outside the valid range (0-1).
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Setting invalid relative probability (>1)
+        >>> # 2. Running validation
+        >>> # 3. Checking that appropriate warning is generated
+    
+    Note:
+        Relative probabilities must be between 0 and 1, and the sum
+        of all relative probabilities for an event should equal 1.
+    """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")

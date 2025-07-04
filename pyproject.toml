@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microlens-submit"
-version = "0.12.0-dev"
+version = "0.12.1"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
 ]
@@ -57,4 +57,4 @@ include = ["microlens_submit*"]
 exclude = ["assets*", "docs*", "tests*"]
 
 [tool.setuptools.package-data]
-microlens_submit = ["assets/rges-pit_logo.png"]
+microlens_submit = ["assets/rges-pit_logo.png", "assets/github-desktop_logo.png"]
