@@ -240,11 +240,11 @@ h1, h2 {
 }
 
 /* Style the EthicalAds ad box to match the sidebar */
-.ethical-rtd, .ethical-sidebar-ad, .ethical-ad {
+.ethical-rtd {
     background: var(--rtd-color-secondary) !important;
     border-radius: 8px !important;
     color: var(--rtd-color-background) !important;
 }
-.ethical-rtd *, .ethical-sidebar-ad *, .ethical-ad * {
+.ethical-rtd * {
     color: var(--rtd-color-background) !important;
 }
