@@ -386,9 +386,9 @@ def test_cli_compare_solutions_skips_zero_data_points():
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
         # Should only show the valid solution in the table
-        # The output now includes "Relative probabilities calculated using BIC" 
-        # so we count "Relative" (the truncated column header) instead
-        assert result.stdout.count("Relative") == 1
+        # The output includes "Relative probabilities calculated using BIC" in footer
+        # so we count the exact table header cell for the 'Relative' column
+        assert result.stdout.count("┃ Relative  ┃") == 1
 
 
 def test_params_file_option_and_bands():
