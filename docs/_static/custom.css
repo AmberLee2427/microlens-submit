@@ -120,3 +120,80 @@
   code {
     color: var(--rtd-color-accent) !important;
   }
+
+  /* Admonition boxes (note, warning, tip, etc.) */
+  .admonition {
+    background: var(--rtd-color-background) !important;
+    border: 2px solid var(--rtd-color-accent) !important;
+    border-radius: 6px !important;
+    margin: 1em 0 !important;
+    padding: 0.5em 1em !important;
+  }
+  
+  .admonition-title {
+    background: var(--rtd-color-accent) !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    margin: -0.5em -1em 0.5em -1em !important;
+    padding: 0.5em 1em !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
+  
+  /* Specific admonition types */
+  .admonition.note {
+    border-color: var(--rtd-color-accent) !important;
+  }
+  
+  .admonition.note .admonition-title {
+    background: var(--rtd-color-accent) !important;
+  }
+  
+  .admonition.warning {
+    border-color: #e74c3c !important;
+  }
+  
+  .admonition.warning .admonition-title {
+    background: #e74c3c !important;
+  }
+  
+  .admonition.tip {
+    border-color: #27ae60 !important;
+  }
+  
+  .admonition.tip .admonition-title {
+    background: #27ae60 !important;
+  }
+  
+  .admonition.important {
+    border-color: #f39c12 !important;
+  }
+  
+  .admonition.important .admonition-title {
+    background: #f39c12 !important;
+  }
+  
+  .admonition.seealso {
+    border-color: var(--rtd-color-secondary) !important;
+  }
+  
+  .admonition.seealso .admonition-title {
+    background: var(--rtd-color-secondary) !important;
+  }
+  
+  /* Example boxes */
+  .example {
+    background: var(--rtd-color-background) !important;
+    border: 2px solid var(--rtd-color-accent) !important;
+    border-radius: 6px !important;
+    margin: 1em 0 !important;
+    padding: 0.5em 1em !important;
+  }
+  
+  .example .admonition-title {
+    background: var(--rtd-color-accent) !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    margin: -0.5em -1em 0.5em -1em !important;
+    padding: 0.5em 1em !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
