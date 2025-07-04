@@ -34,13 +34,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 
 ## Installation
 
-This package is pre-release. It is currently available on TestPyPI:
-
-```bash
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.12.0-dev
-```
-
-The package will be available on PyPI:
+The package is be available on PyPI:
 
 ```bash
 pip install microlens-submit
