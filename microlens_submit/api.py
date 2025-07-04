@@ -60,32 +60,29 @@ class Solution(BaseModel):
     :meth:`Event.add_solution` and persisted to disk when
     :meth:`Submission.save` is called.
 
-    Attributes:
-        solution_id: Unique identifier for the solution (auto-generated UUID).
-        model_type: Specific lens/source configuration such as "1S1L" or "1S2L".
-        bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
-        higher_order_effects: List of physical effects modeled (e.g., ["parallax"]).
-        t_ref: Reference time for time-dependent effects (Julian Date).
-        parameters: Dictionary of model parameters used for the fit.
-        is_active: Flag indicating whether the solution should be included in
-            the final submission export.
-        compute_info: Metadata about the computing environment, populated by
-            :meth:`set_compute_info`.
-        posterior_path: Optional path to a file containing posterior samples.
-        lightcurve_plot_path: Optional path to the lightcurve plot file.
-        lens_plane_plot_path: Optional path to the lens plane plot file.
-        notes_path: Path to the markdown notes file for this solution.
-        used_astrometry: Whether astrometric information was used when fitting.
-        used_postage_stamps: Whether postage stamp data was used.
-        limb_darkening_model: Name of the limb darkening model employed.
-        limb_darkening_coeffs: Mapping of limb darkening coefficients.
-        parameter_uncertainties: Uncertainties for parameters in parameters.
-        physical_parameters: Physical parameters derived from the model.
-        log_likelihood: Log-likelihood value of the fit.
-        relative_probability: Optional probability of this solution being the best model.
-        n_data_points: Number of data points used in the fit.
-        creation_timestamp: UTC timestamp when the solution was created.
-        
+    :ivar solution_id: Unique identifier for the solution (auto-generated UUID).
+    :ivar model_type: Specific lens/source configuration such as "1S1L" or "1S2L".
+    :ivar bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
+    :ivar higher_order_effects: List of physical effects modeled (e.g., ["parallax"]).
+    :ivar t_ref: Reference time for time-dependent effects (Julian Date).
+    :ivar parameters: Dictionary of model parameters used for the fit.
+    :ivar is_active: Flag indicating whether the solution should be included in the final submission export.
+    :ivar compute_info: Metadata about the computing environment, populated by :meth:`set_compute_info`.
+    :ivar posterior_path: Optional path to a file containing posterior samples.
+    :ivar lightcurve_plot_path: Optional path to the lightcurve plot file.
+    :ivar lens_plane_plot_path: Optional path to the lens plane plot file.
+    :ivar notes_path: Path to the markdown notes file for this solution.
+    :ivar used_astrometry: Whether astrometric information was used when fitting.
+    :ivar used_postage_stamps: Whether postage stamp data was used.
+    :ivar limb_darkening_model: Name of the limb darkening model employed.
+    :ivar limb_darkening_coeffs: Mapping of limb darkening coefficients.
+    :ivar parameter_uncertainties: Uncertainties for parameters in parameters.
+    :ivar physical_parameters: Physical parameters derived from the model.
+    :ivar log_likelihood: Log-likelihood value of the fit.
+    :ivar relative_probability: Optional probability of this solution being the best model.
+    :ivar n_data_points: Number of data points used in the fit.
+    :ivar creation_timestamp: UTC timestamp when the solution was created.
+
     Example:
         >>> from microlens_submit import load
         >>> 
@@ -117,7 +114,7 @@ class Solution(BaseModel):
         >>> messages = solution.run_validation()
         >>> if messages:
         ...     print("Validation issues:", messages)
-        
+
     Note:
         The notes_path field supports Markdown formatting, allowing you to create rich,
         structured documentation with headers, lists, code blocks, tables, and links.
@@ -292,38 +289,16 @@ class Solution(BaseModel):
         This method performs comprehensive validation using centralized validation logic
         to ensure the solution is complete, consistent, and ready for submission.
         
-        **Validation Checks:**
+        The validation includes:
         
-        **Parameter Completeness:**
-        - Ensures all required parameters are present for the given model type
-        - Validates higher-order effect requirements (e.g., parallax needs piEN, piEE)
-        - Checks band-specific flux parameters when bands are specified
-        - Verifies t_ref is provided when required by time-dependent effects
+        * Parameter completeness for the given model type
+        * Higher-order effect requirements (e.g., parallax needs piEN, piEE)
+        * Band-specific flux parameters when bands are specified
+        * Reference time requirements for time-dependent effects
+        * Parameter data types and physically meaningful ranges
+        * Physical consistency checks
+        * Model-specific parameter requirements
         
-        **Parameter Types and Values:**
-        - Validates parameter data types (float, int, string)
-        - Checks physically meaningful parameter ranges
-        - Ensures positive values for quantities that must be positive (tE, s, etc.)
-        - Validates mass ratio (q) is between 0 and 1
-        
-        **Physical Consistency:**
-        - Checks for physically impossible parameter combinations
-        - Validates binary lens separation ranges for caustic crossing
-        - Ensures relative_probability is between 0 and 1 when specified
-        
-        **Model-Specific Validation:**
-        - 1S1L: Requires t0, u0, tE
-        - 1S2L: Requires t0, u0, tE, s, q, alpha
-        - 2S1L: Requires t0, u0, tE (core lens parameters)
-        - Higher-order effects: Validates effect-specific parameters
-        
-        **Higher-Order Effects Supported:**
-        - parallax: Requires piEN, piEE, t_ref
-        - finite-source: Requires rho
-        - lens-orbital-motion: Requires dsdt, dadt, t_ref
-        - gaussian-process: Optional ln_K, ln_lambda, ln_period, ln_gamma
-        - fitted-limb-darkening: Optional u1, u2, u3, u4
-    
         Args:
             None
             
