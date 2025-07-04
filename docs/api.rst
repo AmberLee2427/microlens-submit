@@ -145,6 +145,32 @@ Represents an individual microlensing model fit with all associated metadata.
       >>> solution.lightcurve_plot_path = "plots/event123_lc.png"
       >>> solution.lens_plane_plot_path = "plots/event123_lens.png"
 
+   **Solution Aliases:**
+
+   You can assign human-readable aliases to solutions for easier identification:
+
+   .. code-block:: python
+
+      >>> # Create a solution with an alias
+      >>> solution = event.add_solution(
+      ...     model_type="1S1L",
+      ...     parameters={"t0": 2459123.5, "u0": 0.15, "tE": 20.5}
+      ... )
+      >>> 
+      >>> # Set an alias for the solution
+      >>> solution.alias = "best_fit"
+      >>> 
+      >>> # Aliases must be unique within each event
+      >>> # This would raise an error if another solution in EVENT123 has alias "best_fit"
+      >>> submission.save()
+
+   **Alias Features:**
+   - Aliases are displayed as primary identifiers in dossier generation
+   - In the full dossier report, solutions are titled as "Solution: <event_id> <alias>"
+   - The UUID is shown as a subtitle for technical reference
+   - Solutions without aliases fall back to UUID-based identification
+   - Aliases can be edited later by setting the ``alias`` attribute
+
 **Advanced Usage**
 ~~~~~~~~~~~~~~~~~
 

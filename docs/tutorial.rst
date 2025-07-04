@@ -93,6 +93,30 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
    - The notes file is included in the exported zip and rendered in the HTML dossier.
 
+   **Solution Aliases:**
+
+   You can assign human-readable aliases to your solutions for easier identification:
+
+   .. code-block:: bash
+
+     microlens-submit add-solution EVENT123 1S1L \
+          --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+          --alias "best_fit" \
+          --notes "Initial fit"
+
+   **Alias Features:**
+   - Aliases must be unique within each event (e.g., you can't have two solutions with alias "best_fit" in EVENT123)
+   - Aliases are displayed as primary identifiers in dossier generation, with UUIDs as secondary
+   - In the full dossier report, solutions are titled as "Solution: <event_id> <alias>" with UUID as subtitle
+   - Aliases can be edited later using the edit-solution command
+   - Solutions without aliases fall back to UUID-based identification
+
+   **Edit solution aliases:**
+
+   .. code-block:: bash
+
+     microlens-submit edit-solution <solution_id> --alias "updated_best_fit"
+
    **Parameter File Support:**
 
    You can also load parameters from a JSON or YAML file instead of listing them on the
