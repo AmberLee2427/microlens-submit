@@ -22,6 +22,7 @@ import time
 import json
 import os
 import shlex
+from microlens_submit.api import load
 
 
 def run_command(cmd, check=True, capture_output=True):
@@ -68,7 +69,7 @@ def main():
     
     print("\n📊 Adding sample solutions...")
     
-    # Add a simple 1S1L solution
+    # Add a simple 1S1L solution with alias
     run_command(f"""microlens-submit add-solution EVENT001 1S1L {project_dir} \
         --param t0=2459123.5 \
         --param u0=0.15 \
@@ -78,6 +79,7 @@ def main():
         --cpu-hours 2.5 \
         --wall-time-hours 0.5 \
         --relative-probability 0.6 \
+        --alias "simple_point_lens" \
         --notes "# Single Lens Solution\n\nThis is a simple point source, point lens fit for EVENT001." """)
     
     # Add a solution with elaborate markdown notes for testing
@@ -92,6 +94,7 @@ def main():
                 f'--cpu-hours 3.0 '
                 f'--wall-time-hours 0.7 '
                 f'--relative-probability 0.5 '
+                f'--alias "detailed_analysis" '
                 f'--notes-file "{escaped_md}"')
     
     # Add a binary lens solution with higher-order effects
@@ -110,6 +113,7 @@ def main():
         --higher-order-effect parallax \
         --higher-order-effect finite-source \
         --t-ref 2459123.0 \
+        --alias "binary_with_parallax" \
         --notes "# Binary Lens Solution\n\nThis solution includes parallax and finite source effects." """)
     
     # Add a second event with different characteristics
@@ -127,6 +131,7 @@ def main():
         --relative-probability 1.0 \
         --higher-order-effect parallax \
         --t-ref 2459156.0 \
+        --alias "caustic_crossing_binary" \
         --notes "# Complex Binary Event\n\nThis event shows clear caustic crossing features." """)
     
     # Add a third event with different model type
@@ -139,6 +144,7 @@ def main():
         --cpu-hours 8.1 \
         --wall-time-hours 1.5 \
         --relative-probability 1.0 \
+        --alias "binary_source_model" \
         --notes "# Binary Source Event\n\nThis event shows evidence of a binary source." """)
     
     print("\n🔍 Validating submission...")
@@ -206,6 +212,112 @@ def main():
     print(f"   4. Test the event links (they'll be placeholders for now)")
     print(f"\n🧹 To clean up test files:")
     print(f"   rm -rf {project_dir} {dossier_dir}")
+    
+    # Test that aliases are properly displayed in the dossier
+    print(f"\n🔍 Testing alias display in dossier...")
+    
+    # Check that aliases appear in the event pages
+    for event_id in ["EVENT001", "EVENT002", "EVENT003"]:
+        event_page = dossier_path / f"{event_id}.html"
+        if event_page.exists():
+            with event_page.open("r", encoding="utf-8") as f:
+                content = f.read()
+                if event_id == "EVENT001":
+                    # Should contain all three aliases for EVENT001
+                    assert "simple_point_lens" in content, f"Alias 'simple_point_lens' not found in {event_id}.html"
+                    assert "detailed_analysis" in content, f"Alias 'detailed_analysis' not found in {event_id}.html"
+                    assert "binary_with_parallax" in content, f"Alias 'binary_with_parallax' not found in {event_id}.html"
+                elif event_id == "EVENT002":
+                    assert "caustic_crossing_binary" in content, f"Alias 'caustic_crossing_binary' not found in {event_id}.html"
+                elif event_id == "EVENT003":
+                    assert "binary_source_model" in content, f"Alias 'binary_source_model' not found in {event_id}.html"
+            print(f"✅ Aliases properly displayed in {event_id}.html")
+        else:
+            print(f"⚠️  Event page {event_id}.html not found")
+    
+    # Check that aliases appear in the main dashboard
+    with index_html.open("r", encoding="utf-8") as f:
+        dashboard_content = f.read()
+        # Should contain at least some of the aliases in the dashboard
+        alias_count = sum(1 for alias in ["simple_point_lens", "detailed_analysis", "binary_with_parallax", 
+                                         "caustic_crossing_binary", "binary_source_model"] 
+                         if alias in dashboard_content)
+        if alias_count > 0:
+            print(f"✅ Found {alias_count} aliases in main dashboard")
+        else:
+            print("⚠️  No aliases found in main dashboard (this might be expected)")
+    
+    print(f"✅ Alias display testing completed!")
+    
+    # Test that the alias lookup table is properly created
+    print(f"\n🔍 Testing alias lookup table...")
+    alias_file = project_dir / "aliases.json"
+    if alias_file.exists():
+        with alias_file.open("r") as f:
+            alias_lookup = json.load(f)
+        
+        # Check that all expected aliases are in the lookup table
+        expected_aliases = [
+            "EVENT001 simple_point_lens",
+            "EVENT001 detailed_analysis", 
+            "EVENT001 binary_with_parallax",
+            "EVENT002 caustic_crossing_binary",
+            "EVENT003 binary_source_model"
+        ]
+        
+        for expected_alias in expected_aliases:
+            assert expected_alias in alias_lookup, f"Expected alias '{expected_alias}' not found in aliases.json"
+        
+        print(f"✅ Alias lookup table contains {len(alias_lookup)} entries")
+        print(f"✅ All expected aliases found in aliases.json")
+    else:
+        print("❌ Error: aliases.json was not created!")
+        sys.exit(1)
+    
+    # Test editing aliases via CLI
+    print(f"\n🔧 Testing alias editing via CLI...")
+    
+    # Get the solution ID for the first solution to edit its alias
+    sub = load(str(project_dir))
+    first_solution_id = next(iter(sub.get_event("EVENT001").solutions.keys()))
+    
+    # Get the original alias of the first solution
+    original_alias = sub.get_event("EVENT001").solutions[first_solution_id].alias
+    print(f"🔍 Original alias for solution {first_solution_id[:8]}...: '{original_alias}'")
+    
+    # Edit the alias of the first solution
+    run_command(f"""microlens-submit edit-solution {first_solution_id} {project_dir} \
+        --alias "updated_simple_lens" """)
+    
+    # Verify the alias was updated
+    sub_updated = load(str(project_dir))
+    updated_solution = sub_updated.get_event("EVENT001").solutions[first_solution_id]
+    if updated_solution.alias == "updated_simple_lens":
+        print(f"✅ Successfully updated alias to 'updated_simple_lens'")
+    else:
+        print(f"❌ Alias update failed: expected 'updated_simple_lens', got '{updated_solution.alias}'")
+    
+    # Check that the alias lookup table was updated by reloading the submission
+    # This ensures we get the fresh lookup table after the edit operation
+    sub_final = load(str(project_dir))
+    final_alias_lookup = sub_final._build_alias_lookup()
+    
+    # Check that the specific solution's alias was updated correctly
+    old_alias_key = f"EVENT001 {original_alias}"
+    new_alias_key = f"EVENT001 updated_simple_lens"
+    
+    # The old alias key should not map to our edited solution
+    if old_alias_key in final_alias_lookup:
+        if final_alias_lookup[old_alias_key] == first_solution_id:
+            assert False, f"Old alias '{old_alias_key}' still maps to edited solution {first_solution_id[:8]}..."
+        else:
+            print(f"✅ Old alias '{old_alias_key}' exists but maps to different solution (this is correct)")
+    
+    # The new alias key should map to our edited solution
+    assert new_alias_key in final_alias_lookup, f"New alias '{new_alias_key}' not added to lookup table"
+    assert final_alias_lookup[new_alias_key] == first_solution_id, f"New alias '{new_alias_key}' maps to wrong solution"
+    
+    print(f"✅ Alias lookup table properly updated")
 
 
 if __name__ == "__main__":

@@ -44,6 +44,7 @@ import sys
 import uuid
 import zipfile
 import math
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Literal, List
@@ -69,6 +70,11 @@ class Solution(BaseModel):
         parameters: Dictionary of model parameters used for the fit.
         is_active: Flag indicating whether the solution should be included in
             the final submission export.
+        alias: Optional human-readable alias for the solution (e.g., "best_fit", "parallax_model").
+            When provided, this alias is used as the primary identifier in dossier displays,
+            with the UUID shown as a secondary identifier. The combination of event_id and
+            alias must be unique within the project. If not unique, an error will be raised
+            during validation or save operations.
         compute_info: Metadata about the computing environment, populated by
             :meth:`set_compute_info`.
         posterior_path: Optional path to a file containing posterior samples.
@@ -107,6 +113,7 @@ class Solution(BaseModel):
         >>> solution.relative_probability = 0.8
         >>> solution.higher_order_effects = ["parallax"]
         >>> solution.t_ref = 2459123.0
+        >>> solution.alias = "best_parallax_fit"  # Set a human-readable alias
         >>> 
         >>> # Record compute information
         >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
@@ -152,6 +159,7 @@ class Solution(BaseModel):
     t_ref: Optional[float] = None
     parameters: dict
     is_active: bool = True
+    alias: Optional[str] = None
     compute_info: dict = Field(default_factory=dict)
     posterior_path: Optional[str] = None
     lightcurve_plot_path: Optional[str] = None
@@ -586,7 +594,7 @@ class Event(BaseModel):
     solutions: Dict[str, Solution] = Field(default_factory=dict)
     submission: Optional["Submission"] = Field(default=None, exclude=True)
 
-    def add_solution(self, model_type: str, parameters: dict) -> Solution:
+    def add_solution(self, model_type: str, parameters: dict, alias: Optional[str] = None) -> Solution:
         """Create and attach a new solution to this event.
 
         Parameters are stored as provided and the new solution is returned for
@@ -595,6 +603,10 @@ class Event(BaseModel):
         Args:
             model_type: Short label describing the model type (e.g., "1S1L", "1S2L").
             parameters: Dictionary of model parameters for the fit.
+            alias: Optional human-readable alias for the solution (e.g., "best_fit", "parallax_model").
+                When provided, this alias is used as the primary identifier in dossier displays,
+                with the UUID shown as a secondary identifier. The combination of event_id and
+                alias must be unique within the project.
 
         Returns:
             Solution: The newly created solution instance.
@@ -609,6 +621,12 @@ class Event(BaseModel):
             ...     "tE": 20.0       # Einstein crossing time
             ... })
             >>> 
+            >>> # Create a solution with an alias
+            >>> solution_with_alias = event.add_solution("1S2L", {
+            ...     "t0": 2459123.5, "u0": 0.1, "tE": 20.0,
+            ...     "s": 1.2, "q": 0.5, "alpha": 45.0
+            ... }, alias="best_binary_fit")
+            >>> 
             >>> # The solution is automatically added to the event
             >>> print(f"Event now has {len(event.solutions)} solutions")
             >>> print(f"Solution ID: {solution.solution_id}")
@@ -616,11 +634,13 @@ class Event(BaseModel):
         Note:
             The solution is automatically marked as active and assigned a
             unique UUID. You can modify the solution attributes after creation
-            and then save the submission to persist changes.
+            and then save the submission to persist changes. If an alias is
+            provided, it will be validated for uniqueness when the submission
+            is saved.
         """
         solution_id = str(uuid.uuid4())
         sol = Solution(
-            solution_id=solution_id, model_type=model_type, parameters=parameters
+            solution_id=solution_id, model_type=model_type, parameters=parameters, alias=alias
         )
         self.solutions[solution_id] = sol
         return sol
@@ -832,6 +852,10 @@ class Submission(BaseModel):
         elif not ("github.com" in self.repo_url):
             warnings.append(f"repo_url does not appear to be a valid GitHub URL: {self.repo_url}")
 
+        # Check for alias uniqueness
+        alias_errors = self._validate_alias_uniqueness()
+        warnings.extend(alias_errors)
+
         for event in self.events.values():
             active = [sol for sol in event.solutions.values() if sol.is_active]
             if not active:
@@ -977,12 +1001,121 @@ class Submission(BaseModel):
         except OSError as exc:  # pragma: no cover
             logging.debug("Failed to read /proc/meminfo: %s", exc)
 
+    def _get_alias_lookup_path(self) -> Path:
+        """Get the path to the alias lookup table file.
+        
+        Returns:
+            Path to the aliases.json file in the project root.
+        """
+        return Path(self.project_path) / "aliases.json"
+
+    def _load_alias_lookup(self) -> Dict[str, str]:
+        """Load the alias lookup table from disk.
+        
+        The lookup table maps "<event_id> <alias>" strings to solution_id UUIDs.
+        
+        Returns:
+            Dictionary mapping alias keys to solution IDs.
+        """
+        alias_path = self._get_alias_lookup_path()
+        if alias_path.exists():
+            try:
+                with alias_path.open("r", encoding="utf-8") as fh:
+                    return json.load(fh)
+            except (json.JSONDecodeError, OSError) as e:
+                logging.warning("Failed to load alias lookup table: %s", e)
+                return {}
+        return {}
+
+    def _save_alias_lookup(self, alias_lookup: Dict[str, str]) -> None:
+        """Save the alias lookup table to disk.
+        
+        Args:
+            alias_lookup: Dictionary mapping alias keys to solution IDs.
+        """
+        alias_path = self._get_alias_lookup_path()
+        try:
+            with alias_path.open("w", encoding="utf-8") as fh:
+                json.dump(alias_lookup, fh, indent=2, sort_keys=True)
+        except OSError as e:
+            logging.error("Failed to save alias lookup table: %s", e)
+            raise
+
+    def _build_alias_lookup(self) -> Dict[str, str]:
+        """Build the current alias lookup table from all solutions.
+        
+        Returns:
+            Dictionary mapping "<event_id> <alias>" to solution_id.
+        """
+        alias_lookup = {}
+        for event_id, event in self.events.items():
+            for solution in event.solutions.values():
+                if solution.alias:
+                    alias_key = f"{event_id} {solution.alias}"
+                    alias_lookup[alias_key] = solution.solution_id
+        return alias_lookup
+
+    def _validate_alias_uniqueness(self) -> list[str]:
+        """Validate that all aliases are unique within their events.
+        
+        Returns:
+            List of validation error messages. Empty if all aliases are unique.
+        """
+        errors = []
+        
+        # Check for duplicates within each event
+        for event_id, event in self.events.items():
+            seen_aliases = set()
+            for solution in event.solutions.values():
+                if solution.alias:
+                    if solution.alias in seen_aliases:
+                        errors.append(
+                            f"Duplicate alias '{solution.alias}' found in event '{event_id}'. "
+                            f"Alias must be unique within each event."
+                        )
+                    seen_aliases.add(solution.alias)
+        
+        return errors
+
+    def get_solution_by_alias(self, event_id: str, alias: str) -> Optional[Solution]:
+        """Get a solution by its event ID and alias.
+        
+        Args:
+            event_id: The event identifier.
+            alias: The solution alias.
+            
+        Returns:
+            The Solution object if found, None otherwise.
+            
+        Example:
+            >>> submission = load("./my_project")
+            >>> 
+            >>> # Get a solution by its alias
+            >>> solution = submission.get_solution_by_alias("EVENT001", "best_fit")
+            >>> if solution:
+            ...     print(f"Found solution: {solution.solution_id}")
+            ... else:
+            ...     print("Solution not found")
+        """
+        if event_id not in self.events:
+            return None
+        
+        event = self.events[event_id]
+        for solution in event.solutions.values():
+            if solution.alias == alias:
+                return solution
+        
+        return None
+
     def save(self) -> None:
         """Persist the current state of the submission to ``project_path``.
         
         This method writes all submission data to disk, including events,
         solutions, and metadata. It also handles moving temporary notes
-        files to their canonical locations.
+        files to their canonical locations and validates alias uniqueness.
+        
+        Raises:
+            ValueError: If any aliases are not unique within their events.
         
         Example:
             >>> submission = load("./my_project")
@@ -991,6 +1124,7 @@ class Submission(BaseModel):
             >>> submission.team_name = "Team Alpha"
             >>> event = submission.get_event("EVENT001")
             >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+            >>> solution.alias = "best_fit"  # Set an alias
             >>> 
             >>> # Save all changes to disk
             >>> submission.save()
@@ -1001,8 +1135,15 @@ class Submission(BaseModel):
             This method creates the project directory structure if it doesn't
             exist and moves any temporary notes files from tmp/ to their
             canonical locations in events/{event_id}/solutions/{solution_id}.md.
+            It also validates that all aliases are unique within their events
+            and saves the alias lookup table to aliases.json.
             Always call save() after making changes to persist them.
         """
+        # Validate alias uniqueness before saving
+        alias_errors = self._validate_alias_uniqueness()
+        if alias_errors:
+            raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
+        
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
@@ -1020,8 +1161,16 @@ class Submission(BaseModel):
                         if src.exists():
                             src.replace(dst)
                         sol.notes_path = str(canonical)
+        
+        # Save the main submission data
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
             fh.write(self.model_dump_json(exclude={"events", "project_path"}, indent=2))
+        
+        # Save the alias lookup table
+        alias_lookup = self._build_alias_lookup()
+        self._save_alias_lookup(alias_lookup)
+        
+        # Save all events
         for event in self.events.values():
             event.submission = self
             event._save()

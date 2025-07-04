@@ -361,6 +361,9 @@ def add_solution(
     lens_plane_plot_path: Optional[Path] = typer.Option(
         None, "--lens-plane-plot-path", help="Path to lens plane plot file"
     ),
+    alias: Optional[str] = typer.Option(
+        None, "--alias", help="Optional human-readable alias for the solution (must be unique within the event)"
+    ),
     notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
     notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
     dry_run: bool = typer.Option(
@@ -401,6 +404,10 @@ def add_solution(
     - gaussian-process: Gaussian process noise modeling
     - other: Custom higher-order effects
     
+    **Alias:**
+    - Use --alias to specify a human-readable alias for the solution (e.g., "best_fit", "parallax_model").
+    - The combination of event_id and alias must be unique within the project. If not, an error will be raised during validation or save operations.
+    
     Args:
         event_id: Identifier for the microlensing event (e.g., "EVENT001").
         model_type: Type of microlensing model used for the fit.
@@ -422,6 +429,7 @@ def add_solution(
         wall_time_hours: Real-world time consumed by the fit.
         lightcurve_plot_path: Path to the lightcurve plot file.
         lens_plane_plot_path: Path to the lens plane plot file.
+        alias: Optional human-readable alias for the solution (must be unique within the event).
         notes: Markdown-formatted notes for the solution.
         notes_file: Path to a Markdown file containing solution notes.
         dry_run: If True, display the solution without saving.
@@ -432,31 +440,14 @@ def add_solution(
         OSError: If unable to write files or create directories.
     
     Example:
-        # Simple 1S1L solution with inline parameters
+        # Simple 1S1L solution with alias
         microlens-submit add-solution EVENT001 1S1L ./project \
             --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
+            --alias best_fit \
             --log-likelihood -1234.56 --n-data-points 1250 \
             --cpu-hours 2.5 --wall-time-hours 0.5 \
             --relative-probability 0.8 \
             --notes "# Simple Point Lens Fit\n\nThis is a basic 1S1L solution."
-        
-        # Binary lens solution with higher-order effects
-        microlens-submit add-solution EVENT002 1S2L ./project \
-            --param t0=2459156.2 --param u0=0.08 --param tE=35.7 \
-            --param q=0.0005 --param s=0.95 --param alpha=78.3 \
-            --higher-order-effect parallax --higher-order-effect finite-source \
-            --t-ref 2459156.0 --log-likelihood -2156.78 \
-            --cpu-hours 28.5 --wall-time-hours 7.2
-        
-        # Using a parameter file
-        microlens-submit add-solution EVENT003 1S1L ./project \
-            --params-file parameters.json \
-            --log-likelihood -987.65 --cpu-hours 8.1
-        
-        # Dry run to preview without saving
-        microlens-submit add-solution EVENT001 1S1L ./project \
-            --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
-            --dry-run
         
     Note:
         The solution is automatically assigned a unique UUID and marked as active.
@@ -498,7 +489,7 @@ def add_solution(
         and "," in higher_order_effect[0]
     ):
         higher_order_effect = higher_order_effect[0].split(",")
-    sol = evt.add_solution(model_type=model_type, parameters=params)
+    sol = evt.add_solution(model_type=model_type, parameters=params, alias=alias)
     sol.bands = bands or []
     sol.higher_order_effects = higher_order_effect or []
     sol.t_ref = t_ref
@@ -550,6 +541,7 @@ def add_solution(
             "lens_plane_plot_path": (
                 str(lens_plane_plot_path) if lens_plane_plot_path else None
             ),
+            "alias": alias,
             "notes_path": sol.notes_path,
         }
         console.print(Panel("Parsed Input", style="cyan"))
@@ -1312,6 +1304,9 @@ def edit_solution(
         "--n-data-points",
         help="Number of data points used in this solution",
     ),
+    alias: Optional[str] = typer.Option(
+        None, "--alias", help="Set or update the human-readable alias for this solution (must be unique within the event)"
+    ),
     notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
     notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
     append_notes: Optional[str] = typer.Option(
@@ -1348,12 +1343,16 @@ def edit_solution(
     ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Edit an existing solution's attributes, including file-based notes.
+    """Edit an existing solution's attributes, including file-based notes and alias.
     
     This command allows you to modify various attributes of an existing solution
     without having to recreate it. It supports updating parameters, metadata,
-    notes, and compute information. The command provides detailed feedback about
+    notes, alias, and compute information. The command provides detailed feedback about
     what changes were made.
+    
+    **Alias Management:**
+    - Use --alias to set or update the human-readable alias for the solution (e.g., "best_fit").
+    - The combination of event_id and alias must be unique within the project. If not, an error will be raised during validation or save operations.
     
     **Notes Management:**
     - Use --notes to replace existing notes with new content
@@ -1373,6 +1372,7 @@ def edit_solution(
     
     Args:
         solution_id: The unique identifier of the solution to edit.
+        alias: Set or update the human-readable alias for this solution (must be unique within the event).
         relative_probability: New relative probability value.
         log_likelihood: New log-likelihood value.
         n_data_points: New number of data points value.
@@ -1399,31 +1399,9 @@ def edit_solution(
         typer.BadParameter: If parameter format is invalid.
     
     Example:
-        # Update solution metadata
+        # Update solution alias
         microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --log-likelihood -1200.0 \
-            --relative-probability 0.8 \
-            --cpu-hours 3.5
-        
-        # Update model parameters
-        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --param t0=2459123.6 --param u0=0.12
-        
-        # Replace notes
-        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --notes "# Updated Solution Notes\n\nThis is the updated description."
-        
-        # Append to existing notes
-        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --append-notes "\n\n## Additional Analysis\n\nFurther investigation shows..."
-        
-        # Clear specific fields
-        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --clear-relative-probability --clear-notes
-        
-        # Dry run to preview changes
-        microlens-submit edit-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project \
-            --log-likelihood -1200.0 --dry-run
+            --alias best_fit
         
     Note:
         This command only modifies the specified fields. Unspecified fields
@@ -1442,13 +1420,17 @@ def edit_solution(
         console.print(f"Solution {solution_id} not found", style="bold red")
         raise typer.Exit(code=1)
     changes = []
+    if alias is not None:
+        if target_solution.alias != alias:
+            changes.append(f"Update alias: {target_solution.alias}  {alias}")
+            target_solution.alias = alias
     if clear_relative_probability:
         if target_solution.relative_probability is not None:
             changes.append(f"Clear relative_probability: {target_solution.relative_probability}")
             target_solution.relative_probability = None
     elif relative_probability is not None:
         if target_solution.relative_probability != relative_probability:
-            changes.append(f"Update relative_probability: {target_solution.relative_probability} → {relative_probability}")
+            changes.append(f"Update relative_probability: {target_solution.relative_probability}  {relative_probability}")
             target_solution.relative_probability = relative_probability
     if clear_log_likelihood:
         if target_solution.log_likelihood is not None:
@@ -1456,7 +1438,7 @@ def edit_solution(
             target_solution.log_likelihood = None
     elif log_likelihood is not None:
         if target_solution.log_likelihood != log_likelihood:
-            changes.append(f"Update log_likelihood: {target_solution.log_likelihood} → {log_likelihood}")
+            changes.append(f"Update log_likelihood: {target_solution.log_likelihood}  {log_likelihood}")
             target_solution.log_likelihood = log_likelihood
     if clear_n_data_points:
         if target_solution.n_data_points is not None:
@@ -1464,7 +1446,7 @@ def edit_solution(
             target_solution.n_data_points = None
     elif n_data_points is not None:
         if target_solution.n_data_points != n_data_points:
-            changes.append(f"Update n_data_points: {target_solution.n_data_points} → {n_data_points}")
+            changes.append(f"Update n_data_points: {target_solution.n_data_points}  {n_data_points}")
             target_solution.n_data_points = n_data_points
     # Notes file logic
     canonical_notes_path = Path(project_path) / "events" / target_event_id / "solutions" / f"{target_solution.solution_id}.md"

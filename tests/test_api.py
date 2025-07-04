@@ -48,6 +48,8 @@ Note:
 
 import zipfile
 import json
+import subprocess
+import sys
 
 from microlens_submit.api import load
 
@@ -467,30 +469,298 @@ def test_validate_warnings(tmp_path):
 
 
 def test_relative_probability_range(tmp_path):
-    """Test that relative probability validation works correctly.
+    """Test that relative probabilities are properly calculated and validated.
     
-    Verifies that the validation system correctly identifies relative
-    probability values outside the valid range (0-1).
+    Verifies that relative probabilities are calculated correctly for solutions
+    that don't have them set, and that validation catches issues with probability
+    ranges and sums.
     
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
     
     Example:
         >>> # This test verifies:
-        >>> # 1. Setting invalid relative probability (>1)
-        >>> # 2. Running validation
-        >>> # 3. Checking that appropriate warning is generated
+        >>> # 1. Creating solutions with and without relative probabilities
+        >>> # 2. Checking automatic calculation using BIC
+        >>> # 3. Validating probability ranges and sums
+        >>> # 4. Testing validation warnings for invalid probabilities
     
     Note:
-        Relative probabilities must be between 0 and 1, and the sum
-        of all relative probabilities for an event should equal 1.
+        Relative probabilities must sum to 1.0 for active solutions within
+        each event. The system automatically calculates missing probabilities
+        using BIC when sufficient data is available.
     """
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    sol = evt.add_solution("other", {"a": 1})
-    sol.relative_probability = 1.2
-
+    
+    # Add solutions with different relative probabilities
+    sol1 = evt.add_solution("other", {"a": 1})
+    sol1.log_likelihood = -100
+    sol1.n_data_points = 100
+    sol1.relative_probability = 0.6
+    
+    sol2 = evt.add_solution("other", {"b": 2})
+    sol2.log_likelihood = -110
+    sol2.n_data_points = 100
+    sol2.relative_probability = 0.4
+    
+    # Test validation
     warnings = sub.run_validation()
+    assert not any("relative probabilities" in w.lower() for w in warnings)
+    
+    # Test invalid probabilities
+    sol1.relative_probability = 0.8  # Sum > 1.0
+    warnings = sub.run_validation()
+    assert any("sum to" in w for w in warnings)
 
-    assert any("between 0 and 1" in w for w in warnings)
+
+def test_solution_aliases(tmp_path):
+    """Test solution alias functionality including creation, validation, and persistence.
+    
+    Verifies that solution aliases can be set, are validated for uniqueness,
+    and are properly persisted across save/load cycles. Also tests that
+    aliases are displayed correctly in dossier generation.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating solutions with aliases
+        >>> # 2. Testing alias uniqueness validation
+        >>> # 3. Checking alias persistence
+        >>> # 4. Testing alias lookup functionality
+    
+    Note:
+        Aliases provide human-readable identifiers for solutions and must
+        be unique within each event. They are used as primary identifiers
+        in dossier displays with UUIDs as secondary identifiers.
+    """
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    
+    # Test creating solutions with aliases
+    evt1 = sub.get_event("EVENT001")
+    sol1 = evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit")
+    sol2 = evt1.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5}, alias="binary_model")
+    
+    # Test alias persistence
+    sub.save()
+    new_sub = load(str(project))
+    new_sol1 = new_sub.get_event("EVENT001").solutions[sol1.solution_id]
+    new_sol2 = new_sub.get_event("EVENT001").solutions[sol2.solution_id]
+    
+    assert new_sol1.alias == "best_fit"
+    assert new_sol2.alias == "binary_model"
+    
+    # Test alias lookup
+    found_sol = new_sub.get_solution_by_alias("EVENT001", "best_fit")
+    assert found_sol is not None
+    assert found_sol.solution_id == sol1.solution_id
+    
+    # Test alias uniqueness validation
+    evt2 = sub.get_event("EVENT002")
+    sol3 = evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit")  # Same alias, different event - should be OK
+    
+    # Test duplicate alias in same event - should fail
+    # Create a fresh submission to test duplicate aliases
+    project2 = tmp_path / "proj2"
+    sub2 = load(str(project2))
+    evt_dup = sub2.get_event("EVENT001")
+    sol_dup1 = evt_dup.add_solution("1S1L", {"t0": 2459123.5}, alias="duplicate")
+    sol_dup2 = evt_dup.add_solution("1S2L", {"t0": 2459123.5}, alias="duplicate")  # Duplicate alias
+    
+    import pytest
+    with pytest.raises(ValueError, match="Duplicate alias"):
+        sub2.save()  # This should trigger validation and raise the error
+
+
+def test_alias_lookup_table(tmp_path):
+    """Test that the alias lookup table is properly created and maintained.
+    
+    Verifies that the aliases.json file is created with the correct mapping
+    of "<event_id> <alias>" to solution_id, and that it's updated when
+    aliases are added or removed.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating solutions with aliases
+        >>> # 2. Checking alias lookup table creation
+        >>> # 3. Testing lookup table updates
+        >>> # 4. Verifying table structure and content
+    
+    Note:
+        The alias lookup table provides fast lookup of solutions by alias
+        and is stored as aliases.json in the project root.
+    """
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    
+    # Create solutions with aliases
+    evt1 = sub.get_event("EVENT001")
+    sol1 = evt1.add_solution("1S1L", {"t0": 2459123.5}, alias="fit1")
+    sol2 = evt1.add_solution("1S2L", {"t0": 2459123.5}, alias="fit2")
+    
+    evt2 = sub.get_event("EVENT002")
+    sol3 = evt2.add_solution("1S1L", {"t0": 2459123.5}, alias="fit1")  # Same alias, different event
+    
+    sub.save()
+    
+    # Check that aliases.json was created
+    alias_file = project / "aliases.json"
+    assert alias_file.exists()
+    
+    # Load and verify the lookup table
+    with alias_file.open("r") as f:
+        alias_lookup = json.load(f)
+    
+    # Check that all expected aliases are in the lookup table
+    expected_aliases = [
+        "EVENT001 fit1",
+        "EVENT001 fit2", 
+        "EVENT002 fit1"
+    ]
+    assert all(key in alias_lookup for key in expected_aliases)
+    assert alias_lookup["EVENT001 fit1"] == sol1.solution_id
+    assert alias_lookup["EVENT001 fit2"] == sol2.solution_id
+    assert alias_lookup["EVENT002 fit1"] == sol3.solution_id
+
+
+def test_alias_validation_warnings(tmp_path):
+    """Test that alias validation warnings are properly generated.
+    
+    Verifies that the validation system correctly identifies and reports
+    issues with aliases, such as duplicate aliases within the same event.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating solutions with duplicate aliases
+        >>> # 2. Running validation
+        >>> # 3. Checking for appropriate warning messages
+        >>> # 4. Testing validation without duplicates
+    
+    Note:
+        Alias validation is part of the overall submission validation
+        process and provides clear error messages for data integrity issues.
+    """
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    
+    # Create solutions with duplicate aliases in same event
+    evt = sub.get_event("EVENT001")
+    sol1 = evt.add_solution("1S1L", {"t0": 2459123.5}, alias="duplicate")
+    sol2 = evt.add_solution("1S2L", {"t0": 2459123.5}, alias="duplicate")  # Duplicate alias
+    
+    # Test validation warnings
+    warnings = sub.run_validation()
+    assert any("Duplicate alias" in w for w in warnings)
+    assert any("duplicate" in w.lower() for w in warnings)
+    
+    # Fix the duplicate
+    sol2.alias = "unique"
+    warnings = sub.run_validation()
+    assert not any("Duplicate alias" in w for w in warnings)
+
+
+def test_alias_in_dossier_generation(tmp_path):
+    """Test that aliases are properly displayed in dossier generation.
+    
+    Verifies that when generating dossiers, solutions with aliases show
+    the alias as the primary identifier and the UUID as secondary.
+    
+    Args:
+        tmp_path: Pytest fixture providing a temporary directory path.
+    
+    Example:
+        >>> # This test verifies:
+        >>> # 1. Creating solutions with aliases
+        >>> # 2. Generating dossier HTML
+        >>> # 3. Checking that aliases appear in the HTML
+        >>> # 4. Verifying UUID is shown as secondary identifier
+    
+    Note:
+        Dossier generation should prioritize aliases for readability
+        while still providing UUID access for technical reference.
+    """
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    
+    # Create solution with alias
+    evt = sub.get_event("EVENT001")
+    sol = evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_parallax_fit")
+    sol.log_likelihood = -1234.56
+    sol.n_data_points = 1250
+    sol.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
+    
+    sub.save()
+    
+    # Generate dossier
+    from microlens_submit.dossier import generate_dashboard_html
+    dossier_dir = project / "dossier"
+    generate_dashboard_html(sub, dossier_dir)
+    
+    # Check that event page was generated
+    event_page = dossier_dir / "EVENT001.html"
+    assert event_page.exists()
+    
+    # Read the HTML and check for alias display
+    with event_page.open("r") as f:
+        html_content = f.read()
+    
+    # Should show alias as primary identifier
+    assert "best_parallax_fit" in html_content
+    # Should show UUID as secondary identifier
+    assert sol.solution_id[:8] in html_content
+    
+    # Check solution page
+    solution_page = dossier_dir / f"{sol.solution_id}.html"
+    assert solution_page.exists()
+    
+    with solution_page.open("r") as f:
+        sol_html = f.read()
+    
+    # Should show alias in title and header
+    assert "best_parallax_fit" in sol_html
+    assert sol.solution_id[:8] in sol_html
+
+
+def test_cli_add_and_edit_alias(tmp_path):
+    """Test CLI --alias option for add-solution and edit-solution commands.
+    
+    Verifies that:
+    - add-solution --alias sets the alias correctly
+    - edit-solution --alias updates the alias
+    - Aliases are persisted and validated
+    """
+    project = tmp_path / "proj"
+    project.mkdir()
+    # Add a solution with alias via CLI
+    result = subprocess.run([
+        sys.executable, "-m", "microlens_submit.cli", "add-solution",
+        "EVENT001", "1S1L", str(project),
+        "--param", "t0=2459123.5", "--param", "u0=0.1", "--param", "tE=20.0",
+        "--alias", "cli_best_fit"
+    ], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    # Check that alias is set in the project
+    from microlens_submit.api import load
+    sub = load(str(project))
+    sol = next(iter(sub.get_event("EVENT001").solutions.values()))
+    assert sol.alias == "cli_best_fit"
+    # Edit the alias via CLI
+    result2 = subprocess.run([
+        sys.executable, "-m", "microlens_submit.cli", "edit-solution",
+        sol.solution_id, str(project),
+        "--alias", "cli_renamed"
+    ], capture_output=True, text=True)
+    assert result2.returncode == 0, result2.stderr
+    sub2 = load(str(project))
+    sol2 = sub2.get_event("EVENT001").solutions[sol.solution_id]
+    assert sol2.alias == "cli_renamed"

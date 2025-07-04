@@ -580,11 +580,21 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         relprob = f"{sol.relative_probability:.3f}" if sol.relative_probability is not None else "N/A"
         # Read notes snippet from file
         notes_snip = (sol.get_notes(project_root=Path(submission.project_path))[:50] + ("..." if len(sol.get_notes(project_root=Path(submission.project_path))) > 50 else "")) if sol.notes_path else ""
+        
+        # Display alias as primary identifier, UUID as secondary
+        if sol.alias:
+            solution_display = f"""
+                <div>
+                    <a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.alias}</a>
+                    <div class="text-xs text-gray-500 font-mono">{sol.solution_id[:8]}...</div>
+                </div>
+            """
+        else:
+            solution_display = f'<a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.solution_id[:8]}...</a>'
+        
         rows.append(f"""
             <tr class='border-b border-gray-200 hover:bg-gray-50'>
-                <td class='py-3 px-4'>
-                    <a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.solution_id[:8]}...</a>
-                </td>
+                <td class='py-3 px-4'>{solution_display}</td>
                 <td class='py-3 px-4'>{sol.model_type}</td>
                 <td class='py-3 px-4'>{status}</td>
                 <td class='py-3 px-4'>{logl}</td>
@@ -912,7 +922,7 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Solution Dossier: {solution.solution_id[:8]}... - {submission.team_name}</title>
+    <title>Solution Dossier: {solution.alias or solution.solution_id[:8] + '...'} - {submission.team_name}</title>
     <script src='https://cdn.tailwindcss.com'></script>
     <script>
       tailwind.config = {{
@@ -1009,8 +1019,9 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
             <!-- Header & Navigation -->
             <div class='text-center py-8'>
                 <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
-                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Solution Dossier: {solution.solution_id[:8]}...</h1>
+                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Solution Dossier: {solution.alias or solution.solution_id[:8] + '...'}</h1>
                 <p class='text-xl text-rtd-accent text-center mb-4'>Event: {event.event_id} | Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'} {commit_html}</p>
+                {f"<p class='text-lg text-gray-600 text-center mb-2'>UUID: {solution.solution_id}</p>" if solution.alias else ""}
                 <nav class='flex justify-center space-x-4 mb-8'>
                     <a href='{event.event_id}.html' class='text-rtd-accent hover:underline'>&larr; Back to Event {event.event_id}</a>
                     <a href='index.html' class='text-rtd-accent hover:underline'>&larr; Back to Dashboard</a>
@@ -1042,11 +1053,11 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
                 <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
                         <img src='{lc_plot}' alt='Lightcurve Plot' class='w-full h-auto rounded-md mb-2'>
-                        <p class="text-sm text-rtd-secondary">Caption: Lightcurve fit for Solution {solution.solution_id[:8]}...</p>
+                        <p class="text-sm text-rtd-secondary">Caption: Lightcurve fit for Solution {solution.alias or solution.solution_id[:8] + '...'}</p>
                     </div>
                     <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
                         <img src='{lens_plot}' alt='Lens Plane Plot' class='w-full h-auto rounded-md mb-2'>
-                        <p class='text-sm text-rtd-secondary'>Caption: Lens plane geometry for Solution {solution.solution_id[:8]}...</p>
+                        <p class='text-sm text-rtd-secondary'>Caption: Lens plane geometry for Solution {solution.alias or solution.solution_id[:8] + '...'}</p>
                     </div>
                 </div>
                 {f"<p class='text-rtd-text mt-4 text-center'>Posterior Samples: <a href='{posterior}' class='text-rtd-accent hover:underline'>Download Posterior Data</a></p>" if posterior else ''}
@@ -1140,7 +1151,7 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
 </html>"""
     return html 
 
-def _extract_main_content_body(html: str, section_type: str = None, section_id: str = None) -> str:
+def _extract_main_content_body(html: str, section_type: str = None, section_id: str = None, project_root: Path = None) -> str:
     """Extract main content for the full dossier using explicit markers.
     
     Extracts the main content from HTML pages using explicit marker comments.
@@ -1153,6 +1164,8 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
             content. If 'event' or 'solution', extracts and formats accordingly.
         section_id: Identifier for the section (event_id or solution_id). Used
             to create section headings in the full dossier.
+        project_root: Path to the project root directory. Used to access aliases.json
+            for solution alias lookups.
     
     Returns:
         str: Extracted and formatted HTML content ready for inclusion in
@@ -1172,7 +1185,7 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
         >>> 
         >>> # Extract solution content
         >>> solution_html = _generate_solution_page_content(solution, event, submission)
-        >>> solution_body = _extract_main_content_body(solution_html, 'solution', 'sol_uuid')
+        >>> solution_body = _extract_main_content_body(solution_html, 'solution', 'sol_uuid', project_root)
     
     Note:
         This function relies on HTML comments <!-- Regex Start --> and
@@ -1221,7 +1234,28 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
             heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-8">Event: {section_id}</h2>'
             section_class = 'dossier-event-section'
         elif section_type == 'solution' and section_id:
-            heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {section_id}</h2>'
+            # Look up alias from aliases.json if project_root is provided
+            alias_key = None
+            if project_root:
+                aliases_file = project_root / "aliases.json"
+                if aliases_file.exists():
+                    import json
+                    try:
+                        with aliases_file.open("r") as f:
+                            aliases = json.load(f)
+                        # Look up the solution_id in the aliases
+                        for key, uuid in aliases.items():
+                            if uuid == section_id:
+                                alias_key = key
+                                break
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+            
+            if alias_key:
+                heading = f'''<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {alias_key}</h2>
+                <h3 class="text-lg text-gray-600 mb-4">UUID: {section_id}</h3>'''
+            else:
+                heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {section_id}</h2>'
             section_class = 'dossier-solution-section'
         
         # Wrap in a section for clarity
@@ -1282,7 +1316,7 @@ def _generate_full_dossier_report_html(submission, output_dir):
         
         for sol in event.get_active_solutions():
             sol_html = _generate_solution_page_content(sol, event, submission)
-            sol_body = _extract_main_content_body(sol_html, section_type='solution', section_id=sol.solution_id)
+            sol_body = _extract_main_content_body(sol_html, section_type='solution', section_id=sol.solution_id, project_root=Path(submission.project_path))
             all_html_sections.append(sol_body)
             all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after solution
     
