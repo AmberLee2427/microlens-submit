@@ -1,434 +1,85 @@
-## Release v0.12.1
-
-**Release Date:** 2025-07-03
-
-### 🎉 Major New Features
-
-#### **Hardware Information Management**
-- **New CLI command:** `set-hardware-info` for managing computational resource details
-- **Flexible options:** CPU, memory, platform, Nexus image support
-- **Update capabilities:** Modify existing info or clear and replace
-- **Dry run support:** Preview changes before applying
-- **Dossier integration:** Hardware info displays correctly in generated HTML
-
-#### **Parameter File Support**
-- **YAML and JSON support:** `--params-file` option for structured parameter input
-- **Uncertainty handling:** Support for parameter uncertainties in structured format
-- **Example files:** Comprehensive example parameter files in `tests/`
-- **Validation integration:** Proper validation for parameter file formats
-
-#### **Enhanced GitHub Integration**
-- **GitHub logo packaging:** Properly included in pip install and dossier generation
-- **Repository URL management:** Both CLI (`set-repo-url`) and API support
-- **Dossier integration:** Displays repo name and links to commits in solution pages
-- **Auto-detection:** Automatic GitHub URL detection during project initialization
-
-#### **Higher-Order Effects Support**
-- **Comprehensive CLI support:** `--higher-order-effect` option for multiple effects
-- **Full effect list:** parallax, finite-source, lens-orbital-motion, limb-darkening, xallarap, stellar-rotation, fitted-limb-darkening, gaussian-process
-- **Validation integration:** Proper validation for different model types and effects
-- **Documentation:** Complete examples and usage patterns
-
-### 🔧 CLI Improvements
-
-#### **New Commands**
-- `set-hardware-info` - Manage hardware information for reproducibility
-- Enhanced `set-repo-url` - Improved GitHub repository URL management
-
-#### **Enhanced Existing Commands**
-- `add-solution` - Added `--params-file` support for structured parameter input
-- `edit-solution` - Improved parameter and metadata editing capabilities
-- `validate-submission` - Enhanced validation output with framed results
-- `generate-dossier` - Improved HTML generation with better styling
-
-### 📚 Documentation Enhancements
-
-#### **Google-Style Docstrings**
-- **Complete coverage:** All modules now have comprehensive Google-style docstrings
-- **Usage examples:** Clear, practical examples for all functions and classes
-- **Helpful notes:** Additional context and best practices throughout
-- **API documentation:** Detailed class descriptions with examples
-
-#### **Enhanced Tutorials**
-- **Updated CLI syntax:** Corrected model type names (1S1L instead of single_lens)
-- **Parameter file examples:** Shows both YAML and JSON usage patterns
-- **Advanced features:** Demonstrates GitHub integration and higher-order effects
-- **Troubleshooting:** Added comprehensive troubleshooting sections
-
-#### **Sphinx Configuration**
-- **Improved autodoc:** Better Napoleon settings for Google-style docstrings
-- **Enhanced theme:** Better ReadTheDocs theme configuration
-- **Intersphinx mappings:** Added links to Python and other documentation
-- **Asset management:** Proper handling of logos and static files
-
-### 🎨 Dossier Generation Improvements
-
-#### **Full Dossier Report**
-- **Comprehensive printable version:** Single HTML file with all content
-- **Section organization:** Clear event and solution sections with navigation
-- **Professional styling:** Enhanced Tailwind CSS with better typography
-- **Asset management:** Proper logo and icon handling
-
-#### **Enhanced Styling**
-- **Better responsive design:** Improved mobile and tablet layouts
-- **Professional branding:** RGES-PIT logo and GitHub integration
-- **Syntax highlighting:** Code blocks in notes with highlight.js
-- **Print optimization:** Better layout for printed reports
-
-### 🔍 Validation Enhancements
-
-#### **Improved Output Format**
-- **Framed results:** Professional validation output with clear formatting
-- **Better error messages:** More helpful guidance for fixing issues
-- **Comprehensive checks:** Enhanced validation for all submission components
-- **User-friendly feedback:** Clear next steps for resolving issues
-
-#### **Enhanced Checks**
-- **Repository URL validation:** Strict GitHub URL validation with helpful error messages
-- **Hardware info validation:** Checks for missing hardware information
-- **Solution completeness:** Comprehensive parameter and metadata validation
-- **Relative probability consistency:** Better handling of probability calculations
-
-### 🛠️ Developer Experience
-
-#### **Better Error Handling**
-- **Clear error messages:** More informative error messages throughout
-- **Graceful fallbacks:** Better handling of missing or invalid data
-- **Validation feedback:** Detailed feedback for fixing issues
-
-#### **Improved Testing**
-- **Comprehensive test coverage:** Better test coverage for new features
-- **Example files:** Test parameter files and documentation examples
-- **CI integration:** Enhanced continuous integration testing
-
-### 🐛 Bug Fixes
-
-- **Model type validation:** Fixed validation for all supported model types
-- **Parameter parsing:** Improved handling of complex parameter formats
-- **File path handling:** Better cross-platform file path management
-- **Dossier generation:** Fixed issues with asset copying and HTML generation
-
-### 📦 Packaging Improvements
-
-- **Asset inclusion:** Proper packaging of logos and static files
-- **Dependency management:** Updated dependency specifications
-- **Build configuration:** Improved setuptools configuration
-- **Distribution:** Better source and wheel distribution
-
----
-
-## Release v0.12.0
-
-### What's New
-- **Submission Dossier Generator:** New `generate-dossier` CLI command that creates comprehensive HTML dashboards for submission review
-- **HTML Dashboard:** Generates professional `index.html` with submission overview, event summaries, and solution statistics following Dashboard_Design.md specifications
-- **Tailwind CSS Design:** Modern, responsive design using Tailwind CSS with custom RGES-PIT color palette
-- **Rich Metadata Display:** Shows team information, hardware details, compute statistics, and model type distributions
-- **Progress Tracking:** Visual progress bar showing completion percentage against total challenge events (293)
-- **Event Navigation:** Links to future event-specific pages (structure prepared for v0.13.0 expansion)
-- **Parameter Distribution Placeholders:** Placeholder plots for key parameter distributions with professional styling
-
-### Dossier Features
-- **Summary Cards:** Quick overview of total events, active solutions, and hardware information
-- **Submission Metadata:** Team name, challenge tier, and generation timestamp
-- **Hardware Information:** Display of compute platform details when available
-- **Progress Visualization:** Progress bar showing events processed vs. total challenge events
-- **Events Overview:** Table showing all events with active solution counts and model types
-- **Compute Time Summary:** Total CPU and wall time hours across all solutions
-- **Directory Structure:** Creates organized output with `assets/` and `events/` subdirectories for future expansion
-
-### Usage
-```bash
-microlens-submit generate-dossier /path/to/output/directory
-```
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No new dependencies
-
-## v0.12.0 (2025-07-03)
-
-### Major Features
-- **File-Based Notes System:**
-  - Notes for each solution are now always stored as Markdown files, referenced by `notes_path` in the solution JSON.
-  - New CLI options: `--notes-file` (specify a file), `--notes` (create canonical file), and `--append-notes` (append to notes file).
-  - `microlens-submit notes <solution_id>` opens the notes file in your editor.
-  - Python API: `set_notes()` creates a temp file in `tmp/` if no path is set; on `save()`, temp notes are moved to canonical location.
-  - `notes` property and `view_notes(render_html=True)` for easy notebook viewing.
-
-- **Dossier Generator:**
-  - `microlens-submit generate-dossier` creates a full HTML dashboard (`dossier/index.html`) and event/solution subpages.
-  - All links, assets, and navigation are robust and browser/server compatible.
-  - Markdown notes are rendered in dossier pages.
-
-- **Export Improvements:**
-  - Notes files are now included in the exported zip, with correct archive paths.
-  - Export logic updates `notes_path` in the archive to match the zipped location.
-
-- **CLI & API UX Improvements:**
-  - All solution management (add, edit, append, clear notes) is robust and consistent between CLI and Python API.
-  - UUID solution IDs are used everywhere for uniqueness and safety.
-  - Improved error handling and validation for notes and file paths.
-
-### Other Changes
-- Documentation and tutorial updated for new notes workflow.
-- Test scripts and automation updated for HTML dossier and notes file handling.
-- Minor bugfixes and linter improvements throughout.
-
-<br>
-
-## Release v0.11.0
-
-### What's New
-- **Enhanced Parameter Validation:** Comprehensive docstring for `validate()` method with detailed explanation of all validation checks
-- **Parameter Uncertainty Validation:** New validation logic for parameter uncertainties, including support for asymmetric uncertainties [lower, upper]
-- **Structured Parameter Files:** Support for JSON and YAML files containing both parameters and uncertainties in a single file
-- **Improved CLI:** Enhanced `--params-file` option now supports YAML format and structured parameter files
-- **Code Cleanup:** Removed deprecated `log_prior` field (not used in calculations)
-
-### Structured Parameter File Format
-Parameter files can now use either simple or structured format:
-
-**Simple format (JSON/YAML):**
-```json
-{
-  "t0": 2459123.5,
-  "u0": 0.15,
-  "tE": 20.5
-}
-```
-
-**Structured format (JSON/YAML):**
-```json
-{
-  "parameters": {
-    "t0": 2459123.5,
-    "u0": 0.15,
-    "tE": 20.5
-  },
-  "uncertainties": {
-    "t0": [0.1, 0.1],
-    "u0": 0.02,
-    "tE": [0.3, 0.4]
-  }
-}
-```
-
-### Uncertainty Validation
-- Validates uncertainty values are positive
-- Supports both single values and [lower, upper] asymmetric uncertainties
-- Warns if uncertainties are very large (>50%) or very small (<0.1%) relative to parameter values
-- Checks that uncertainty bounds are properly ordered (lower ≤ upper)
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- **Removed `log_prior` field:** This field was not used in any calculations and has been removed from the API and CLI
-
-### Dependencies
-- Added `PyYAML>=6.0` for YAML file support
-
-<br>
-
-## Release v0.10.0
-
-### What's New
-- **Centralized Parameter Validation:** Added comprehensive validation logic that checks parameter completeness, types, and physical consistency based on model type and higher-order effects.
-- **CLI Validation Commands:** New commands `validate-solution`, `validate-event`, and `validate-submission` for checking solutions and submissions.
-- **Automatic Validation:** Solutions are automatically validated when added via CLI, with warnings displayed but saving never blocked.
-- **Enhanced Dry-Run:** `--dry-run` now includes validation results, showing warnings before saving.
-- **Validation Module:** New `validate_parameters.py` module with extensible validation logic for different model types and effects.
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- None
-
-### Dependencies
-- N/A
-
-<br>
-
-## Release v0.9.0
-
-### What's New
-- Removed the `model_name` field from `Solution` and CLI.
-- Introduced strongly typed `model_type` values (e.g., `1S1L`, `1S2L`).
-- Added `bands` attribute for photometric bands.
-- Added `higher_order_effects` list to flag physical effects.
-- Added a dedicated `t_ref` field.
-- Foundation for parameter validation based on `model_type` and `bands`.
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- None
-
-### Dependencies
-- N/A
-
-<br>
-
-## Release v0.8.0
-
-### What's New
-- Added `relative_probability` field to `Solution` model with CLI and API support.
-- `Submission.export` automatically computes this probability via BIC when not provided, or assigns equal values if BIC inputs are missing.
-- `compare-solutions` now shows relative probabilities and calculates them on demand.
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- None
-
-### Dependencies
-- N/A
-
-<br>
-
-## Release v0.7.1
-
-### What's New
-- Clarified external file (plots, posteriors) storage and path handling in
-  `SUBMISSION_MANUAL.md`. Internal paths within `solution.json` files in exported
-  archives now point to the file's location inside the zip, allowing immediate
-  use after extraction.
-
-### Bug Fixes
-- None
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.7.0
-
-### What's New
-- Added `lightcurve_plot_path` and `lens_plane_plot_path` fields to the `Solution` model and CLI.
-- Posterior and plot files referenced by solutions are automatically packaged on export.
-
-### Bug Fixes
-- Validation now warns when plot paths are missing.
-- Export raises an error if any referenced file does not exist.
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.6.1
-
-### What's New
-- `add-solution` supports a `--dry-run` flag to validate inputs without saving.
-
-### Bug Fixes
-- N/A
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.6.0
-
-### What's New
-- `add-solution` accepts a `--params-file` option for JSON parameter files.
-- Added optional `model_name` field to `Solution` and CLI.
-
-### Bug Fixes
-- N/A
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.5.0
-
-### What's New
-- Added `nexus-init` command to capture platform metadata on the Roman Research Nexus.
-- `Submission.autofill_nexus_info` auto-populates hardware details from the environment.
-- New Jupyter notebook tutorial for Nexus users.
-
-### Bug Fixes
-- N/A
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.4.0
-
-### What's New
-- Added `SUBMISSION_MANUAL.md` documenting the submission format.
-- Added standalone `validate_submission.py` for validating directories.
-
-### Bug Fixes
-- N/A
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.3.0
-
-### What's New
-- Added `compare-solutions` command to evaluate solutions using BIC.
-- `export` now performs pre-flight validation and supports a `--force` flag.
-
-### Bug Fixes
-- BIC calculation now uses the number of data points stored for each solution.
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
-
-<br>
-
-## Release v0.2.0
-
-### What's New
-- Added structured metadata fields to `Solution` and `Submission` models including astrometry usage, limb darkening info, physical parameters, and hardware information.
-- `Solution.set_compute_info` now records Git repository state (commit hash, branch, dirty status) while failing gracefully when Git is unavailable.
-- CLI `add-solution` command updated with options to supply the new metadata from the command line.
-
-### Bug Fixes
-- N/A
-
-### Breaking Changes
-- None
-
-### Dependencies
-- No dependency changes
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.12.2] - 2024-12-19
+
+### Fixed
+- **Critical Bug Fix**: Renamed `Solution.validate()` method to `Solution.run_validation()` to resolve Pydantic conflict
+  - Pydantic was interpreting the `validate` method as a field validator, causing import errors
+  - This was breaking Sphinx documentation generation and module imports
+  - All references updated across API, CLI, tests, and documentation
+  - Method functionality remains identical, only the name changed
+
+### Changed
+- Updated all documentation and examples to use `run_validation()` instead of `validate()`
+- Updated CLI commands and help text for consistency
+- Updated test suite to use the new method name
+
+## [0.12.1] - 2024-12-19
+
+### Added
+- **New CLI Command**: `set-hardware-info` for managing compute platform information
+  - Supports setting CPU, memory, platform, and Nexus image details
+  - Includes `--clear`, `--dry-run`, and update options
+  - Integrates with dossier generation for hardware documentation
+- **Enhanced Documentation**: Comprehensive improvements to Sphinx documentation
+  - Expanded API reference with detailed examples and best practices
+  - Enhanced tutorial with step-by-step workflow and troubleshooting
+  - Improved index page with key features and quick start guide
+  - Added custom CSS styling for RGES-PIT color scheme
+- **Example Parameter Files**: Created comprehensive example parameter files
+  - `tests/example_params.yaml` and `tests/example_params.json`
+  - Demonstrates different parameter formats, uncertainties, and model types
+  - Useful for testing and tutorial purposes
+
+### Changed
+- **Version Update**: Bumped version from v0.12.0-dev to v0.12.1
+- **Documentation**: Updated all version references across codebase
+- **Tutorial**: Updated CLI commands in `Submission_Tool_Tutorial.ipynb` to match current syntax
+- **GitHub Logo**: Ensured GitHub logo is properly packaged and included in dossier generation
+
+### Fixed
+- **CI Test Failures**: Fixed test assertions for CLI comparison and validation commands
+  - Updated table header counting logic for solution comparison output
+  - Added missing repo_url setting in validation tests
+- **Documentation Build**: Improved Sphinx configuration for better autodoc and theme options
+
+## [0.12.0] - 2024-12-18
+
+### Added
+- **Comprehensive Documentation**: Complete Sphinx documentation with API reference, tutorial, and examples
+- **Enhanced Dossier Generation**: Improved HTML dashboard with better styling and navigation
+- **Parameter File Support**: Added support for JSON and YAML parameter files in CLI
+- **Validation System**: Centralized parameter validation with comprehensive error checking
+- **Hardware Information**: Automatic detection and manual setting of compute platform details
+- **Notes Management**: Enhanced markdown notes support with file-based editing
+- **Solution Comparison**: BIC-based solution ranking and relative probability calculation
+- **Export Improvements**: Better handling of external files and automatic path updates
+
+### Changed
+- **API Improvements**: Enhanced Solution and Submission classes with better validation
+- **CLI Enhancements**: More robust command-line interface with better error handling
+- **Project Structure**: Improved organization with better separation of concerns
+
+### Fixed
+- **Bug Fixes**: Various fixes for data persistence, validation, and export functionality
+- **Documentation**: Comprehensive docstring updates with Google style formatting
+
+## [0.11.0] - 2024-12-17
+
+### Added
+- **Initial Release**: Basic submission management functionality
+- **Core API**: Solution, Event, and Submission classes
+- **CLI Interface**: Basic command-line tools for project management
+- **Export Functionality**: ZIP archive creation for submissions
+
+### Changed
+- **Project Structure**: Organized code into logical modules
+- **Documentation**: Basic README and docstrings
+
+### Fixed
+- **Initial Implementation**: Core functionality for microlensing submission management

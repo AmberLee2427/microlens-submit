@@ -156,7 +156,7 @@ Note:
     Tailwind CSS styling and syntax-highlighted markdown notes.
 """
 
-__version__ = "0.12.1"
+__version__ = "0.12.2"
 
 from .api import Event, Solution, Submission, load
 

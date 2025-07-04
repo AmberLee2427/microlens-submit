@@ -457,7 +457,7 @@ def test_validate_warnings(tmp_path):
     sol2 = evt2.add_solution("other", {"b": 2})
     sol2.deactivate()
 
-    warnings = sub.validate()
+    warnings = sub.run_validation()
 
     assert any("Hardware info" in w for w in warnings)
     assert any("evt2" in w for w in warnings)
@@ -491,6 +491,6 @@ def test_relative_probability_range(tmp_path):
     sol = evt.add_solution("other", {"a": 1})
     sol.relative_probability = 1.2
 
-    warnings = sub.validate()
+    warnings = sub.run_validation()
 
     assert any("between 0 and 1" in w for w in warnings)

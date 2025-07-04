@@ -42,7 +42,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 `microlens-submit` is currently at version 0.12.0-dev. Below is the prioritized roadmap for developing version 1.0.0.
 
-### v0.12.1 — Enhanced CLI & Documentation (Current Release)
+### v0.12.2 — Critical Bug Fix (Current Release)
 
 - **Task 1: Submission Dossier Generator**
   - *Goal:* Allow participants to preview exactly what evaluators will receive.
@@ -355,7 +355,7 @@ twine check dist/*
 
 ### 10.4. Version Numbering Strategy
 
-- **Patch releases (0.12.0 → 0.12.1):** Bug fixes, minor improvements
+- **Patch releases (0.12.0 → 0.12.2):** Bug fixes, minor improvements
 - **Minor releases (0.12.0 → 0.13.0):** New features, non-breaking changes
 - **Major releases (0.12.0 → 1.0.0):** Breaking changes, major rewrites
 
@@ -385,7 +385,7 @@ When creating a release, include:
 
 After creating a release:
 
-1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.12.0 → 0.12.1-dev)
+1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.12.0 → 0.12.2-dev)
 2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
 3. **Update Roadmap:** Mark completed tasks in this document
 
@@ -400,11 +400,11 @@ For future automation, consider implementing:
 ### 10.8. Current Release Status
 
 - **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
-- **v0.12.1:** ✅ Released (2025-07-03) - File-based notes system, HTML dossier generator, export improvements, temp notes file logic, robust CLI/API UX
+- **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict
 - **v0.13.0:** 📋 Planned - High Automation Support
 - **v1.0.0:** 📋 Planned - Official Release
 
-### v0.12.1 Highlights
+### v0.12.2 Highlights
 - **New CLI Commands:** `set-hardware-info` for managing computational resources
 - **Parameter File Support:** YAML and JSON parameter files with `--params-file`
 - **Enhanced GitHub Integration:** Logo packaging, repo URL management, commit links
@@ -414,5 +414,5 @@ For future automation, consider implementing:
 - **Improved Validation:** Professional output format with better error messages
 - **Hardware Info Management:** CLI and API support for reproducibility tracking
 
-- **v0.12.1:** ✅ Released (2025-07-03) - Enhanced CLI commands, hardware info management, parameter file support, comprehensive documentation, GitHub integration, higher-order effects support, improved validation, full dossier report generation
+- **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict, breaking Sphinx documentation generation
 

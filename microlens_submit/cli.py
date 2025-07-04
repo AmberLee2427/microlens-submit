@@ -556,7 +556,7 @@ def add_solution(
         console.print(json.dumps(parsed, indent=2))
         console.print(Panel("Schema Output", style="cyan"))
         console.print(sol.model_dump_json(indent=2))
-        validation_messages = sol.validate()
+        validation_messages = sol.run_validation()
         if validation_messages:
             console.print(Panel("Validation Warnings", style="yellow"))
             for msg in validation_messages:
@@ -576,7 +576,7 @@ def add_solution(
             canonical_notes_path.parent.mkdir(parents=True, exist_ok=True)
             canonical_notes_path.write_text("", encoding="utf-8")
     sub.save()
-    validation_messages = sol.validate()
+    validation_messages = sol.run_validation()
     if validation_messages:
         console.print(Panel("Validation Warnings", style="yellow"))
         for msg in validation_messages:
@@ -715,7 +715,7 @@ def export(
         that don't have them set, using BIC if sufficient data is available.
     """
     sub = load(str(project_path))
-    warnings = sub.validate()
+    warnings = sub.run_validation()
     if warnings:
         console.print(Panel("Validation Warnings", style="yellow"))
         for w in warnings:
@@ -1072,7 +1072,7 @@ def validate_solution(
         raise typer.Exit(code=1)
 
     # Run validation
-    messages = target_solution.validate()
+    messages = target_solution.run_validation()
 
     if not messages:
         console.print(
@@ -1143,7 +1143,7 @@ def validate_submission(
         all required information is present and valid.
     """
     sub = load(str(project_path))
-    warnings = sub.validate()
+    warnings = sub.run_validation()
 
     # Check for missing repo_url
     repo_url_warning = next((w for w in warnings if 'repo_url' in w.lower() or 'github' in w.lower()), None)
@@ -1213,7 +1213,7 @@ def validate_event(
     console.print(Panel(f"Validating Event: {event_id}", style="cyan"))
 
     for solution in event.solutions.values():
-        messages = solution.validate()
+        messages = solution.run_validation()
         if messages:
             console.print(f"\n[bold]Solution {solution.solution_id}:[/bold]")
             for msg in messages:

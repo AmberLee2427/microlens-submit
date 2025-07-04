@@ -30,7 +30,7 @@ The main container class that represents an entire microlensing challenge submis
 
    - ``get_event(event_id)``: Retrieve or create an event
    - ``save()``: Persist all changes to disk
-   - ``validate()``: Check submission completeness and consistency
+   - ``run_validation()``: Check submission completeness and consistency
    - ``export(path)``: Create submission package
 
    **Example:**
@@ -50,7 +50,7 @@ The main container class that represents an entire microlensing challenge submis
       >>> submission.save()
       >>> 
       >>> # Validate submission
-      >>> warnings = submission.validate()
+      >>> warnings = submission.run_validation()
       >>> for warning in warnings:
       ...     print(f"Warning: {warning}")
 
@@ -170,7 +170,7 @@ Represents an individual microlensing model fit with all associated metadata.
 .. code-block:: python
 
    >>> # Comprehensive validation
-   >>> warnings = submission.validate()
+   >>> warnings = submission.run_validation()
    >>> 
    >>> if warnings:
    ...     print("Validation warnings:")
@@ -196,7 +196,7 @@ Represents an individual microlensing model fit with all associated metadata.
 ~~~~~~~~~~~~~~~~~
 
 1. **Always save after changes**: Call ``submission.save()`` after modifying data
-2. **Use validation**: Check ``submission.validate()`` before exporting
+2. **Use validation**: Check ``submission.run_validation()`` before exporting
 3. **Handle errors gracefully**: Wrap operations in try/except blocks
 4. **Use relative paths**: Keep file paths relative to the project directory
 5. **Document solutions**: Add detailed notes to explain your analysis

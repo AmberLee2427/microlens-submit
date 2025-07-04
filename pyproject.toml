@@ -6,27 +6,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microlens-submit"
-version = "0.12.1"
+version = "0.12.2"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
+  {name = "Roman Science Platform Team", email = "roman-science-platform@stsci.edu"}
 ]
-description = "A stateful submission toolkit for the Microlensing Data Challenge."
+description = "A toolkit for managing microlensing data challenge submissions"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
 ]
+keywords = ["astronomy", "microlensing", "data-challenge", "submission", "roman"]
 dependencies = [
+    "pydantic>=2.0.0",
     "typer[all]>=0.9.0",
-    "pydantic>=2.0",
-    "rich>=13.0",
-    "PyYAML>=6.0",
-    "markdown >=3.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "markdown>=3.4.0",
 ]
 
 [project.urls]

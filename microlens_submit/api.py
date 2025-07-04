@@ -114,7 +114,7 @@ class Solution(BaseModel):
         >>> solution.set_notes("# My Solution Notes\n\nThis is a simple point lens fit.")
         >>> 
         >>> # Validate the solution
-        >>> messages = solution.validate()
+        >>> messages = solution.run_validation()
         >>> if messages:
         ...     print("Validation issues:", messages)
         
@@ -123,7 +123,7 @@ class Solution(BaseModel):
         structured documentation with headers, lists, code blocks, tables, and links.
         This is particularly useful for creating detailed submission dossiers for evaluators.
         
-        The validate() method performs comprehensive validation of parameters,
+        The run_validation() method performs comprehensive validation of parameters,
         higher-order effects, and physical consistency. Always validate solutions
         before submission.
     """
@@ -286,7 +286,7 @@ class Solution(BaseModel):
         """
         self.is_active = True
 
-    def validate(self) -> list[str]:
+    def run_validation(self) -> list[str]:
         """Validate this solution's parameters and configuration.
         
         This method performs comprehensive validation using centralized validation logic
@@ -334,7 +334,7 @@ class Solution(BaseModel):
                       
         Example:
             >>> solution = event.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1})
-            >>> messages = solution.validate()
+            >>> messages = solution.run_validation()
             >>> if messages:
             ...     print("Validation issues found:")
             ...     for msg in messages:
@@ -782,7 +782,7 @@ class Submission(BaseModel):
         >>> solution2 = event2.add_solution("1S2L", {"t0": 2459156.2, "u0": 0.08, "tE": 35.7, "s": 0.95, "q": 0.0005, "alpha": 78.3})
         >>> 
         >>> # Validate the submission
-        >>> warnings = submission.validate()
+        >>> warnings = submission.run_validation()
         >>> if warnings:
         ...     print("Validation warnings:")
         ...     for warning in warnings:
@@ -809,7 +809,7 @@ class Submission(BaseModel):
     events: Dict[str, Event] = Field(default_factory=dict)
     repo_url: Optional[str] = None
 
-    def validate(self) -> list[str]:
+    def run_validation(self) -> list[str]:
         """Check the submission for missing or incomplete information.
 
         The method performs lightweight validation and returns a list of
@@ -824,7 +824,7 @@ class Submission(BaseModel):
             >>> submission = load("./my_project")
             >>> 
             >>> # Validate the submission
-            >>> warnings = submission.validate()
+            >>> warnings = submission.run_validation()
             >>> if warnings:
             ...     print("Validation warnings:")
             ...     for warning in warnings:
@@ -875,7 +875,7 @@ class Submission(BaseModel):
             
             for sol in active:
                 # Use the new centralized validation
-                solution_messages = sol.validate()
+                solution_messages = sol.run_validation()
                 for msg in solution_messages:
                     warnings.append(f"Solution {sol.solution_id} in event {event.event_id}: {msg}")
                 
@@ -1060,7 +1060,7 @@ class Submission(BaseModel):
             >>> submission = load("./my_project")
             >>> 
             >>> # Validate before export
-            >>> warnings = submission.validate()
+            >>> warnings = submission.run_validation()
             >>> if warnings:
             ...     print("Fix validation issues before export:", warnings)
             ... else:
