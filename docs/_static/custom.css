@@ -212,6 +212,12 @@
       background: var(--rtd-color-accent) !important;
       color: var(--rtd-color-background) !important;
   }
+
+   /* Sidebar nav item background on hover */
+   .wy-nav-side .wy-menu-vertical li a:active {
+    background: var(--rtd-color-accent) !important;
+    color: var(--rtd-color-background) !important;
+}
   
   /* Current page indicator */
   .wy-nav-side .wy-menu-vertical li.current a {
