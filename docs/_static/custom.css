@@ -239,15 +239,12 @@ h1, h2 {
     color: #fff !important;
 }
 
-/* Breadcrumb navigation bar */
-.wy-breadcrumbs {
+/* Style the EthicalAds ad box to match the sidebar */
+.ethical-rtd, .ethical-sidebar-ad, .ethical-ad {
     background: var(--rtd-color-secondary) !important;
-}
-
-.wy-breadcrumbs li {
+    border-radius: 8px !important;
     color: var(--rtd-color-background) !important;
 }
-
-.wy-breadcrumbs li a {
+.ethical-rtd *, .ethical-sidebar-ad *, .ethical-ad * {
     color: var(--rtd-color-background) !important;
 }
