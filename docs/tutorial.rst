@@ -256,7 +256,50 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit deactivate <solution_id>
 
-9. **Edit solution attributes (optional)**
+   **Note:** Deactivated solutions are kept in the project but excluded from exports.
+   Use this when you want to keep the solution data for reference but don't want
+   it in your final submission.
+
+9. **Remove mistakes (optional)**
+
+   Completely remove solutions or events that were created by mistake:
+
+   .. code-block:: bash
+      
+      # Remove a saved solution (requires --force for safety)
+      microlens-submit remove-solution <solution_id> --force
+      
+      # Remove an entire event and all its solutions (requires --force for safety)
+      microlens-submit remove-event <event_id> --force
+
+   **CLI vs Python API:**
+   
+   - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
+   - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
+   
+   **What happens if you forget --force?**
+   
+   If you try to remove a saved solution or event without --force, you'll get a helpful error message and nothing will be deleted. For example:
+
+   .. code-block:: text
+
+      $ microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc
+      Error: Cannot remove saved solution 12345678... without force=True. Use solution.deactivate() to exclude from exports instead, or call remove_solution(solution_id, force=True) to force removal.
+      💡 Use --force to override safety checks, or use deactivate to keep the solution
+
+   **When to use removal vs deactivation:**
+   
+   - **Use deactivate()** when you want to keep the solution data but exclude it from exports
+   - **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
+   - **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
+   
+   **Safety features:**
+   
+   - Saved solutions/events require ``--force`` to prevent accidental data loss
+   - Removal cannot be undone - use deactivate() if you're unsure
+   - Temporary files (notes in tmp/) are automatically cleaned up
+
+10. **Edit solution attributes (optional)**
 
    After creating solutions, you can modify their attributes:
 
@@ -286,7 +329,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      # See what would change without saving
      microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
 
-10. **Export the final package**
+11. **Export the final package**
 
     Create the submission package for upload:
 
@@ -297,7 +340,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
     This creates a zip file containing all active solutions and associated files,
     ready for submission to the challenge organizers.
 
-11. **Preview your submission dossier**
+12. **Preview your submission dossier**
 
     Generate a human-readable HTML dashboard for review:
 

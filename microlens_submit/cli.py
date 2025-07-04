@@ -624,39 +624,155 @@ def activate(
     solution_id: str,
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Mark a solution as active so it is included in exports.
-    
-    Activates a solution by setting its is_active flag to True. Active
-    solutions are included in submission exports and dossier generation.
-    This is the default state for newly created solutions.
-    
+    """Activate a previously deactivated solution.
+
+    Re-enables a solution that was previously deactivated, making it
+    active again for inclusion in exports and dossier generation.
+
     Args:
-        solution_id: The unique identifier of the solution to activate.
-        project_path: Directory of the submission project.
-    
-    Raises:
-        typer.Exit: If the solution is not found in any event.
-    
+        solution_id: UUID of the solution to activate.
+        project_path: Path to the submission project directory.
+
     Example:
-        # Activate a previously deactivated solution
-        microlens-submit activate abc12345-def6-7890-ghij-klmnopqrstuv ./project
-        
-        # The solution is now active and will be included in exports
-        microlens-submit export submission.zip ./project  # Includes active solutions
-        
+        >>> microlens-submit activate 12345678-1234-1234-1234-123456789abc ./my_project
+        ✅ Activated solution 12345678...
+
     Note:
-        This command only changes the active status. Use this to reactivate
-        solutions that were previously deactivated using the deactivate command.
+        This command automatically saves the change to disk.
+        Only active solutions are included in submission exports.
     """
-    sub = load(str(project_path))
-    for event in sub.events.values():
+    submission = load(project_path)
+    
+    # Find the solution across all events
+    solution = None
+    event_id = None
+    for eid, event in submission.events.items():
         if solution_id in event.solutions:
-            event.solutions[solution_id].activate()
-            sub.save()
-            console.print(f"Activated {solution_id}")
-            return
-    console.print(f"Solution {solution_id} not found", style="bold red")
-    raise typer.Exit(code=1)
+            solution = event.solutions[solution_id]
+            event_id = eid
+            break
+    
+    if solution is None:
+        console.print(f"[red]Error: Solution {solution_id} not found[/red]")
+        raise typer.Exit(1)
+    
+    solution.activate()
+    submission.save()
+    console.print(f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]")
+
+
+@app.command("remove-solution")
+def remove_solution(
+    solution_id: str,
+    force: bool = typer.Option(False, "--force", help="Force removal of saved solutions (use with caution)"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Completely remove a solution from the submission.
+
+    ⚠️  WARNING: This permanently removes the solution from memory and any
+    associated files. This action cannot be undone. Use deactivate instead
+    if you want to keep the solution but exclude it from exports.
+
+    Args:
+        solution_id: UUID of the solution to remove.
+        force: If True, skip safety checks and remove immediately.
+        project_path: Path to the submission project directory.
+
+    Example:
+        >>> # Remove an unsaved solution (safe)
+        >>> microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc ./my_project
+        🗑️  Removed solution 12345678... from event EVENT001
+        
+        >>> # Force remove a saved solution (use with caution!)
+        >>> microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc --force ./my_project
+        🗑️  Removed solution 12345678... from event EVENT001
+
+    Note:
+        - Unsaved solutions can be removed safely
+        - Saved solutions require --force to prevent accidental data loss
+        - Removal cannot be undone - use deactivate if you're unsure
+        - Temporary files (notes in tmp/) are automatically cleaned up
+    """
+    submission = load(project_path)
+    
+    # Find the solution across all events
+    solution = None
+    event_id = None
+    for eid, event in submission.events.items():
+        if solution_id in event.solutions:
+            solution = event.solutions[solution_id]
+            event_id = eid
+            break
+    
+    if solution is None:
+        console.print(f"[red]Error: Solution {solution_id} not found[/red]")
+        raise typer.Exit(1)
+    
+    try:
+        removed = submission.events[event_id].remove_solution(solution_id, force=force)
+        if removed:
+            submission.save()
+            console.print(f"[green]✅ Solution {solution_id[:8]}... removed from event {event_id}[/green]")
+        else:
+            console.print(f"[red]Error: Failed to remove solution {solution_id}[/red]")
+            raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print(f"[yellow]💡 Use --force to override safety checks, or use deactivate to keep the solution[/yellow]")
+        raise typer.Exit(1)
+
+
+@app.command("remove-event")
+def remove_event(
+    event_id: str,
+    force: bool = typer.Option(False, "--force", help="Force removal of events with saved solutions (use with caution)"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Completely remove an event and all its solutions from the submission.
+
+    ⚠️  WARNING: This permanently removes the event and ALL its solutions from
+    memory and any associated files. This action cannot be undone. Use
+    event.clear_solutions() instead if you want to keep the event but exclude
+    all solutions from exports.
+
+    Args:
+        event_id: Identifier of the event to remove.
+        force: If True, skip safety checks and remove immediately.
+        project_path: Path to the submission project directory.
+
+    Example:
+        >>> # Remove an event with only unsaved solutions (safe)
+        >>> microlens-submit remove-event TEST_EVENT ./my_project
+        🗑️  Removed event 'TEST_EVENT' with 2 solutions
+        
+        >>> # Force remove an event with saved solutions (use with caution!)
+        >>> microlens-submit remove-event EXISTING_EVENT --force ./my_project
+        🗑️  Removed event 'EXISTING_EVENT' with 3 solutions
+
+    Note:
+        - Events with only unsaved solutions can be removed safely
+        - Events with saved solutions require --force to prevent accidental data loss
+        - Removal cannot be undone - use event.clear_solutions() if you're unsure
+        - Temporary files (notes in tmp/) are automatically cleaned up
+    """
+    submission = load(project_path)
+    
+    if event_id not in submission.events:
+        console.print(f"[red]Error: Event {event_id} not found[/red]")
+        raise typer.Exit(1)
+    
+    try:
+        removed = submission.remove_event(event_id, force=force)
+        if removed:
+            submission.save()
+            console.print(f"[green]✅ Event {event_id} removed successfully[/green]")
+        else:
+            console.print(f"[red]Error: Failed to remove event {event_id}[/red]")
+            raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print(f"[yellow]💡 Use --force to override safety checks, or use event.clear_solutions() to keep the event[/yellow]")
+        raise typer.Exit(1)
 
 
 @app.command()
