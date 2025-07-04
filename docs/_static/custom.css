@@ -233,3 +233,8 @@ h1, h2 {
 .wy-nav-content h1, .wy-nav-content h2 {
     color: var(--rtd-color-secondary) !important;
 }
+
+/* CONTENTS text above nav bar */
+.wy-menu-vertical .caption {
+    color: #fff !important;
+}
