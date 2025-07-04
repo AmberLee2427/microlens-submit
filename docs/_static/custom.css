@@ -123,15 +123,15 @@
 
   /* Admonition boxes (note, warning, tip, etc.) */
   .admonition {
-    background: var(--rtd-color-background) !important;
-    border: 2px solid var(--rtd-color-accent) !important;
+    background: var(--rtd-color-primary) !important;
+    border: 2px solid var(--rtd-color-secondary) !important;
     border-radius: 6px !important;
     margin: 1em 0 !important;
     padding: 0.5em 1em !important;
   }
   
   .admonition-title {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-secondary) !important;
     color: #fff !important;
     font-weight: bold !important;
     margin: -0.5em -1em 0.5em -1em !important;
@@ -141,11 +141,11 @@
   
   /* Specific admonition types */
   .admonition.note {
-    border-color: var(--rtd-color-accent) !important;
+    border-color: var(--rtd-color-secondary) !important;
   }
   
   .admonition.note .admonition-title {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-secondary) !important;
   }
   
   .admonition.warning {
@@ -165,11 +165,11 @@
   }
   
   .admonition.important {
-    border-color: #f39c12 !important;
+    border-color: var(--rtd-color-accent) !important;
   }
   
   .admonition.important .admonition-title {
-    background: #f39c12 !important;
+    background: var(--rtd-color-accent) !important;
   }
   
   .admonition.seealso {
@@ -182,15 +182,15 @@
   
   /* Example boxes */
   .example {
-    background: var(--rtd-color-background) !important;
-    border: 2px solid var(--rtd-color-accent) !important;
+    background: var(--rtd-color-primary) !important;
+    border: 2px solid var(--rtd-color-secondary) !important;
     border-radius: 6px !important;
     margin: 1em 0 !important;
     padding: 0.5em 1em !important;
   }
   
   .example .admonition-title {
-    background: var(--rtd-color-accent) !important;
+    background: var(--rtd-color-secondary) !important;
     color: #fff !important;
     font-weight: bold !important;
     margin: -0.5em -1em 0.5em -1em !important;
