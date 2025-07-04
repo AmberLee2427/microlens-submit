@@ -212,12 +212,6 @@
       background: var(--rtd-color-accent) !important;
       color: var(--rtd-color-background) !important;
   }
-
-   /* Sidebar nav item background on hover */
-   .wy-nav-side .wy-menu-vertical li a:active {
-    background: var(--rtd-color-accent) !important;
-    color: var(--rtd-color-background) !important;
-}
   
   /* Current page indicator */
   .wy-nav-side .wy-menu-vertical li.current a {
@@ -227,5 +221,15 @@
 
   .wy-nav-side .wy-menu-vertical li.current a:hover {
     background: var(--rtd-color-primary) !important;
+    color: var(--rtd-color-secondary) !important;
+}
+
+/* Headings */
+h1, h2 {
+    color: var(--rtd-color-secondary) !important;
+}
+
+/* Also target headings within the main content area */
+.wy-nav-content h1, .wy-nav-content h2 {
     color: var(--rtd-color-secondary) !important;
 }
