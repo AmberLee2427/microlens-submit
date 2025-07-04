@@ -292,37 +292,38 @@ class Solution(BaseModel):
         This method performs comprehensive validation using centralized validation logic
         to ensure the solution is complete, consistent, and ready for submission.
         
-        **Validation Checks:**
-        
-        **Parameter Completeness:**
-        - Ensures all required parameters are present for the given model type
-        - Validates higher-order effect requirements (e.g., parallax needs piEN, piEE)
-        - Checks band-specific flux parameters when bands are specified
-        - Verifies t_ref is provided when required by time-dependent effects
-        
-        **Parameter Types and Values:**
-        - Validates parameter data types (float, int, string)
-        - Checks physically meaningful parameter ranges
-        - Ensures positive values for quantities that must be positive (tE, s, etc.)
-        - Validates mass ratio (q) is between 0 and 1
-        
-        **Physical Consistency:**
-        - Checks for physically impossible parameter combinations
-        - Validates binary lens separation ranges for caustic crossing
-        - Ensures relative_probability is between 0 and 1 when specified
-        
-        **Model-Specific Validation:**
-        - 1S1L: Requires t0, u0, tE
-        - 1S2L: Requires t0, u0, tE, s, q, alpha
-        - 2S1L: Requires t0, u0, tE (core lens parameters)
-        - Higher-order effects: Validates effect-specific parameters
-        
-        **Higher-Order Effects Supported:**
-        - parallax: Requires piEN, piEE, t_ref
-        - finite-source: Requires rho
-        - lens-orbital-motion: Requires dsdt, dadt, t_ref
-        - gaussian-process: Optional ln_K, ln_lambda, ln_period, ln_gamma
-        - fitted-limb-darkening: Optional u1, u2, u3, u4
+        .. note::
+            **Validation Checks:**
+            
+            **Parameter Completeness:**
+            - Ensures all required parameters are present for the given model type
+            - Validates higher-order effect requirements (e.g., parallax needs piEN, piEE)
+            - Checks band-specific flux parameters when bands are specified
+            - Verifies t_ref is provided when required by time-dependent effects
+            
+            **Parameter Types and Values:**
+            - Validates parameter data types (float, int, string)
+            - Checks physically meaningful parameter ranges
+            - Ensures positive values for quantities that must be positive (tE, s, etc.)
+            - Validates mass ratio (q) is between 0 and 1
+            
+            **Physical Consistency:**
+            - Checks for physically impossible parameter combinations
+            - Validates binary lens separation ranges for caustic crossing
+            - Ensures relative_probability is between 0 and 1 when specified
+            
+            **Model-Specific Validation:**
+            - 1S1L: Requires t0, u0, tE
+            - 1S2L: Requires t0, u0, tE, s, q, alpha
+            - 2S1L: Requires t0, u0, tE (core lens parameters)
+            - Higher-order effects: Validates effect-specific parameters
+            
+            **Higher-Order Effects Supported:**
+            - parallax: Requires piEN, piEE, t_ref
+            - finite-source: Requires rho
+            - lens-orbital-motion: Requires dsdt, dadt, t_ref
+            - gaussian-process: Optional ln_K, ln_lambda, ln_period, ln_gamma
+            - fitted-limb-darkening: Optional u1, u2, u3, u4
         
         Args:
             None
