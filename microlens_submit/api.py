@@ -60,28 +60,32 @@ class Solution(BaseModel):
     :meth:`Event.add_solution` and persisted to disk when
     :meth:`Submission.save` is called.
 
-    :ivar solution_id: Unique identifier for the solution (auto-generated UUID).
-    :ivar model_type: Specific lens/source configuration such as "1S1L" or "1S2L".
-    :ivar bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
-    :ivar higher_order_effects: List of physical effects modeled (e.g., ["parallax"]).
-    :ivar t_ref: Reference time for time-dependent effects (Julian Date).
-    :ivar parameters: Dictionary of model parameters used for the fit.
-    :ivar is_active: Flag indicating whether the solution should be included in the final submission export.
-    :ivar compute_info: Metadata about the computing environment, populated by :meth:`set_compute_info`.
-    :ivar posterior_path: Optional path to a file containing posterior samples.
-    :ivar lightcurve_plot_path: Optional path to the lightcurve plot file.
-    :ivar lens_plane_plot_path: Optional path to the lens plane plot file.
-    :ivar notes_path: Path to the markdown notes file for this solution.
-    :ivar used_astrometry: Whether astrometric information was used when fitting.
-    :ivar used_postage_stamps: Whether postage stamp data was used.
-    :ivar limb_darkening_model: Name of the limb darkening model employed.
-    :ivar limb_darkening_coeffs: Mapping of limb darkening coefficients.
-    :ivar parameter_uncertainties: Uncertainties for parameters in parameters.
-    :ivar physical_parameters: Physical parameters derived from the model.
-    :ivar log_likelihood: Log-likelihood value of the fit.
-    :ivar relative_probability: Optional probability of this solution being the best model.
-    :ivar n_data_points: Number of data points used in the fit.
-    :ivar creation_timestamp: UTC timestamp when the solution was created.
+    Attributes:
+        solution_id: Unique identifier for the solution (auto-generated UUID).
+        model_type: Specific lens/source configuration such as "1S1L" or "1S2L".
+        bands: List of photometric bands used in the fit (e.g., ["0", "1", "2"]).
+        higher_order_effects: List of physical effects modeled (e.g., ["parallax"]).
+        t_ref: Reference time for time-dependent effects (Julian Date).
+        parameters: Dictionary of model parameters used for the fit.
+        is_active: Flag indicating whether the solution should be included in
+            the final submission export.
+        compute_info: Metadata about the computing environment, populated by
+            :meth:`set_compute_info`.
+        posterior_path: Optional path to a file containing posterior samples.
+        lightcurve_plot_path: Optional path to the lightcurve plot file.
+        lens_plane_plot_path: Optional path to the lens plane plot file.
+        notes_path: Path to the markdown notes file for this solution.
+        used_astrometry: Whether astrometric information was used when fitting.
+        used_postage_stamps: Whether postage stamp data was used.
+        limb_darkening_model: Name of the limb darkening model employed.
+        limb_darkening_coeffs: Mapping of limb darkening coefficients.
+        parameter_uncertainties: Uncertainties for parameters in parameters.
+        physical_parameters: Physical parameters derived from the model.
+        log_likelihood: Log-likelihood value of the fit.
+        relative_probability: Optional probability of this solution being the best model.
+        n_data_points: Number of data points used in the fit.
+        creation_timestamp: UTC timestamp when the solution was created.
+
 
     Example:
         >>> from microlens_submit import load
@@ -108,7 +112,11 @@ class Solution(BaseModel):
         >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
         >>> 
         >>> # Add notes
-        >>> solution.set_notes("# My Solution Notes\n\nThis is a simple point lens fit.")
+        >>> solution.set_notes('''
+        ...     # My Solution Notes
+        ...
+        ...     This is a simple point lens fit.
+        ... ''')
         >>> 
         >>> # Validate the solution
         >>> messages = solution.run_validation()
