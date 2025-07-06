@@ -52,8 +52,9 @@ import subprocess
 import sys
 import tempfile
 import pytest
+from pathlib import Path
 
-from microlens_submit.api import load
+from microlens_submit.api import load, import_solutions_from_csv
 
 
 def test_full_lifecycle(tmp_path):
@@ -825,3 +826,185 @@ def test_remove_solution_and_event():
         # Should work with force
         removed = submission.remove_event("SAVED_EVENT2", force=True)
         assert removed is True
+
+
+def test_api_import_solutions_from_csv():
+    """Test the API import_solutions_from_csv function directly."""
+    import tempfile
+    from pathlib import Path
+    from microlens_submit.api import load, import_solutions_from_csv
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a test CSV file
+        csv_content = """# event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
+OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,"# Simple Point Lens"
+OGLE-2023-BLG-0001,binary_1S2L,"[""1S2L"", ""parallax""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"# Binary Lens"
+OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,"# Finite Source"
+"""
+        csv_file = Path(tmpdir) / "test_import.csv"
+        csv_file.write_text(csv_content)
+        
+        # Load project
+        submission = load(tmpdir)
+        submission.team_name = "Test Team"
+        
+        # Test dry run
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=True,
+            validate=True,
+            project_path=Path(tmpdir)
+        )
+        assert stats['total_rows'] == 3
+        assert stats['successful_imports'] == 3
+        
+        # Test actual import
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            validate=True,
+            project_path=Path(tmpdir)
+        )
+        assert stats['successful_imports'] == 3
+        assert "OGLE-2023-BLG-0001" in submission.events
+        assert "OGLE-2023-BLG-0002" in submission.events
+        event1 = submission.events["OGLE-2023-BLG-0001"]
+        event2 = submission.events["OGLE-2023-BLG-0002"]
+        assert len(event1.solutions) == 2
+        assert len(event2.solutions) == 1
+        aliases = [sol.alias for sol in event1.solutions.values()]
+        assert "simple_1S1L" in aliases
+        assert "binary_1S2L" in aliases
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        assert simple_sol.model_type == "1S1L"
+        assert simple_sol.parameters["t0"] == 2459123.5
+        assert simple_sol.parameters["u0"] == 0.1
+        assert simple_sol.parameters["tE"] == 20.0
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L")
+        assert binary_sol.model_type == "1S2L"
+        assert binary_sol.parameters["s"] == 1.2
+        assert binary_sol.parameters["q"] == 0.5
+        assert binary_sol.parameters["alpha"] == 45.0
+        finite_sol = next(sol for sol in event2.solutions.values())
+        assert finite_sol.model_type == "1S1L"
+        assert "finite-source" in finite_sol.higher_order_effects
+        # Test duplicate handling (error mode)
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            on_duplicate="error",
+            project_path=Path(tmpdir)
+        )
+        assert stats['skipped_rows'] == 3
+        # Test duplicate handling (override mode)
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            on_duplicate="override",
+            project_path=Path(tmpdir)
+        )
+        assert stats['duplicate_handled'] == 3
+        assert stats['successful_imports'] == 3
+
+
+def test_api_import_solutions_from_csv_with_data_file():
+    """Test the API import_solutions_from_csv function using the actual test file."""
+    import tempfile
+    from pathlib import Path
+    from microlens_submit.api import load, import_solutions_from_csv
+    
+    # Use the actual test CSV file from tests/data
+    csv_file = Path(__file__).parent / "data" / "test_import.csv"
+    assert csv_file.exists(), f"Test CSV file not found: {csv_file}"
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Load project
+        submission = load(tmpdir)
+        submission.team_name = "Test Team"
+        
+        # Test dry run
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=True,
+            validate=True,
+            project_path=Path(tmpdir)
+        )
+        assert stats['total_rows'] == 6
+        assert stats['successful_imports'] == 6  # All rows are valid
+        
+        # Test actual import
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            validate=True,
+            project_path=Path(tmpdir)
+        )
+        assert stats['successful_imports'] == 6
+        assert "OGLE-2023-BLG-0001" in submission.events
+        assert "OGLE-2023-BLG-0002" in submission.events
+        assert "OGLE-2023-BLG-0003" in submission.events
+        assert "OGLE-2023-BLG-0004" in submission.events
+        
+        event1 = submission.events["OGLE-2023-BLG-0001"]
+        event2 = submission.events["OGLE-2023-BLG-0002"]
+        event3 = submission.events["OGLE-2023-BLG-0003"]
+        event4 = submission.events["OGLE-2023-BLG-0004"]
+        
+        assert len(event1.solutions) == 2
+        assert len(event2.solutions) == 2
+        assert len(event3.solutions) == 1
+        assert len(event4.solutions) == 1
+        
+        # Check aliases
+        aliases = [sol.alias for sol in event1.solutions.values()]
+        assert "simple_1S1L" in aliases
+        assert "binary_parallax" in aliases
+        
+        # Check parameters for simple solution
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        assert simple_sol.model_type == "1S1L"
+        assert simple_sol.parameters["t0"] == 2459123.5
+        assert simple_sol.parameters["u0"] == 0.1
+        assert simple_sol.parameters["tE"] == 20.0
+        
+        # Check parameters for binary parallax solution
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_parallax")
+        assert binary_sol.model_type == "1S2L"
+        assert binary_sol.parameters["s"] == 1.2
+        assert binary_sol.parameters["q"] == 0.5
+        assert binary_sol.parameters["alpha"] == 45.0
+        assert binary_sol.parameters["piEN"] == 0.1
+        assert binary_sol.parameters["piEE"] == 0.05
+        assert "parallax" in binary_sol.higher_order_effects
+        
+        # Check finite source solution
+        finite_sol = next(sol for sol in event2.solutions.values() if sol.alias == "finite_source")
+        assert finite_sol.model_type == "1S1L"
+        assert "finite-source" in finite_sol.higher_order_effects
+        assert finite_sol.parameters["rho"] == 0.001
+        
+        # Test duplicate handling (error mode)
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            on_duplicate="error",
+            project_path=Path(tmpdir)
+        )
+        assert stats['skipped_rows'] == 6  # All rows should be skipped as duplicates
+        
+        # Test duplicate handling (override mode)
+        stats = import_solutions_from_csv(
+            submission,
+            csv_file,
+            dry_run=False,
+            on_duplicate="override",
+            project_path=Path(tmpdir)
+        )
+        assert stats['duplicate_handled'] == 6
+        assert stats['successful_imports'] == 6

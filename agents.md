@@ -87,6 +87,12 @@ The library is built around a stateful, object-oriented model that mirrors the s
   - *Action:* CLI command to import solutions from directories of YAML files.
   - *Why:* Streamlines workflows for users with many solutions to add.
 
+- **Task 6: Bulk CSV Import**
+  - *Goal:* Allow users to import multiple solutions at once from a CSV file.
+  - *Action:* Add a new CLI command `import-solutions` supporting column mapping, alias handling, duplicate handling, notes, dry-run, and validation options.
+  - *Why:* Streamlines workflows for large teams and automated pipelines.
+  - *Test Data:* See `tests/data/test_import.csv` for a comprehensive example used in both CLI and API tests.
+
 ### v1.0.0 — Official Release
 
 Release after comprehensive testing and PyPI publication.
@@ -163,6 +169,7 @@ Built with **Typer**, the CLI supports all core functionality.
 microlens-submit init --team-name "Planet Pounders" --tier "advanced"
 microlens-submit add-solution <event_id> 1S1L --param t0=555.5 --param u0=0.1 --log-likelihood -1234.5
 microlens-submit add-solution <event_id> 1S2L --params-file params.yaml --notes "# My Analysis\n\n## Results\n..."
+microlens-submit import-solutions tests/data/test_import.csv --dry-run
 microlens-submit edit-solution <solution_id> --relative-probability 0.7 --append-notes "Updated after review"
 microlens-submit validate-solution <solution_id>
 microlens-submit validate-event <event_id>
@@ -174,6 +181,8 @@ microlens-submit export --output "final_submission.zip"
 ```
 
 > **Note:** All CLI-provided fields must conform to the Python types defined in the Pydantic models. Invalid types will raise validation errors. The `export` command includes a validation step and will fail on invalid or incomplete entries unless explicitly overridden.
+
+> **Note:** The file `tests/data/test_import.csv` is used in the test suite and can be used as a template for your own bulk imports or for development/testing purposes.
 
 ---
 

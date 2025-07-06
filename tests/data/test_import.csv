@@ -1,0 +1,7 @@
+# event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,piEN,piEE,rho,notes
+OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,,,"# Simple Point Lens Solution\n\nThis is a basic 1S1L fit."
+OGLE-2023-BLG-0001,binary_parallax,"[""1S2L"", ""parallax""]",2459123.5,0.1,20.0,1.2,0.5,45.0,0.1,0.05,,"# Binary Lens with Parallax\n\nThis solution includes parallax effects."
+OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,,0.001,"# Finite Source Solution\n\nIncludes finite source size effects."
+OGLE-2023-BLG-0002,duplicate_test,"[""1S1L""]",2459156.2,0.08,35.7,,,,,,,"# This will be a duplicate"
+OGLE-2023-BLG-0003,missing_params,"[""1S2L""]",2459200.0,,,,,,,,,"# Missing required parameters for 1S2L"
+OGLE-2023-BLG-0004,invalid_json,"[""1S1L""]",2459123.5,0.1,20.0,,,,,,,"# Invalid JSON in parameters" 

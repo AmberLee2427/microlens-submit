@@ -147,6 +147,35 @@ def main():
         --alias "binary_source_model" \
         --notes "# Binary Source Event\n\nThis event shows evidence of a binary source." """)
     
+    print("\n📊 Importing solutions from CSV...")
+    
+    # Import solutions from the test CSV file
+    csv_file = project_root / "tests" / "data" / "test_import.csv"
+    if csv_file.exists():
+        print(f"📁 Importing from: {csv_file}")
+        
+        # First, do a dry run to see what would be imported
+        result = run_command(f"microlens-submit import-solutions {csv_file} --project-path {project_dir} --dry-run", check=False)
+        if result.returncode == 0:
+            print("✅ CSV dry run successful")
+            print(result.stdout)
+        else:
+            print("⚠️  CSV dry run had issues:")
+            print(result.stdout)
+            print(result.stderr)
+        
+        # Now do the actual import
+        result = run_command(f"microlens-submit import-solutions {csv_file} --project-path {project_dir}", check=False)
+        if result.returncode == 0:
+            print("✅ CSV import successful")
+            print(result.stdout)
+        else:
+            print("⚠️  CSV import had issues:")
+            print(result.stdout)
+            print(result.stderr)
+    else:
+        print(f"⚠️  CSV file not found: {csv_file}")
+    
     print("\n🔍 Validating submission...")
     
     # Validate the submission
@@ -160,7 +189,7 @@ def main():
     print("\n📋 Listing solutions...")
     
     # List solutions for each event
-    for event_id in ["EVENT001", "EVENT002", "EVENT003"]:
+    for event_id in ["EVENT001", "EVENT002", "EVENT003", "OGLE-2023-BLG-0001", "OGLE-2023-BLG-0002", "OGLE-2023-BLG-0003", "OGLE-2023-BLG-0004"]:
         print(f"\n--- Solutions for {event_id} ---")
         result = run_command(f"microlens-submit list-solutions {event_id} {project_dir}")
         print(result.stdout)
@@ -217,7 +246,7 @@ def main():
     print(f"\n🔍 Testing alias display in dossier...")
     
     # Check that aliases appear in the event pages
-    for event_id in ["EVENT001", "EVENT002", "EVENT003"]:
+    for event_id in ["EVENT001", "EVENT002", "EVENT003", "OGLE-2023-BLG-0001", "OGLE-2023-BLG-0002", "OGLE-2023-BLG-0003", "OGLE-2023-BLG-0004"]:
         event_page = dossier_path / f"{event_id}.html"
         if event_page.exists():
             with event_page.open("r", encoding="utf-8") as f:
@@ -231,6 +260,17 @@ def main():
                     assert "caustic_crossing_binary" in content, f"Alias 'caustic_crossing_binary' not found in {event_id}.html"
                 elif event_id == "EVENT003":
                     assert "binary_source_model" in content, f"Alias 'binary_source_model' not found in {event_id}.html"
+                elif event_id == "OGLE-2023-BLG-0001":
+                    # Check for CSV imported aliases
+                    assert "simple_1S1L" in content, f"Alias 'simple_1S1L' not found in {event_id}.html"
+                    assert "binary_parallax" in content, f"Alias 'binary_parallax' not found in {event_id}.html"
+                elif event_id == "OGLE-2023-BLG-0002":
+                    assert "finite_source" in content, f"Alias 'finite_source' not found in {event_id}.html"
+                    assert "duplicate_test" in content, f"Alias 'duplicate_test' not found in {event_id}.html"
+                elif event_id == "OGLE-2023-BLG-0003":
+                    assert "missing_params" in content, f"Alias 'missing_params' not found in {event_id}.html"
+                elif event_id == "OGLE-2023-BLG-0004":
+                    assert "invalid_json" in content, f"Alias 'invalid_json' not found in {event_id}.html"
             print(f"✅ Aliases properly displayed in {event_id}.html")
         else:
             print(f"⚠️  Event page {event_id}.html not found")
@@ -240,7 +280,9 @@ def main():
         dashboard_content = f.read()
         # Should contain at least some of the aliases in the dashboard
         alias_count = sum(1 for alias in ["simple_point_lens", "detailed_analysis", "binary_with_parallax", 
-                                         "caustic_crossing_binary", "binary_source_model"] 
+                                         "caustic_crossing_binary", "binary_source_model",
+                                         "simple_1S1L", "binary_parallax", "finite_source", "duplicate_test",
+                                         "missing_params", "invalid_json"] 
                          if alias in dashboard_content)
         if alias_count > 0:
             print(f"✅ Found {alias_count} aliases in main dashboard")
@@ -262,7 +304,13 @@ def main():
             "EVENT001 detailed_analysis", 
             "EVENT001 binary_with_parallax",
             "EVENT002 caustic_crossing_binary",
-            "EVENT003 binary_source_model"
+            "EVENT003 binary_source_model",
+            "OGLE-2023-BLG-0001 simple_1S1L",
+            "OGLE-2023-BLG-0001 binary_parallax",
+            "OGLE-2023-BLG-0002 finite_source",
+            "OGLE-2023-BLG-0002 duplicate_test",
+            "OGLE-2023-BLG-0003 missing_params",
+            "OGLE-2023-BLG-0004 invalid_json"
         ]
         
         for expected_alias in expected_aliases:

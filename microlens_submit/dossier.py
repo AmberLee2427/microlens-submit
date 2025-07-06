@@ -859,7 +859,7 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
     """
     # Render notes as HTML from file
     notes_md = solution.get_notes(project_root=Path(submission.project_path))
-    notes_html = markdown.markdown(notes_md or "", extensions=["extra", "tables", "fenced_code"])
+    notes_html = markdown.markdown(notes_md or "", extensions=["extra", "tables", "fenced_code", "nl2br"])
     # Parameters table
     param_rows = []
     params = solution.parameters or {}

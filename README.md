@@ -31,6 +31,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 * **Environment Capture:** Automatically records your Python dependencies for each specific model fit, ensuring reproducibility.
 * **Optional Posterior Storage:** Record the path to posterior samples for any solution.
 * **Simple Export:** Packages all your active solutions into a clean, standardized `.zip` archive for final submission.
+* **Bulk Import:** Import multiple solutions at once from a CSV file using the `import-solutions` CLI command. Supports column mapping, alias handling, duplicate handling, notes, dry-run, and validation options.
 
 ## Installation
 
@@ -59,10 +60,15 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
    This will create a new solution and print its unique `solution_id`.
    You can run the same command with `--dry-run` first to verify the
    parsed input without saving anything.
-3. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
-4. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
-5. Validate solutions and check for issues: `microlens-submit validate-solution <solution_id>`
-6. Export your final submission: `microlens-submit export final_submission.zip`
+3. **Bulk import multiple solutions from a CSV file:**
+   ```bash
+   microlens-submit import-solutions tests/data/test_import.csv --dry-run
+   ```
+   See the file `tests/data/test_import.csv` for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
+4. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
+5. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
+6. Validate solutions and check for issues: `microlens-submit validate-solution <solution_id>`
+7. Export your final submission: `microlens-submit export final_submission.zip`
 
 **Note:** When you add a solution, it's automatically validated and any warnings are displayed. Use `--dry-run` to check validation without saving.
 
@@ -111,6 +117,10 @@ To build and test this project, the development environment needs the following 
 ### Packaging & Distribution Dependencies:
 * **`build`**: For building the package from the `pyproject.toml` file.
 * **`twine`**: For uploading the final package to PyPI.
+
+### Test Data
+
+A comprehensive test CSV file is provided at `tests/data/test_import.csv`. This file is used in the test suite and can be copied or adapted for your own bulk imports or for development/testing purposes.
 
 ## Citation
 

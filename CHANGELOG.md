@@ -83,3 +83,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Initial Implementation**: Core functionality for microlensing submission management
+
+## [Unreleased]
+
+### Added
+- **Bulk CSV Import**: New CLI command `import-solutions` for importing multiple solutions from a CSV file in one step.
+  - Supports column mapping, alias handling, duplicate handling (error/override/ignore), notes, dry-run, and validation options.
+  - See the tutorial and README for usage examples.
+- **Test Data**: Added `tests/data/test_import.csv` as a comprehensive test file for CSV import functionality.
+  - Used in both CLI and API tests as a real-world example and template for users.
+
+### Changed
+- Documentation and tutorial updated to cover CSV import and test data usage.

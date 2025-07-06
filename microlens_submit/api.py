@@ -48,6 +48,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Literal, List
+import csv
+import yaml
 
 from pydantic import BaseModel, Field
 
@@ -215,11 +217,13 @@ class Solution(BaseModel):
             If pip is not available, dependencies will be an empty list.
         """
 
+        # Set timing information
         if cpu_hours is not None:
             self.compute_info["cpu_hours"] = cpu_hours
         if wall_time_hours is not None:
             self.compute_info["wall_time_hours"] = wall_time_hours
 
+        # Capture Python environment dependencies
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "freeze"],
@@ -234,6 +238,7 @@ class Solution(BaseModel):
             logging.warning("Could not capture pip environment: %s", e)
             self.compute_info["dependencies"] = []
 
+        # Capture Git repository information
         try:
             commit = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
@@ -435,7 +440,7 @@ class Solution(BaseModel):
             return path.read_text(encoding="utf-8")
         return ""
 
-    def set_notes(self, content: str, project_root: Optional[Path] = None) -> None:
+    def set_notes(self, content: str, project_root: Optional[Path] = None, convert_escapes: bool = False) -> None:
         """Write notes to the notes file, creating it if needed.
         
         If notes_path is not set, creates a temporary file in tmp/<solution_id>.md
@@ -450,6 +455,9 @@ class Solution(BaseModel):
             content: The markdown content to write to the notes file.
             project_root: Optional project root path for resolving relative
                 notes_path. If None, uses the current working directory.
+            convert_escapes: If True, convert literal \\n and \\r to actual newlines
+                and carriage returns. Useful for CSV import where notes contain
+                literal escape sequences. Defaults to False for backward compatibility.
         
         Example:
             >>> solution = event.get_solution("solution_uuid")
@@ -482,6 +490,9 @@ class Solution(BaseModel):
             2. Check the content before calling: print("Notes content:", content)
             3. Use a dry-run approach by setting notes_path manually
         """
+        if convert_escapes:
+            content = content.replace('\\n', '\n').replace('\\r', '\r')
+            
         if not self.notes_path:
             # Use tmp/ for unsaved notes
             tmp_dir = Path(project_root or ".") / "tmp"
@@ -552,7 +563,7 @@ class Solution(BaseModel):
         md = self.get_notes(project_root=project_root)
         if render_html:
             import markdown
-            return markdown.markdown(md or "", extensions=["extra", "tables", "fenced_code"])
+            return markdown.markdown(md or "", extensions=["extra", "tables", "fenced_code", "nl2br"])
         return md
 
 
@@ -1812,3 +1823,228 @@ def load(project_path: str) -> Submission:
 # Resolve forward references
 Event.model_rebuild()
 Submission.model_rebuild()
+
+def import_solutions_from_csv(
+    submission,
+    csv_file: Path,
+    parameter_map_file: Optional[Path] = None,
+    delimiter: Optional[str] = None,
+    dry_run: bool = False,
+    validate: bool = False,
+    on_duplicate: str = "error",
+    project_path: Optional[Path] = None,
+) -> dict:
+    """Import solutions from a CSV file into a Submission object (API version).
+
+    Args:
+        submission: The loaded Submission object.
+        csv_file: Path to the CSV file.
+        parameter_map_file: Optional YAML file mapping CSV columns to solution attributes.
+        delimiter: CSV delimiter (auto-detected if not specified).
+        dry_run: If True, do not persist changes.
+        validate: If True, run solution validation.
+        on_duplicate: How to handle duplicate alias keys: error, override, ignore.
+        project_path: Project root for resolving file paths (default: cwd).
+
+    Returns:
+        dict: Summary statistics of the import process.
+    """
+    if on_duplicate not in ["error", "override", "ignore"]:
+        raise ValueError(f"Invalid on_duplicate: {on_duplicate}")
+
+    if project_path is None:
+        project_path = Path(".")
+
+    # Load parameter mapping if provided
+    column_mapping = {}
+    if parameter_map_file:
+        with open(parameter_map_file, 'r') as f:
+            column_mapping = yaml.safe_load(f)
+
+    # Auto-detect delimiter if not specified
+    if not delimiter:
+        with open(csv_file, 'r') as f:
+            sample = f.read(1024)
+            if '\t' in sample:
+                delimiter = '\t'
+            elif ';' in sample:
+                delimiter = ';'
+            else:
+                delimiter = ','
+
+    stats = {
+        'total_rows': 0,
+        'successful_imports': 0,
+        'skipped_rows': 0,
+        'validation_errors': 0,
+        'duplicate_handled': 0,
+        'errors': []
+    }
+
+    with open(csv_file, 'r', newline='', encoding='utf-8') as f:
+        lines = f.readlines()
+        header_row = 0
+        
+        for i, line in enumerate(lines):
+            if line.strip().startswith('#'):
+                header_row = i
+                break
+
+        header_line = lines[header_row].strip()
+        if header_line.startswith('# '):
+            header_line = header_line[2:]
+        elif header_line.startswith('#'):
+            header_line = header_line[1:]
+
+        reader = csv.DictReader([header_line] + lines[header_row + 1:], delimiter=delimiter)
+
+        for row_num, row in enumerate(reader, start=header_row + 2):
+            stats['total_rows'] += 1
+
+            try:
+                # Validate required fields
+                if not row.get('event_id'):
+                    stats['skipped_rows'] += 1
+                    stats['errors'].append(f"Row {row_num}: Missing event_id")
+                    continue
+
+                solution_id = row.get('solution_id')
+                solution_alias = row.get('solution_alias')
+                
+                if not solution_id and not solution_alias:
+                    stats['skipped_rows'] += 1
+                    stats['errors'].append(f"Row {row_num}: Missing solution_id or solution_alias")
+                    continue
+
+                if not row.get('model_tags'):
+                    stats['skipped_rows'] += 1
+                    stats['errors'].append(f"Row {row_num}: Missing model_tags")
+                    continue
+
+                # Parse model tags
+                try:
+                    model_tags = json.loads(row['model_tags'])
+                    if not isinstance(model_tags, list):
+                        raise ValueError("model_tags must be a list")
+                except json.JSONDecodeError:
+                    stats['skipped_rows'] += 1
+                    stats['errors'].append(f"Row {row_num}: Invalid model_tags JSON")
+                    continue
+
+                # Extract model type and higher order effects
+                model_type = None
+                higher_order_effects = []
+                
+                for tag in model_tags:
+                    if tag in ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]:
+                        if model_type:
+                            stats['skipped_rows'] += 1
+                            stats['errors'].append(f"Row {row_num}: Multiple model types specified")
+                            continue
+                        model_type = tag
+                    elif tag in ["parallax", "finite-source", "lens-orbital-motion", "xallarap", 
+                               "gaussian-process", "stellar-rotation", "fitted-limb-darkening", "other"]:
+                        higher_order_effects.append(tag)
+
+                if not model_type:
+                    stats['skipped_rows'] += 1
+                    stats['errors'].append(f"Row {row_num}: No valid model type found in model_tags")
+                    continue
+
+                # Parse parameters
+                parameters = {}
+                for key, value in row.items():
+                    if key not in ['event_id', 'solution_id', 'solution_alias', 'model_tags', 'notes', 'parameters']:
+                        if isinstance(value, str) and value.strip():
+                            try:
+                                parameters[key] = float(value)
+                            except ValueError:
+                                parameters[key] = value
+                        elif value and str(value).strip():
+                            try:
+                                parameters[key] = float(value)
+                            except (ValueError, TypeError):
+                                parameters[key] = str(value)
+
+                if not parameters and row.get('parameters'):
+                    try:
+                        parameters = json.loads(row['parameters'])
+                    except json.JSONDecodeError:
+                        stats['skipped_rows'] += 1
+                        stats['errors'].append(f"Row {row_num}: Invalid parameters JSON")
+                        continue
+
+                # Handle notes
+                notes = row.get('notes', '').strip()
+                notes_path = None
+                notes_content = None
+
+                if notes:
+                    notes_file = Path(notes)
+                    if notes_file.exists() and notes_file.is_file():
+                        notes_path = str(notes_file)
+                    else:
+                        # CSV files encode newlines as literal \n, so we convert them to real newlines here.
+                        # We do NOT do this when reading .md files or in set_notes(), because users may want literal '\n'.
+                        notes_content = notes.replace('\\n', '\n').replace('\\r', '\r')
+                else:
+                    pass
+
+                # Get or create event
+                event = submission.get_event(row['event_id'])
+
+                # Check for duplicates
+                alias_key = f"{row['event_id']} {solution_alias or solution_id}"
+                existing_solution = None
+                
+                if solution_alias:
+                    existing_solution = submission.get_solution_by_alias(row['event_id'], solution_alias)
+                elif solution_id:
+                    existing_solution = event.get_solution(solution_id)
+
+                if existing_solution:
+                    if on_duplicate == "error":
+                        stats['skipped_rows'] += 1
+                        stats['errors'].append(f"Row {row_num}: Duplicate alias key '{alias_key}'")
+                        continue
+                    elif on_duplicate == "ignore":
+                        stats['duplicate_handled'] += 1
+                        continue
+                    elif on_duplicate == "override":
+                        event.remove_solution(existing_solution.solution_id, force=True)
+                        stats['duplicate_handled'] += 1
+
+                if not dry_run:
+                    solution = event.add_solution(model_type, parameters)
+                    
+                    if solution_alias:
+                        solution.alias = solution_alias
+                    elif solution_id:
+                        solution.alias = solution_id
+
+                    if higher_order_effects:
+                        solution.higher_order_effects = higher_order_effects
+
+                    if notes_path:
+                        import shutil
+                        solution_notes_path = Path(project_path) / "tmp" / f"{solution.solution_id}.md"
+                        solution_notes_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(notes_path, solution_notes_path)
+                        solution.notes_path = str(solution_notes_path.relative_to(project_path))
+                    elif notes_content:
+                        solution.set_notes(notes_content, project_path, convert_escapes=True)
+
+                    if validate:
+                        validation_messages = solution.run_validation()
+                        if validation_messages:
+                            stats['validation_errors'] += 1
+                            for msg in validation_messages:
+                                stats['errors'].append(f"Row {row_num} validation: {msg}")
+
+                stats['successful_imports'] += 1
+
+            except Exception as e:
+                stats['errors'].append(f"Row {row_num}: {str(e)}")
+                continue
+
+    return stats

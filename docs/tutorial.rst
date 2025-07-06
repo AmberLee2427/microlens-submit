@@ -18,9 +18,10 @@ The typical workflow consists of these main steps:
 
 1. **Project Initialization**: Set up your submission project structure
 2. **Solution Addition**: Add microlensing solutions with parameters and metadata
-3. **Validation**: Check your solutions for completeness and consistency
-4. **Documentation**: Add notes and generate review materials
-5. **Export**: Create the final submission package
+3. **Bulk Importing Solutions from CSV**
+4. **Validation**: Check your solutions for completeness and consistency
+5. **Documentation**: Add notes and generate review materials
+6. **Export**: Create the final submission package
 
 **Step-by-Step Guide**
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -184,7 +185,42 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    Uncertainties can be single values (symmetric) or [lower, upper] arrays (asymmetric).
    Both JSON and YAML formats are supported with the same structure.
 
-3. **Validate without saving**
+3. **Bulk Importing Solutions from CSV**
+
+   You can import multiple solutions at once from a CSV file using the bulk import command. This is especially useful for large teams or automated pipelines.
+
+   .. code-block:: bash
+
+      microlens-submit import-solutions path/to/your_solutions.csv
+
+   **Features:**
+   - Supports individual parameter columns or a JSON parameters column
+   - Handles solution aliases, notes, and higher-order effects
+   - Duplicate handling: error (default), override, or ignore
+   - Supports dry-run and validation options
+   - File paths are resolved relative to the current working directory or with --project-path
+
+   **Example CSV:**
+   See `tests/data/test_import.csv` in the repository for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
+
+   **Basic CSV format:**
+   .. code-block:: csv
+
+      # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
+      OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,"# Simple Point Lens"
+      OGLE-2023-BLG-0001,binary_1S2L,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"# Binary Lens"
+      OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,"# Finite Source"
+
+   **Options:**
+   - `--on-duplicate [error|override|ignore]`: How to handle duplicate aliases/IDs
+   - `--dry-run`: Preview what would be imported without saving
+   - `--validate`: Run validation on each imported solution
+   - `--project-path <dir>`: Set the project root for file resolution
+
+   **Test Data:**
+   The file `tests/data/test_import.csv` is used in the test suite and can be copied or adapted for your own bulk imports.
+
+4. **Validate without saving**
 
    Test your solution before committing it to disk:
 
@@ -199,7 +235,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    displayed. This is especially useful for checking relative probability
    assignments before saving.
 
-4. **Validate existing solutions**
+5. **Validate existing solutions**
 
    Check your solutions for completeness and consistency:
 
@@ -218,7 +254,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    based on the model type and higher-order effects. They also validate that
    relative probabilities for active solutions in each event sum to 1.0.
 
-5. **Attach a posterior file (optional)**
+6. **Attach a posterior file (optional)**
 
    After generating a posterior sample (e.g., an MCMC chain), store the file
    within your project and record its relative path using the Python API::
@@ -231,7 +267,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
       >>> sub.save()
 
-6. **Add a competing solution**
+7. **Add a competing solution**
 
    Add alternative models for comparison:
 
@@ -240,7 +276,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      microlens-submit add-solution EVENT123 1S1L \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
-7. **List your solutions**
+8. **List your solutions**
 
    Review all solutions for an event:
 
@@ -248,7 +284,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit list-solutions EVENT123
 
-8. **Deactivate the less-good solution**
+9. **Deactivate the less-good solution**
 
    Mark solutions as inactive (they remain in the project but aren't exported):
 
@@ -260,7 +296,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    Use this when you want to keep the solution data for reference but don't want
    it in your final submission.
 
-9. **Remove mistakes (optional)**
+10. **Remove mistakes (optional)**
 
    Completely remove solutions or events that were created by mistake:
 
@@ -299,7 +335,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Removal cannot be undone - use deactivate() if you're unsure
    - Temporary files (notes in tmp/) are automatically cleaned up
 
-10. **Edit solution attributes (optional)**
+11. **Edit solution attributes (optional)**
 
    After creating solutions, you can modify their attributes:
 
@@ -329,7 +365,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      # See what would change without saving
      microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
 
-11. **Export the final package**
+12. **Export the final package**
 
     Create the submission package for upload:
 
@@ -340,7 +376,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
     This creates a zip file containing all active solutions and associated files,
     ready for submission to the challenge organizers.
 
-12. **Preview your submission dossier**
+13. **Preview your submission dossier**
 
     Generate a human-readable HTML dashboard for review:
 

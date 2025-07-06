@@ -1177,3 +1177,220 @@ def test_cli_generate_dossier():
         html = dossier_index.read_text(encoding="utf-8")
         assert "DossierTesters" in html
         assert f"microlens-submit v{__version__}" in html
+
+
+def test_csv_import_functionality():
+    """Test the CSV import functionality with individual parameter columns."""
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a test CSV file
+        csv_content = """# event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
+OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,"# Simple Point Lens"
+OGLE-2023-BLG-0001,binary_1S2L,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"# Binary Lens"
+OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,"# Finite Source"
+"""
+        csv_file = Path(tmpdir) / "test_import.csv"
+        csv_file.write_text(csv_content)
+        
+        # Load project
+        from microlens_submit.api import load
+        submission = load(tmpdir)
+        submission.team_name = "Test Team"
+        
+        # Test dry run import
+        import subprocess
+        result = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir,
+            "--dry-run"
+        ], capture_output=True, text=True)
+        
+        assert result.returncode == 0
+        assert "Total rows processed: 3" in result.stdout
+        assert "Successful imports: 3" in result.stdout
+        
+        # Test actual import
+        result = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir
+        ], capture_output=True, text=True)
+        
+        assert result.returncode == 0
+        assert "Successful imports: 3" in result.stdout
+        
+        # Verify solutions were created
+        submission = load(tmpdir)
+        assert "OGLE-2023-BLG-0001" in submission.events
+        assert "OGLE-2023-BLG-0002" in submission.events
+        
+        event1 = submission.events["OGLE-2023-BLG-0001"]
+        event2 = submission.events["OGLE-2023-BLG-0002"]
+        
+        assert len(event1.solutions) == 2
+        assert len(event2.solutions) == 1
+        
+        # Check aliases
+        aliases = [sol.alias for sol in event1.solutions.values()]
+        assert "simple_1S1L" in aliases
+        assert "binary_1S2L" in aliases
+        
+        # Check parameters
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        assert simple_sol.model_type == "1S1L"
+        assert simple_sol.parameters["t0"] == 2459123.5
+        assert simple_sol.parameters["u0"] == 0.1
+        assert simple_sol.parameters["tE"] == 20.0
+        
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L")
+        assert binary_sol.model_type == "1S2L"
+        assert binary_sol.parameters["s"] == 1.2
+        assert binary_sol.parameters["q"] == 0.5
+        assert binary_sol.parameters["alpha"] == 45.0
+        
+        finite_sol = next(sol for sol in event2.solutions.values())
+        assert finite_sol.model_type == "1S1L"
+        assert "finite-source" in finite_sol.higher_order_effects
+
+
+def test_csv_import_duplicate_handling():
+    """Test CSV import duplicate handling modes."""
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a test CSV file
+        csv_content = """# event_id,solution_alias,model_tags,t0,u0,tE,notes
+OGLE-2023-BLG-0001,test_solution,"[""1S1L""]",2459123.5,0.1,20.0,"First import"
+"""
+        csv_file = Path(tmpdir) / "test_import.csv"
+        csv_file.write_text(csv_content)
+        
+        # Load project
+        from microlens_submit.api import load
+        submission = load(tmpdir)
+        submission.team_name = "Test Team"
+        
+        # First import
+        import subprocess
+        result1 = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir
+        ], capture_output=True, text=True)
+        
+        assert result1.returncode == 0
+        assert "Successful imports: 1" in result1.stdout
+        
+        # Test error mode (default)
+        result2 = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir,
+            "--on-duplicate", "error"
+        ], capture_output=True, text=True)
+        
+        assert result2.returncode == 0
+        assert "Skipped rows: 1" in result2.stdout
+        assert "Successful imports: 0" in result2.stdout
+        assert "Duplicate alias key" in result2.stdout
+        
+        # Test ignore mode
+        result3 = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir,
+            "--on-duplicate", "ignore"
+        ], capture_output=True, text=True)
+        
+        assert result3.returncode == 0
+        assert "Duplicates handled: 1" in result3.stdout
+        assert "Successful imports: 0" in result3.stdout
+        
+        # Test override mode
+        result4 = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir,
+            "--on-duplicate", "override"
+        ], capture_output=True, text=True)
+        
+        assert result4.returncode == 0
+        assert "Duplicates handled: 1" in result4.stdout
+        assert "Successful imports: 1" in result4.stdout
+
+
+def test_csv_import_from_data_file():
+    """Test CSV import using the actual test file from tests/data."""
+    import tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Use the actual test CSV file from tests/data
+        csv_file = Path(__file__).parent / "data" / "test_import.csv"
+        assert csv_file.exists(), f"Test CSV file not found: {csv_file}"
+        
+        # Load project
+        from microlens_submit.api import load
+        submission = load(tmpdir)
+        submission.team_name = "Test Team"
+        
+        # Test dry run import
+        import subprocess
+        result = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir,
+            "--dry-run"
+        ], capture_output=True, text=True)
+        
+        assert result.returncode == 0
+        assert "Total rows processed: 6" in result.stdout
+        assert "Successful imports: 6" in result.stdout  # All rows are valid
+        
+        # Test actual import
+        result = subprocess.run([
+            "microlens-submit", "import-solutions", str(csv_file),
+            "--project-path", tmpdir
+        ], capture_output=True, text=True)
+        
+        assert result.returncode == 0
+        assert "Successful imports: 6" in result.stdout
+        
+        # Verify solutions were created
+        submission = load(tmpdir)
+        assert "OGLE-2023-BLG-0001" in submission.events
+        assert "OGLE-2023-BLG-0002" in submission.events
+        assert "OGLE-2023-BLG-0003" in submission.events
+        assert "OGLE-2023-BLG-0004" in submission.events
+        
+        event1 = submission.events["OGLE-2023-BLG-0001"]
+        event2 = submission.events["OGLE-2023-BLG-0002"]
+        event3 = submission.events["OGLE-2023-BLG-0003"]
+        event4 = submission.events["OGLE-2023-BLG-0004"]
+        
+        assert len(event1.solutions) == 2
+        assert len(event2.solutions) == 2
+        assert len(event3.solutions) == 1
+        assert len(event4.solutions) == 1
+        
+        # Check aliases
+        aliases = [sol.alias for sol in event1.solutions.values()]
+        assert "simple_1S1L" in aliases
+        assert "binary_parallax" in aliases
+        
+        # Check parameters for simple solution
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        assert simple_sol.model_type == "1S1L"
+        assert simple_sol.parameters["t0"] == 2459123.5
+        assert simple_sol.parameters["u0"] == 0.1
+        assert simple_sol.parameters["tE"] == 20.0
+        
+        # Check parameters for binary parallax solution
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_parallax")
+        assert binary_sol.model_type == "1S2L"
+        assert binary_sol.parameters["s"] == 1.2
+        assert binary_sol.parameters["q"] == 0.5
+        assert binary_sol.parameters["alpha"] == 45.0
+        assert binary_sol.parameters["piEN"] == 0.1
+        assert binary_sol.parameters["piEE"] == 0.05
+        assert "parallax" in binary_sol.higher_order_effects
+        
+        # Check finite source solution
+        finite_sol = next(sol for sol in event2.solutions.values() if sol.alias == "finite_source")
+        assert finite_sol.model_type == "1S1L"
+        assert "finite-source" in finite_sol.higher_order_effects
+        assert finite_sol.parameters["rho"] == 0.001
