@@ -5,6 +5,7 @@
 -e .[dev]
 
 #Testing
+typer
 pytest
 pytest-cov
 
