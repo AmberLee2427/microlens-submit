@@ -59,6 +59,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    :caption: Contents:
 
    tutorial
+   usage_examples
    api
 
 **Additional Resources**
