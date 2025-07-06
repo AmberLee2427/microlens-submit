@@ -7,8 +7,8 @@ This directory contains a test script to demonstrate the new dossier generation 
 To test the dossier generation feature:
 
 ```bash
-# Make sure you have microlens-submit installed
-pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple microlens-submit==0.12.0-dev
+# Make sure you have microlens-submit installed (version>=0.13.0)
+pip install microlens-submit
 
 # Run the test script (from project root)
 python tests/test_dossier_generation.py
