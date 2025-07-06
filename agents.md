@@ -288,6 +288,14 @@ The tool is published to **PyPI**.
 pip install microlens-submit
 ```
 
+### Development Setup
+
+To run the tests and build the project locally, install the development
+dependencies with either `pip install -e .[dev]` or
+`pip install -r requirements-dev.txt`. The latter installs the project in
+editable mode and includes all packages required for the test suite.
+After installing, run `pytest` to ensure the tests pass.
+
 ### Packaging
 
 The project uses `pyproject.toml` for dependency and entry point configuration.

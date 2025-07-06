@@ -1,10 +1,11 @@
 #requirements-dev.txt
 #For setting up a development environment.
 #Install with: `pip install -r requirements-dev.txt`
-#To install the project itself in editable mode
--e .
+#To install the project itself in editable mode with all development extras
+-e .[dev]
 
 #Testing
+typer
 pytest
 pytest-cov
 
