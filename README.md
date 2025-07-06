@@ -104,7 +104,8 @@ sub.export("final_submission.zip")
 
 The full development plan can be found in agents.md. Contributions are welcome!
 
-To build and test this project, install the development dependencies using either `pip install -e .[dev]` or `pip install -r requirements-dev.txt`. These packages are required to run the test suite and are listed in `requirements-dev.txt`. The development environment needs the following Python libraries. You can provide these to Codex or set up a `requirements-dev.txt` file.
+To build and test this project, install the development dependencies using either `pip install -e .[dev]` or `pip install -r requirements-dev.txt`. These packages are required to run the test suite and are listed in `requirements-dev.txt`.
+After installing the dependencies, run `pre-commit install` to set up the Git hooks for automatic formatting and linting. The development environment needs the following Python libraries.
 
 ### Core Dependencies:
 * **`typer[all]`**: For building the powerful command-line interface. The `[all]` extra ensures shell completion support is included.
