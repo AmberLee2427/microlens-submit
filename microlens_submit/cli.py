@@ -1974,7 +1974,7 @@ def import_solutions(
     column_mapping = {}
     if parameter_map_file:
         try:
-            with open(parameter_map_file, 'r') as f:
+            with open(parameter_map_file, 'r', encoding='utf-8') as f:
                 column_mapping = yaml.safe_load(f)
         except Exception as e:
             typer.echo(f"❌ Failed to load parameter map file: {e}")
@@ -1983,7 +1983,7 @@ def import_solutions(
     # Auto-detect delimiter if not specified
     if not delimiter:
         try:
-            with open(csv_file, 'r') as f:
+            with open(csv_file, 'r', encoding='utf-8') as f:
                 sample = f.read(1024)
                 if '\t' in sample:
                     delimiter = '\t'

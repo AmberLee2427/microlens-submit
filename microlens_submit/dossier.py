@@ -137,8 +137,8 @@ def _generate_dashboard_content(submission: Submission, full_dossier_exists: boo
         >>> html_content = _generate_dashboard_content(submission)
         >>> 
         >>> # Write to file
-        >>> with open("dashboard.html", "w") as f:
-        ...     f.write(html_content)
+        >>> with open("dashboard.html", "w", encoding="utf-8") as f:
+            ...     f.write(html_content)
     
     Note:
         This is an internal function. Use generate_dashboard_html() for the
@@ -555,8 +555,8 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         >>> html_content = _generate_event_page_content(event, submission)
         >>> 
         >>> # Write to file
-        >>> with open("event_page.html", "w") as f:
-        ...     f.write(html_content)
+        >>> with open("event_page.html", "w", encoding="utf-8") as f:
+            ...     f.write(html_content)
     
     Note:
         Solutions are sorted by: active status (active first), relative
@@ -848,8 +848,8 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
         >>> html_content = _generate_solution_page_content(solution, event, submission)
         >>> 
         >>> # Write to file
-        >>> with open("solution_page.html", "w") as f:
-        ...     f.write(html_content)
+        >>> with open("solution_page.html", "w", encoding="utf-8") as f:
+            ...     f.write(html_content)
     
     Note:
         Parameter uncertainties are formatted as ±value or +upper/-lower
@@ -1241,7 +1241,7 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
                 if aliases_file.exists():
                     import json
                     try:
-                        with aliases_file.open("r") as f:
+                        with aliases_file.open("r", encoding="utf-8") as f:
                             aliases = json.load(f)
                         # Look up the solution_id in the aliases
                         for key, uuid in aliases.items():
