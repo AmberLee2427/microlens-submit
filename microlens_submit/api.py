@@ -1931,12 +1931,12 @@ def import_solutions_from_csv(
     # Load parameter mapping if provided
     column_mapping = {}
     if parameter_map_file:
-        with open(parameter_map_file, "r") as f:
+        with open(parameter_map_file, "r", encoding="utf-8") as f:
             column_mapping = yaml.safe_load(f)
 
     # Auto-detect delimiter if not specified
     if not delimiter:
-        with open(csv_file, "r") as f:
+        with open(csv_file, "r", encoding="utf-8") as f:
             sample = f.read(1024)
             if "\t" in sample:
                 delimiter = "\t"

@@ -145,7 +145,7 @@ def _generate_dashboard_content(
         >>> html_content = _generate_dashboard_content(submission)
         >>>
         >>> # Write to file
-        >>> with open("dashboard.html", "w") as f:
+        >>> with open("dashboard.html", "w", encoding="utf-8") as f:
         ...     f.write(html_content)
 
     Note:
@@ -578,7 +578,7 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         >>> html_content = _generate_event_page_content(event, submission)
         >>>
         >>> # Write to file
-        >>> with open("event_page.html", "w") as f:
+        >>> with open("event_page.html", "w", encoding="utf-8") as f:
         ...     f.write(html_content)
 
     Note:
@@ -909,7 +909,7 @@ def _generate_solution_page_content(
         >>> html_content = _generate_solution_page_content(solution, event, submission)
         >>>
         >>> # Write to file
-        >>> with open("solution_page.html", "w") as f:
+        >>> with open("solution_page.html", "w", encoding="utf-8") as f:
         ...     f.write(html_content)
 
     Note:
@@ -1329,7 +1329,7 @@ def _extract_main_content_body(
                     import json
 
                     try:
-                        with aliases_file.open("r") as f:
+                        with aliases_file.open("r", encoding="utf-8") as f:
                             aliases = json.load(f)
                         # Look up the solution_id in the aliases
                         for key, uuid in aliases.items():

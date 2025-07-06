@@ -367,7 +367,7 @@ def main():
     print(f"\n🔍 Testing alias lookup table...")
     alias_file = project_dir / "aliases.json"
     if alias_file.exists():
-        with alias_file.open("r") as f:
+        with alias_file.open("r", encoding="utf-8") as f:
             alias_lookup = json.load(f)
 
         # Check that all expected aliases are in the lookup table
