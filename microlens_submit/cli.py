@@ -61,13 +61,13 @@ app = typer.Typer()
 @app.command("version")
 def version() -> None:
     """Show the version of microlens-submit.
-    
+
     Displays the current version of the microlens-submit package.
-    
+
     Example:
         >>> microlens-submit version
         microlens-submit version 0.12.0-dev
-        
+
     Note:
         This command is useful for verifying the installed version
         and for debugging purposes.
@@ -77,27 +77,27 @@ def version() -> None:
 
 def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
     """Convert CLI key=value options into a dictionary.
-    
+
     Parses command-line arguments in the format "key=value" and converts
     them to a Python dictionary. Handles JSON parsing for numeric and
     boolean values, falling back to string values.
-    
+
     Args:
         pairs: List of strings in "key=value" format, or None.
-    
+
     Returns:
         dict: Parsed key-value pairs, or None if pairs is None/empty.
-    
+
     Raises:
         typer.BadParameter: If any pair is not in "key=value" format.
-    
+
     Example:
         >>> _parse_pairs(["t0=2459123.5", "u0=0.1", "active=true"])
         {'t0': 2459123.5, 'u0': 0.1, 'active': True}
-        
+
         >>> _parse_pairs(["name=test", "value=123"])
         {'name': 'test', 'value': 123}
-        
+
     Note:
         This function attempts to parse values as JSON first (for numbers,
         booleans, etc.), then falls back to string values if JSON parsing fails.
@@ -118,28 +118,28 @@ def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
 
 def _params_file_callback(ctx: typer.Context, value: Optional[Path]) -> Optional[Path]:
     """Validate mutually exclusive parameter options.
-    
+
     Ensures that --params-file and --param options are not used together,
     as they are mutually exclusive ways of specifying parameters.
-    
+
     Args:
         ctx: Typer context containing other parameter values.
         value: The value of the --params-file option.
-    
+
     Returns:
         Path: The validated file path, or None.
-    
+
     Raises:
         typer.BadParameter: If both --params-file and --param are specified,
             or if neither is specified when required.
-    
+
     Example:
         # This would raise an error:
         # microlens-submit add-solution EVENT001 1S1L --param t0=123 --params-file params.json
-        
+
         # This is valid:
         # microlens-submit add-solution EVENT001 1S1L --params-file params.json
-        
+
     Note:
         This is a Typer callback function used for parameter validation.
         It's automatically called when processing command-line arguments.
@@ -158,18 +158,18 @@ def main(
     no_color: bool = typer.Option(False, "--no-color", help="Disable colored output"),
 ) -> None:
     """Handle global CLI options.
-    
+
     Sets up global configuration for the CLI, including color output
     preferences that apply to all commands.
-    
+
     Args:
         ctx: Typer context for command execution.
         no_color: If True, disable colored output for all commands.
-    
+
     Example:
         # Disable colors for all commands
         microlens-submit --no-color init --team-name "Team" --tier "basic" ./project
-        
+
     Note:
         This is a Typer callback that runs before any command execution.
         It's used to configure global settings like color output.
@@ -186,35 +186,35 @@ def init(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Create a new submission project in the specified directory.
-    
+
     Initializes a new microlensing submission project with the given team name
     and tier. The project directory structure is created automatically, and
     the submission.json file is initialized with basic metadata.
-    
+
     This command also attempts to auto-detect the GitHub repository URL
     from the current git configuration and provides helpful feedback.
-    
+
     Args:
         team_name: Name of the participating team (e.g., "Team Alpha").
         tier: Challenge tier level (e.g., "basic", "advanced").
         project_path: Directory where the project will be created.
             Defaults to current directory if not specified.
-    
+
     Raises:
         OSError: If unable to create the project directory or write files.
-    
+
     Example:
         # Create project in current directory
         microlens-submit init --team-name "Team Alpha" --tier "advanced"
-        
+
         # Create project in specific directory
         microlens-submit init --team-name "Team Beta" --tier "basic" ./my_submission
-        
+
         # Project structure created:
         # ./my_submission/
         # ├── submission.json
         # └── events/
-        
+
     Note:
         If the project directory already exists, it will be used as-is.
         If a git repository is detected, the GitHub URL will be automatically
@@ -226,16 +226,23 @@ def init(
     sub.tier = tier
     # Try to auto-detect repo_url
     try:
-        repo_url = subprocess.check_output([
-            'git', 'config', '--get', 'remote.origin.url'
-        ], stderr=subprocess.DEVNULL).decode().strip()
+        repo_url = (
+            subprocess.check_output(
+                ["git", "config", "--get", "remote.origin.url"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except Exception:
         repo_url = None
     if repo_url:
         sub.repo_url = repo_url
         console.print(f"[green]Auto-detected GitHub repo URL:[/green] {repo_url}")
     else:
-        console.print("[yellow]Could not auto-detect a GitHub repository URL. Please add it using 'microlens-submit set-repo-url <url> <project_dir>'.[/yellow]")
+        console.print(
+            "[yellow]Could not auto-detect a GitHub repository URL. Please add it using 'microlens-submit set-repo-url <url> <project_dir>'.[/yellow]"
+        )
     sub.save()
     console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
 
@@ -247,27 +254,27 @@ def nexus_init(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Create a project and record Roman Nexus environment details.
-    
+
     This command combines the functionality of init() with automatic
     detection of Roman Science Platform environment information. It
     populates hardware_info with CPU details, memory information, and
     the Nexus image identifier.
-    
+
     Args:
         team_name: Name of the participating team (e.g., "Team Alpha").
         tier: Challenge tier level (e.g., "basic", "advanced").
         project_path: Directory where the project will be created.
             Defaults to current directory if not specified.
-    
+
     Example:
         # Initialize project with Nexus platform info
         microlens-submit nexus-init --team-name "Team Alpha" --tier "advanced" ./project
-        
+
         # This will automatically detect:
         # - CPU model from /proc/cpuinfo
-        # - Memory from /proc/meminfo  
+        # - Memory from /proc/meminfo
         # - Nexus image from JUPYTER_IMAGE_SPEC
-        
+
     Note:
         This command is specifically designed for the Roman Science Platform
         environment. It will silently skip any environment information that
@@ -362,10 +369,18 @@ def add_solution(
         None, "--lens-plane-plot-path", help="Path to lens plane plot file"
     ),
     alias: Optional[str] = typer.Option(
-        None, "--alias", help="Optional human-readable alias for the solution (must be unique within the event)"
+        None,
+        "--alias",
+        help="Optional human-readable alias for the solution (must be unique within the event)",
     ),
-    notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
-    notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
+    notes: Optional[str] = typer.Option(
+        None, help="Notes for the solution (supports Markdown formatting)"
+    ),
+    notes_file: Optional[Path] = typer.Option(
+        None,
+        "--notes-file",
+        help="Path to a Markdown file for solution notes (mutually exclusive with --notes)",
+    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -511,7 +526,9 @@ def add_solution(
         str(lens_plane_plot_path) if lens_plane_plot_path else None
     )
     # Handle notes file logic
-    canonical_notes_path = Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
+    canonical_notes_path = (
+        Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
+    )
     if notes_file is not None:
         sol.notes_path = str(notes_file)
     else:
@@ -584,25 +601,25 @@ def deactivate(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Mark a solution as inactive so it is excluded from exports.
-    
+
     Deactivates a solution by setting its is_active flag to False. Inactive
     solutions are excluded from submission exports and dossier generation,
     but their data remains intact and can be reactivated later.
-    
+
     Args:
         solution_id: The unique identifier of the solution to deactivate.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the solution is not found in any event.
-    
+
     Example:
         # Deactivate a specific solution
         microlens-submit deactivate abc12345-def6-7890-ghij-klmnopqrstuv ./project
-        
+
         # The solution is now inactive and won't be included in exports
         microlens-submit export submission.zip ./project  # Excludes inactive solutions
-        
+
     Note:
         This command only changes the active status. The solution data remains
         intact and can be reactivated using the activate command. Use this to
@@ -642,7 +659,7 @@ def activate(
         Only active solutions are included in submission exports.
     """
     submission = load(project_path)
-    
+
     # Find the solution across all events
     solution = None
     event_id = None
@@ -651,20 +668,24 @@ def activate(
             solution = event.solutions[solution_id]
             event_id = eid
             break
-    
+
     if solution is None:
         console.print(f"[red]Error: Solution {solution_id} not found[/red]")
         raise typer.Exit(1)
-    
+
     solution.activate()
     submission.save()
-    console.print(f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]")
+    console.print(
+        f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]"
+    )
 
 
 @app.command("remove-solution")
 def remove_solution(
     solution_id: str,
-    force: bool = typer.Option(False, "--force", help="Force removal of saved solutions (use with caution)"),
+    force: bool = typer.Option(
+        False, "--force", help="Force removal of saved solutions (use with caution)"
+    ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Completely remove a solution from the submission.
@@ -682,7 +703,7 @@ def remove_solution(
         >>> # Remove an unsaved solution (safe)
         >>> microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc ./my_project
         🗑️  Removed solution 12345678... from event EVENT001
-        
+
         >>> # Force remove a saved solution (use with caution!)
         >>> microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc --force ./my_project
         🗑️  Removed solution 12345678... from event EVENT001
@@ -694,7 +715,7 @@ def remove_solution(
         - Temporary files (notes in tmp/) are automatically cleaned up
     """
     submission = load(project_path)
-    
+
     # Find the solution across all events
     solution = None
     event_id = None
@@ -703,29 +724,35 @@ def remove_solution(
             solution = event.solutions[solution_id]
             event_id = eid
             break
-    
+
     if solution is None:
         console.print(f"[red]Error: Solution {solution_id} not found[/red]")
         raise typer.Exit(1)
-    
+
     try:
         removed = submission.events[event_id].remove_solution(solution_id, force=force)
         if removed:
             submission.save()
-            console.print(f"[green]✅ Solution {solution_id[:8]}... removed from event {event_id}[/green]")
+            console.print(
+                f"[green]✅ Solution {solution_id[:8]}... removed from event {event_id}[/green]"
+            )
         else:
             console.print(f"[red]Error: Failed to remove solution {solution_id}[/red]")
             raise typer.Exit(1)
     except ValueError as e:
         console.print(f"[red]Error: {e}[/red]")
-        console.print(f"[yellow]💡 Use --force to override safety checks, or use deactivate to keep the solution[/yellow]")
+        console.print(
+            f"[yellow]💡 Use --force to override safety checks, or use deactivate to keep the solution[/yellow]"
+        )
         raise typer.Exit(1)
 
 
 @app.command()
 def remove_event(
     event_id: str,
-    force: bool = typer.Option(False, "--force", help="Force removal even if event has saved solutions"),
+    force: bool = typer.Option(
+        False, "--force", help="Force removal even if event has saved solutions"
+    ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Remove an entire event and all its solutions from the submission.
@@ -748,26 +775,30 @@ def remove_event(
         Only active solutions are included in submission exports.
     """
     submission = load(str(project_path))
-    
+
     if event_id not in submission.events:
         typer.echo(f"❌ Event '{event_id}' not found in submission")
         raise typer.Exit(1)
-    
+
     event = submission.events[event_id]
     solution_count = len(event.solutions)
-    
+
     if not force:
-        typer.echo(f"⚠️  This will permanently remove event '{event_id}' and all {solution_count} solutions.")
+        typer.echo(
+            f"⚠️  This will permanently remove event '{event_id}' and all {solution_count} solutions."
+        )
         typer.echo("   This action cannot be undone.")
         confirm = typer.confirm("Are you sure you want to continue?")
         if not confirm:
             typer.echo("❌ Operation cancelled")
             raise typer.Exit(0)
-    
+
     try:
         removed = submission.remove_event(event_id, force=force)
         if removed:
-            typer.echo(f"✅ Removed event '{event_id}' and all {solution_count} solutions")
+            typer.echo(
+                f"✅ Removed event '{event_id}' and all {solution_count} solutions"
+            )
             submission.save()
         else:
             typer.echo(f"❌ Failed to remove event '{event_id}'")
@@ -784,35 +815,35 @@ def export(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Generate a zip archive containing all active solutions.
-    
+
     Creates a compressed zip file containing the complete submission data,
     including all active solutions, parameters, notes, and referenced files.
     The archive is suitable for submission to the challenge organizers.
-    
+
     Before creating the export, the command validates the submission and
     displays any warnings. If validation issues are found, the user is
     prompted to continue or cancel the export (unless --force is used).
-    
+
     Args:
         output_path: Path where the zip archive will be created.
         force: If True, skip validation prompts and continue with export.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If validation fails and user cancels export.
         ValueError: If referenced files (plots, posterior data) don't exist.
         OSError: If unable to create the zip file.
-    
+
     Example:
         # Export with validation prompts
         microlens-submit export submission.zip ./project
-        
+
         # Force export without prompts
         microlens-submit export submission.zip --force ./project
-        
+
         # Export to specific directory
         microlens-submit export /path/to/submissions/my_submission.zip ./project
-        
+
     Note:
         Only active solutions are included in the export. Inactive solutions
         are excluded even if they exist in the project. The export includes:
@@ -820,7 +851,7 @@ def export(
         - All active solutions with parameters
         - Notes files for each solution
         - Referenced files (plots, posterior data)
-        
+
         Relative probabilities are automatically calculated for solutions
         that don't have them set, using BIC if sufficient data is available.
     """
@@ -841,43 +872,51 @@ def export(
 @app.command("generate-dossier")
 def generate_dossier(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
-    event_id: Optional[str] = typer.Option(None, "--event-id", help="Generate dossier for a specific event only (omit for full dossier)"),
-    solution_id: Optional[str] = typer.Option(None, "--solution-id", help="Generate dossier for a specific solution only (omit for full dossier)"),
+    event_id: Optional[str] = typer.Option(
+        None,
+        "--event-id",
+        help="Generate dossier for a specific event only (omit for full dossier)",
+    ),
+    solution_id: Optional[str] = typer.Option(
+        None,
+        "--solution-id",
+        help="Generate dossier for a specific solution only (omit for full dossier)",
+    ),
 ) -> None:
     """Generate an HTML dossier for the submission.
-    
+
     Creates a comprehensive HTML dashboard that provides an overview of the submission,
     including event summaries, solution statistics, and metadata. The dossier is saved
     to the `dossier/` subdirectory of the project directory with the main dashboard as index.html.
-    
+
     The dossier includes:
     - Main dashboard (index.html) with submission overview and statistics
     - Individual event pages for each event with solution tables
     - Individual solution pages with parameters, notes, and metadata
     - Full comprehensive dossier (full_dossier_report.html) for printing
-    
+
     All pages use Tailwind CSS for styling and include syntax highlighting for
     code blocks in participant notes.
-    
+
     Args:
         project_path: Directory of the submission project.
         event_id: If specified, only generate dossier for this event.
         solution_id: If specified, only generate dossier for this solution.
-    
+
     Raises:
         OSError: If unable to create output directory or write files.
         ValueError: If submission data is invalid or missing required fields.
-    
+
     Example:
         # Generate complete dossier for all events and solutions
         microlens-submit generate-dossier ./project
-        
+
         # Generate dossier for specific event only
         microlens-submit generate-dossier --event-id EVENT001 ./project
-        
+
         # Generate dossier for specific solution only
         microlens-submit generate-dossier --solution-id abc12345-def6-7890-ghij-klmnopqrstuv ./project
-        
+
         # Files created:
         # ./project/dossier/
         # ├── index.html (main dashboard)
@@ -885,7 +924,7 @@ def generate_dossier(
         # ├── EVENT001.html (event page)
         # ├── solution_id.html (solution pages)
         # └── assets/ (logos and icons)
-        
+
     Note:
         The dossier is generated in the dossier/ subdirectory of the project.
         The main dashboard provides navigation to individual event and solution pages.
@@ -896,6 +935,7 @@ def generate_dossier(
     output_dir = Path(project_path) / "dossier"
     # Always generate dashboard (even if partial)
     from .dossier import _generate_full_dossier_report_html
+
     generate_dashboard_html(sub, output_dir)
 
     # Determine if it's a full generation (no specific event/solution requested)
@@ -905,7 +945,9 @@ def generate_dossier(
     # TODO: In future, restrict event/solution generation if flags are set
 
     if is_full_generation:
-        console.print(Panel("Generating comprehensive printable dossier...", style="cyan"))
+        console.print(
+            Panel("Generating comprehensive printable dossier...", style="cyan")
+        )
         _generate_full_dossier_report_html(sub, output_dir)
         # Replace placeholder in index.html with the real link
         dashboard_path = output_dir / "index.html"
@@ -914,13 +956,18 @@ def generate_dossier(
                 dashboard_html = f.read()
             dashboard_html = dashboard_html.replace(
                 "<!--FULL_DOSSIER_LINK_PLACEHOLDER-->",
-                '<div class="text-center"><a href="./full_dossier_report.html" class="inline-block bg-rtd-accent text-white py-3 px-6 rounded-lg shadow-md hover:bg-rtd-secondary transition-colors duration-200 text-lg font-semibold mt-8">View Full Comprehensive Dossier (Printable)</a></div>'
+                '<div class="text-center"><a href="./full_dossier_report.html" class="inline-block bg-rtd-accent text-white py-3 px-6 rounded-lg shadow-md hover:bg-rtd-secondary transition-colors duration-200 text-lg font-semibold mt-8">View Full Comprehensive Dossier (Printable)</a></div>',
             )
             with dashboard_path.open("w", encoding="utf-8") as f:
                 f.write(dashboard_html)
         console.print(Panel("Comprehensive dossier generated!", style="bold green"))
 
-    console.print(Panel(f"Dossier generated successfully at {output_dir / 'index.html'}", style="bold green"))
+    console.print(
+        Panel(
+            f"Dossier generated successfully at {output_dir / 'index.html'}",
+            style="bold green",
+        )
+    )
 
 
 @app.command("list-solutions")
@@ -929,22 +976,22 @@ def list_solutions(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Display a table of solutions for a specific event.
-    
+
     Shows a formatted table containing all solutions for the specified event,
     including their model types, active status, and notes snippets. The table
     is displayed using rich formatting with color-coded status indicators.
-    
+
     Args:
         event_id: Identifier of the event to list solutions for.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the event is not found in the project.
-    
+
     Example:
         # List all solutions for EVENT001
         microlens-submit list-solutions EVENT001 ./project
-        
+
         # Output shows:
         # ┌─────────────────────────────────────────────────────────┬──────────┬────────┬─────────────────┐
         # │ Solution ID                                             │ Model    │ Status │ Notes           │
@@ -953,7 +1000,7 @@ def list_solutions(
         # │ abc12345-def6-7890-ghij-klmnopqrstuv                   │ 1S1L     │ Active │ Simple point... │
         # │ def67890-abc1-2345-klmn-opqrstuvwxyz                   │ 1S2L     │ Active │ Binary lens...  │
         # └─────────────────────────────────────────────────────────┴──────────┴────────┴─────────────────┘
-        
+
     Note:
         The table shows both active and inactive solutions. Active solutions
         are marked in green, inactive solutions in red. Notes are truncated
@@ -982,29 +1029,29 @@ def compare_solutions(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Rank active solutions for an event using the Bayesian Information Criterion.
-    
+
     Compares all active solutions for the specified event using BIC to rank
     them by relative probability. The BIC is calculated as:
-    
+
         BIC = k * ln(n) - 2 * ln(L)
-    
+
     where k is the number of parameters, n is the number of data points,
     and L is the likelihood. Lower BIC values indicate better models.
-    
+
     The command displays a table with solution rankings and automatically
     calculates relative probabilities for solutions that don't have them set.
-    
+
     Args:
         event_id: Identifier of the event to compare solutions for.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the event is not found in the project.
-    
+
     Example:
         # Compare solutions for EVENT001
         microlens-submit compare-solutions EVENT001 ./project
-        
+
         # Output shows:
         # ┌─────────────────────────────────────────────────────────┬──────────┬─────────────────────┬─────────┬─────────────────┬─────────┬─────────────────┐
         # │ Solution ID                                             │ Model    │ Higher-Order        │ # Params│ Log-Likelihood  │ BIC     │ Relative Prob   │
@@ -1013,7 +1060,7 @@ def compare_solutions(
         # │ abc12345-def6-7890-ghij-klmnopqrstuv                   │ 1S1L     │ -                   │ 3       │ -1234.56        │ 2475.12 │ 0.600           │
         # │ def67890-abc1-2345-klmn-opqrstuvwxyz                   │ 1S2L     │ parallax,finite-... │ 6       │ -1189.34        │ 2394.68 │ 0.400           │
         # └─────────────────────────────────────────────────────────┴──────────┴─────────────────────┴─────────┴─────────────────┴─────────┴─────────────────┘
-        
+
     Note:
         Only active solutions with valid log_likelihood and n_data_points
         are included in the comparison. Solutions missing these values are
@@ -1130,37 +1177,37 @@ def validate_solution(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate a specific solution's parameters and configuration.
-    
+
     This command uses the centralized validation logic to check:
     - Parameter completeness for the model type
     - Higher-order effect requirements
     - Parameter types and value ranges
     - Physical consistency of parameters
-    
+
     The validation provides detailed feedback about any issues found,
     helping ensure solutions are complete and ready for submission.
-    
+
     Args:
         solution_id: The unique identifier of the solution to validate.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the solution is not found in any event.
-    
+
     Example:
         # Validate a specific solution
         microlens-submit validate-solution abc12345-def6-7890-ghij-klmnopqrstuv ./project
-        
+
         # Output shows:
         # ✅ All validations passed for abc12345-def6-7890-ghij-klmnopqrstuv (event EVENT001)
-        
+
         # Or if issues are found:
         # ┌─────────────────────────────────────────────────────────────────────────────┐
         # │ Validation Results for abc12345-def6-7890-ghij-klmnopqrstuv (event EVENT001) │
         # └─────────────────────────────────────────────────────────────────────────────┘
         #   • Missing required parameter 'tE' for model type '1S1L'
         #   • Parameter 'u0' has invalid value: -0.5 (must be positive)
-        
+
     Note:
         The validation checks are comprehensive and cover all model types
         and higher-order effects. Always validate solutions before submission
@@ -1207,31 +1254,31 @@ def validate_submission(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate the entire submission for missing or incomplete information.
-    
+
     This command performs comprehensive validation of all active solutions
     and returns a list of warnings describing potential issues. It checks
     for common problems like missing metadata, incomplete solutions, and
     validation issues in individual solutions.
-    
+
     The validation is particularly strict about the GitHub repository URL,
     which is required for submission. If repo_url is missing or invalid,
     the command will exit with an error.
-    
+
     Args:
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If repo_url is missing or invalid (exit code 1).
-    
+
     Example:
         # Validate the entire submission
         microlens-submit validate-submission ./project
-        
+
         # Output if all validations pass:
         # ┌─────────────────────────────────────┐
         # │ ✅ All validations passed!          │
         # └─────────────────────────────────────┘
-        
+
         # Output if issues are found:
         # ┌─────────────────────────────────────┐
         # │ Validation Warnings                 │
@@ -1239,7 +1286,7 @@ def validate_submission(
         #   • Hardware info is missing
         #   • Event EVENT001: Solution abc12345 is missing log_likelihood
         #   • Solution def67890 in event EVENT002: Missing required parameter 'tE'
-        
+
     Note:
         This command checks for:
         - Missing or invalid repo_url (GitHub repository URL)
@@ -1248,7 +1295,7 @@ def validate_submission(
         - Solutions with missing required metadata
         - Individual solution validation issues
         - Relative probability consistency
-        
+
         Always run this command before exporting your submission to ensure
         all required information is present and valid.
     """
@@ -1256,9 +1303,16 @@ def validate_submission(
     warnings = sub.run_validation()
 
     # Check for missing repo_url
-    repo_url_warning = next((w for w in warnings if 'repo_url' in w.lower() or 'github' in w.lower()), None)
+    repo_url_warning = next(
+        (w for w in warnings if "repo_url" in w.lower() or "github" in w.lower()), None
+    )
     if repo_url_warning:
-        console.print(Panel(f"[red]Error: {repo_url_warning}\nPlease add your GitHub repository URL using 'microlens-submit set-repo-url <url> <project_dir>'.[/red]", style="bold red"))
+        console.print(
+            Panel(
+                f"[red]Error: {repo_url_warning}\nPlease add your GitHub repository URL using 'microlens-submit set-repo-url <url> <project_dir>'.[/red]",
+                style="bold red",
+            )
+        )
         raise typer.Exit(code=1)
 
     if not warnings:
@@ -1276,36 +1330,36 @@ def validate_event(
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Validate all solutions for a specific event.
-    
+
     Runs validation on all solutions (both active and inactive) for the
     specified event. This provides a focused validation check for a single
     event, useful when working on specific events or debugging issues.
-    
+
     Args:
         event_id: Identifier of the event to validate.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the event is not found in the project.
-    
+
     Example:
         # Validate all solutions for EVENT001
         microlens-submit validate-event EVENT001 ./project
-        
+
         # Output shows:
         # ┌─────────────────────────────────────┐
         # │ Validating Event: EVENT001          │
         # └─────────────────────────────────────┘
-        # 
+        #
         # Solution abc12345-def6-7890-ghij-klmnopqrstuv:
         #   • Missing required parameter 'tE' for model type '1S1L'
-        # 
+        #
         # ✅ Solution def67890-abc1-2345-klmn-opqrstuvwxyz: All validations passed
-        
+
         # ┌─────────────────────────────────────┐
         # │ ✅ All solutions passed validation! │
         # └─────────────────────────────────────┘
-        
+
     Note:
         This command validates all solutions in the event, regardless of
         their active status. It's useful for checking solutions that might
@@ -1343,23 +1397,23 @@ def validate_event(
 
 def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
     """Parse a structured parameter file that can contain both parameters and uncertainties.
-    
+
     Supports both JSON and YAML formats. The file can have either:
     1. Simple format: {"param1": value1, "param2": value2, ...}
     2. Structured format: {"parameters": {...}, "uncertainties": {...}}
-    
+
     Args:
         params_file: Path to the parameter file (JSON or YAML format).
-    
+
     Returns:
         tuple: (parameters_dict, uncertainties_dict) - Two dictionaries containing
                the parsed parameters and their uncertainties.
-    
+
     Raises:
         OSError: If the file cannot be read.
         json.JSONDecodeError: If JSON parsing fails.
         yaml.YAMLError: If YAML parsing fails.
-    
+
     Example:
         # Simple format (all keys are parameters)
         # params.json:
@@ -1368,7 +1422,7 @@ def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
         #   "u0": 0.1,
         #   "tE": 20.0
         # }
-        
+
         # Structured format (separate parameters and uncertainties)
         # params.yaml:
         # parameters:
@@ -1379,9 +1433,9 @@ def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
         #   t0: 0.1
         #   u0: 0.01
         #   tE: 0.5
-        
+
         params, uncertainties = _parse_structured_params_file(Path("params.json"))
-        
+
     Note:
         This function automatically detects the file format based on the file
         extension (.json, .yaml, .yml). For structured format, both parameters
@@ -1389,22 +1443,22 @@ def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
         dictionaries.
     """
     import yaml
-    
+
     with params_file.open("r", encoding="utf-8") as fh:
-        if params_file.suffix.lower() in ['.yaml', '.yml']:
+        if params_file.suffix.lower() in [".yaml", ".yml"]:
             data = yaml.safe_load(fh)
         else:
             data = json.load(fh)
-    
+
     # Handle structured format
-    if isinstance(data, dict) and ('parameters' in data or 'uncertainties' in data):
-        parameters = data.get('parameters', {})
-        uncertainties = data.get('uncertainties', {})
+    if isinstance(data, dict) and ("parameters" in data or "uncertainties" in data):
+        parameters = data.get("parameters", {})
+        uncertainties = data.get("uncertainties", {})
     else:
         # Simple format - all keys are parameters
         parameters = data
         uncertainties = {}
-    
+
     return parameters, uncertainties
 
 
@@ -1423,21 +1477,35 @@ def edit_solution(
         help="Number of data points used in this solution",
     ),
     alias: Optional[str] = typer.Option(
-        None, "--alias", help="Set or update the human-readable alias for this solution (must be unique within the event)"
+        None,
+        "--alias",
+        help="Set or update the human-readable alias for this solution (must be unique within the event)",
     ),
-    notes: Optional[str] = typer.Option(None, help="Notes for the solution (supports Markdown formatting)"),
-    notes_file: Optional[Path] = typer.Option(None, "--notes-file", help="Path to a Markdown file for solution notes (mutually exclusive with --notes)"),
+    notes: Optional[str] = typer.Option(
+        None, help="Notes for the solution (supports Markdown formatting)"
+    ),
+    notes_file: Optional[Path] = typer.Option(
+        None,
+        "--notes-file",
+        help="Path to a Markdown file for solution notes (mutually exclusive with --notes)",
+    ),
     append_notes: Optional[str] = typer.Option(
         None,
         "--append-notes",
         help="Append text to existing notes (use --notes to replace instead)",
     ),
     clear_notes: bool = typer.Option(False, help="Clear all notes"),
-    clear_relative_probability: bool = typer.Option(False, help="Clear relative probability"),
+    clear_relative_probability: bool = typer.Option(
+        False, help="Clear relative probability"
+    ),
     clear_log_likelihood: bool = typer.Option(False, help="Clear log likelihood"),
     clear_n_data_points: bool = typer.Option(False, help="Clear n_data_points"),
-    clear_parameter_uncertainties: bool = typer.Option(False, help="Clear parameter uncertainties"),
-    clear_physical_parameters: bool = typer.Option(False, help="Clear physical parameters"),
+    clear_parameter_uncertainties: bool = typer.Option(
+        False, help="Clear parameter uncertainties"
+    ),
+    clear_physical_parameters: bool = typer.Option(
+        False, help="Clear physical parameters"
+    ),
     cpu_hours: Optional[float] = typer.Option(None, help="CPU hours used"),
     wall_time_hours: Optional[float] = typer.Option(None, help="Wall time hours used"),
     param: Optional[List[str]] = typer.Option(
@@ -1446,14 +1514,16 @@ def edit_solution(
     param_uncertainty: Optional[List[str]] = typer.Option(
         None,
         "--param-uncertainty",
-        help="Parameter uncertainties as key=value (updates existing uncertainties)"
+        help="Parameter uncertainties as key=value (updates existing uncertainties)",
     ),
     higher_order_effect: Optional[List[str]] = typer.Option(
         None,
         "--higher-order-effect",
         help="Higher-order effects (replaces existing effects)",
     ),
-    clear_higher_order_effects: bool = typer.Option(False, help="Clear all higher-order effects"),
+    clear_higher_order_effects: bool = typer.Option(
+        False, help="Clear all higher-order effects"
+    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -1544,11 +1614,15 @@ def edit_solution(
             target_solution.alias = alias
     if clear_relative_probability:
         if target_solution.relative_probability is not None:
-            changes.append(f"Clear relative_probability: {target_solution.relative_probability}")
+            changes.append(
+                f"Clear relative_probability: {target_solution.relative_probability}"
+            )
             target_solution.relative_probability = None
     elif relative_probability is not None:
         if target_solution.relative_probability != relative_probability:
-            changes.append(f"Update relative_probability: {target_solution.relative_probability}  {relative_probability}")
+            changes.append(
+                f"Update relative_probability: {target_solution.relative_probability}  {relative_probability}"
+            )
             target_solution.relative_probability = relative_probability
     if clear_log_likelihood:
         if target_solution.log_likelihood is not None:
@@ -1556,7 +1630,9 @@ def edit_solution(
             target_solution.log_likelihood = None
     elif log_likelihood is not None:
         if target_solution.log_likelihood != log_likelihood:
-            changes.append(f"Update log_likelihood: {target_solution.log_likelihood}  {log_likelihood}")
+            changes.append(
+                f"Update log_likelihood: {target_solution.log_likelihood}  {log_likelihood}"
+            )
             target_solution.log_likelihood = log_likelihood
     if clear_n_data_points:
         if target_solution.n_data_points is not None:
@@ -1564,10 +1640,18 @@ def edit_solution(
             target_solution.n_data_points = None
     elif n_data_points is not None:
         if target_solution.n_data_points != n_data_points:
-            changes.append(f"Update n_data_points: {target_solution.n_data_points}  {n_data_points}")
+            changes.append(
+                f"Update n_data_points: {target_solution.n_data_points}  {n_data_points}"
+            )
             target_solution.n_data_points = n_data_points
     # Notes file logic
-    canonical_notes_path = Path(project_path) / "events" / target_event_id / "solutions" / f"{target_solution.solution_id}.md"
+    canonical_notes_path = (
+        Path(project_path)
+        / "events"
+        / target_event_id
+        / "solutions"
+        / f"{target_solution.solution_id}.md"
+    )
     if notes_file is not None:
         target_solution.notes_path = str(notes_file)
         changes.append(f"Set notes_path to {notes_file}")
@@ -1579,9 +1663,15 @@ def edit_solution(
     elif append_notes is not None:
         if target_solution.notes_path:
             notes_file_path = Path(project_path) / target_solution.notes_path
-            old_content = notes_file_path.read_text(encoding="utf-8") if notes_file_path.exists() else ""
+            old_content = (
+                notes_file_path.read_text(encoding="utf-8")
+                if notes_file_path.exists()
+                else ""
+            )
             notes_file_path.parent.mkdir(parents=True, exist_ok=True)
-            notes_file_path.write_text(old_content + "\n" + append_notes, encoding="utf-8")
+            notes_file_path.write_text(
+                old_content + "\n" + append_notes, encoding="utf-8"
+            )
             changes.append(f"Appended notes in {notes_file_path}")
     elif clear_notes:
         if target_solution.notes_path:
@@ -1606,7 +1696,9 @@ def edit_solution(
             changes.append(f"Update wall_time_hours: {old_wall} → {wall_time_hours}")
         target_solution.set_compute_info(
             cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
-            wall_time_hours=wall_time_hours if wall_time_hours is not None else old_wall
+            wall_time_hours=(
+                wall_time_hours if wall_time_hours is not None else old_wall
+            ),
         )
     if param:
         for p in param:
@@ -1638,15 +1730,23 @@ def edit_solution(
                 target_solution.parameter_uncertainties[key] = new_value
     if clear_higher_order_effects:
         if target_solution.higher_order_effects:
-            changes.append(f"Clear higher_order_effects: {target_solution.higher_order_effects}")
+            changes.append(
+                f"Clear higher_order_effects: {target_solution.higher_order_effects}"
+            )
             target_solution.higher_order_effects = []
     elif higher_order_effect:
         if target_solution.higher_order_effects != higher_order_effect:
-            changes.append(f"Update higher_order_effects: {target_solution.higher_order_effects} → {higher_order_effect}")
+            changes.append(
+                f"Update higher_order_effects: {target_solution.higher_order_effects} → {higher_order_effect}"
+            )
             target_solution.higher_order_effects = higher_order_effect
     if dry_run:
         if changes:
-            console.print(Panel(f"Changes for {solution_id} (event {target_event_id})", style="cyan"))
+            console.print(
+                Panel(
+                    f"Changes for {solution_id} (event {target_event_id})", style="cyan"
+                )
+            )
             for change in changes:
                 console.print(f"  • {change}")
         else:
@@ -1654,7 +1754,9 @@ def edit_solution(
         return
     if changes:
         sub.save()
-        console.print(Panel(f"Updated {solution_id} (event {target_event_id})", style="green"))
+        console.print(
+            Panel(f"Updated {solution_id} (event {target_event_id})", style="green")
+        )
         for change in changes:
             console.print(f"  • {change}")
     else:
@@ -1662,31 +1764,34 @@ def edit_solution(
 
 
 @app.command("notes")
-def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), help="Project directory")) -> None:
+def edit_notes(
+    solution_id: str,
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
     """Open the notes file for a solution in the default text editor.
-    
+
     Launches the system's default text editor (or a fallback) to edit the
     notes file for the specified solution. This provides a convenient way
     to edit solution notes without having to manually locate the file.
-    
+
     The command uses the $EDITOR environment variable if set, otherwise
     falls back to nano, then vi. The notes file is created if it doesn't
     exist.
-    
+
     Args:
         solution_id: The unique identifier of the solution to edit notes for.
         project_path: Directory of the submission project.
-    
+
     Raises:
         typer.Exit: If the solution is not found or no editor is available.
-    
+
     Example:
         # Edit notes for a specific solution
         microlens-submit notes abc12345-def6-7890-ghij-klmnopqrstuv ./project
-        
+
         # This will open the notes file in your default editor:
         # ./project/events/EVENT001/solutions/abc12345-def6-7890-ghij-klmnopqrstuv.md
-        
+
     Note:
         The notes file is opened in the system's default text editor.
         If $EDITOR is not set, the command tries nano, then vi as fallbacks.
@@ -1698,7 +1803,10 @@ def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), 
         if solution_id in event.solutions:
             sol = event.solutions[solution_id]
             if not sol.notes_path:
-                console.print(f"No notes file associated with solution {solution_id}", style="bold red")
+                console.print(
+                    f"No notes file associated with solution {solution_id}",
+                    style="bold red",
+                )
                 raise typer.Exit(code=1)
             notes_file = Path(project_path) / sol.notes_path
             notes_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1714,7 +1822,10 @@ def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), 
                         os.system(f'{fallback} "{notes_file}"')
                         break
                 else:
-                    console.print(f"Could not find an editor to open {notes_file}", style="bold red")
+                    console.print(
+                        f"Could not find an editor to open {notes_file}",
+                        style="bold red",
+                    )
                     raise typer.Exit(code=1)
             return
     console.print(f"Solution {solution_id} not found", style="bold red")
@@ -1723,73 +1834,94 @@ def edit_notes(solution_id: str, project_path: Path = typer.Argument(Path("."), 
 
 @app.command()
 def set_repo_url(
-    repo_url: str = typer.Argument(..., help="GitHub repository URL (e.g. https://github.com/owner/repo)"),
+    repo_url: str = typer.Argument(
+        ..., help="GitHub repository URL (e.g. https://github.com/owner/repo)"
+    ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Set or update the GitHub repository URL in the submission metadata.
-    
+
     Updates the repo_url field in submission.json with the provided GitHub
     repository URL. This URL is required for submission validation and is
     displayed in the generated dossier.
-    
+
     The command accepts various GitHub URL formats:
     - HTTPS: https://github.com/owner/repo
     - SSH: git@github.com:owner/repo.git
     - With or without .git extension
-    
+
     Args:
         repo_url: GitHub repository URL in any standard format.
         project_path: Directory of the submission project.
-    
+
     Raises:
         OSError: If unable to write to submission.json.
-    
+
     Example:
         # Set repository URL using HTTPS format
         microlens-submit set-repo-url https://github.com/team-alpha/microlens-submit ./project
-        
+
         # Set repository URL using SSH format
         microlens-submit set-repo-url git@github.com:team-alpha/microlens-submit.git ./project
-        
+
         # Update existing repository URL
         microlens-submit set-repo-url https://github.com/team-alpha/new-repo ./project
-        
+
     Note:
         The repository URL is used for:
         - Submission validation (required field)
         - Display in the generated dossier
         - Linking to specific commits in solution pages
-        
+
         The URL should point to the repository containing your analysis code
         and submission preparation scripts.
     """
     sub = load(str(project_path))
     sub.repo_url = repo_url
     sub.save()
-    console.print(Panel(f"Set repo_url to {repo_url} in {project_path}/submission.json", style="bold green"))
+    console.print(
+        Panel(
+            f"Set repo_url to {repo_url} in {project_path}/submission.json",
+            style="bold green",
+        )
+    )
 
 
 @app.command("set-hardware-info")
 def set_hardware_info(
     cpu: Optional[str] = typer.Option(None, "--cpu", help="CPU model/description"),
-    cpu_details: Optional[str] = typer.Option(None, "--cpu-details", help="Detailed CPU information"),
+    cpu_details: Optional[str] = typer.Option(
+        None, "--cpu-details", help="Detailed CPU information"
+    ),
     memory_gb: Optional[float] = typer.Option(None, "--memory-gb", help="Memory in GB"),
-    ram_gb: Optional[float] = typer.Option(None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"),
-    platform: Optional[str] = typer.Option(None, "--platform", help="Platform description (e.g., 'Local Analysis', 'Roman Nexus')"),
-    nexus_image: Optional[str] = typer.Option(None, "--nexus-image", help="Roman Nexus image identifier"),
-    clear: bool = typer.Option(False, "--clear", help="Clear all existing hardware info"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be changed without saving"),
+    ram_gb: Optional[float] = typer.Option(
+        None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"
+    ),
+    platform: Optional[str] = typer.Option(
+        None,
+        "--platform",
+        help="Platform description (e.g., 'Local Analysis', 'Roman Nexus')",
+    ),
+    nexus_image: Optional[str] = typer.Option(
+        None, "--nexus-image", help="Roman Nexus image identifier"
+    ),
+    clear: bool = typer.Option(
+        False, "--clear", help="Clear all existing hardware info"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would be changed without saving"
+    ),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Set or update hardware information in the submission metadata.
-    
+
     Updates the hardware_info field in submission.json with computational
     resource details. This information is displayed in the generated dossier
     and helps with reproducibility and resource tracking.
-    
+
     The command accepts various hardware information fields and can be used
     to update existing information or set it for the first time.
-    
+
     Args:
         cpu: Basic CPU model/description (e.g., "Intel Xeon E5-2680 v4").
         cpu_details: Detailed CPU information (takes precedence over --cpu).
@@ -1800,83 +1932,83 @@ def set_hardware_info(
         clear: If True, clear all existing hardware info before setting new values.
         dry_run: If True, show what would be changed without saving.
         project_path: Directory of the submission project.
-    
+
     Raises:
         OSError: If unable to write to submission.json.
-    
+
     Example:
         # Set basic hardware info
         microlens-submit set-hardware-info --cpu "Intel Xeon E5-2680 v4" --memory-gb 64 ./project
-        
+
         # Set detailed platform info
         microlens-submit set-hardware-info --platform "Local Analysis" --cpu-details "Intel Xeon E5-2680 v4 @ 2.4GHz" ./project
-        
+
         # Set Roman Nexus info
         microlens-submit set-hardware-info --platform "Roman Nexus" --nexus-image "roman-science-platform:latest" ./project
-        
+
         # Update existing info
         microlens-submit set-hardware-info --memory-gb 128 ./project
-        
+
         # Clear and set new info
         microlens-submit set-hardware-info --clear --cpu "AMD EPYC" --memory-gb 256 ./project
-        
+
         # Dry run to preview changes
         microlens-submit set-hardware-info --cpu "Intel i7" --memory-gb 32 --dry-run ./project
-        
+
     Note:
         Hardware information is used for:
         - Display in the generated dossier
         - Reproducibility documentation
         - Resource usage tracking
-        
+
         The --cpu-details option takes precedence over --cpu if both are provided.
         The --memory-gb and --ram-gb options are equivalent; use whichever is clearer.
         Use --clear to replace all existing hardware info with new values.
     """
     sub = load(str(project_path))
-    
+
     # Initialize hardware_info if it doesn't exist
     if sub.hardware_info is None:
         sub.hardware_info = {}
-    
+
     changes = []
     old_hardware_info = sub.hardware_info.copy()
-    
+
     # Clear existing info if requested
     if clear:
         if sub.hardware_info:
             changes.append("Clear all existing hardware info")
             sub.hardware_info = {}
-    
+
     # Set new values
     if cpu_details is not None:
-        if sub.hardware_info.get('cpu_details') != cpu_details:
+        if sub.hardware_info.get("cpu_details") != cpu_details:
             changes.append(f"Set cpu_details: {cpu_details}")
-            sub.hardware_info['cpu_details'] = cpu_details
+            sub.hardware_info["cpu_details"] = cpu_details
     elif cpu is not None:
-        if sub.hardware_info.get('cpu') != cpu:
+        if sub.hardware_info.get("cpu") != cpu:
             changes.append(f"Set cpu: {cpu}")
-            sub.hardware_info['cpu'] = cpu
-    
+            sub.hardware_info["cpu"] = cpu
+
     if memory_gb is not None:
-        if sub.hardware_info.get('memory_gb') != memory_gb:
+        if sub.hardware_info.get("memory_gb") != memory_gb:
             changes.append(f"Set memory_gb: {memory_gb}")
-            sub.hardware_info['memory_gb'] = memory_gb
+            sub.hardware_info["memory_gb"] = memory_gb
     elif ram_gb is not None:
-        if sub.hardware_info.get('ram_gb') != ram_gb:
+        if sub.hardware_info.get("ram_gb") != ram_gb:
             changes.append(f"Set ram_gb: {ram_gb}")
-            sub.hardware_info['ram_gb'] = ram_gb
-    
+            sub.hardware_info["ram_gb"] = ram_gb
+
     if platform is not None:
-        if sub.hardware_info.get('platform') != platform:
+        if sub.hardware_info.get("platform") != platform:
             changes.append(f"Set platform: {platform}")
-            sub.hardware_info['platform'] = platform
-    
+            sub.hardware_info["platform"] = platform
+
     if nexus_image is not None:
-        if sub.hardware_info.get('nexus_image') != nexus_image:
+        if sub.hardware_info.get("nexus_image") != nexus_image:
             changes.append(f"Set nexus_image: {nexus_image}")
-            sub.hardware_info['nexus_image'] = nexus_image
-    
+            sub.hardware_info["nexus_image"] = nexus_image
+
     # Show dry run results
     if dry_run:
         if changes:
@@ -1887,11 +2019,16 @@ def set_hardware_info(
         else:
             console.print(Panel("No changes would be made", style="yellow"))
         return
-    
+
     # Apply changes
     if changes:
         sub.save()
-        console.print(Panel(f"Updated hardware info in {project_path}/submission.json", style="bold green"))
+        console.print(
+            Panel(
+                f"Updated hardware info in {project_path}/submission.json",
+                style="bold green",
+            )
+        )
         for change in changes:
             console.print(f"  • {change}")
         console.print(f"\nCurrent hardware_info: {sub.hardware_info}")
@@ -1902,12 +2039,28 @@ def set_hardware_info(
 @app.command()
 def import_solutions(
     csv_file: Path = typer.Argument(..., help="Path to CSV file containing solutions"),
-    parameter_map_file: Optional[Path] = typer.Option(None, "--parameter-map-file", help="YAML file mapping CSV columns to solution attributes"),
-    project_path: Path = typer.Option(Path("."), "--project-path", help="Project directory"),
-    delimiter: Optional[str] = typer.Option(None, "--delimiter", help="CSV delimiter (auto-detected if not specified)"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported without making changes"),
-    validate: bool = typer.Option(False, "--validate", help="Validate solution parameters during import"),
-    on_duplicate: str = typer.Option("error", "--on-duplicate", help="How to handle duplicate alias keys: error, override, or ignore"),
+    parameter_map_file: Optional[Path] = typer.Option(
+        None,
+        "--parameter-map-file",
+        help="YAML file mapping CSV columns to solution attributes",
+    ),
+    project_path: Path = typer.Option(
+        Path("."), "--project-path", help="Project directory"
+    ),
+    delimiter: Optional[str] = typer.Option(
+        None, "--delimiter", help="CSV delimiter (auto-detected if not specified)"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would be imported without making changes"
+    ),
+    validate: bool = typer.Option(
+        False, "--validate", help="Validate solution parameters during import"
+    ),
+    on_duplicate: str = typer.Option(
+        "error",
+        "--on-duplicate",
+        help="How to handle duplicate alias keys: error, override, or ignore",
+    ),
 ) -> None:
     """Import solutions from a CSV file.
 
@@ -1940,7 +2093,7 @@ def import_solutions(
         # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
         # OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,"Simple fit"
         # OGLE-2023-BLG-0001,binary,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"Binary fit"
-        
+
         >>> microlens-submit import-solutions solutions.csv --validate ./my_project
         ✅ Imported 15 solutions successfully
         ⚠️  Skipped 2 rows due to missing required fields
@@ -1956,136 +2109,169 @@ def import_solutions(
     import yaml
     from pathlib import Path
     from typing import Dict, Any, List, Optional
-    
+
     # Validate on_duplicate option
     if on_duplicate not in ["error", "override", "ignore"]:
         typer.echo(f"❌ Invalid --on-duplicate option: {on_duplicate}")
         typer.echo("   Valid options: error, override, ignore")
         raise typer.Exit(1)
-    
+
     # Load submission
     try:
         submission = load(str(project_path))
     except Exception as e:
         typer.echo(f"❌ Failed to load submission: {e}")
         raise typer.Exit(1)
-    
+
     # Load parameter mapping if provided
     column_mapping = {}
     if parameter_map_file:
         try:
-            with open(parameter_map_file, 'r') as f:
+            with open(parameter_map_file, "r") as f:
                 column_mapping = yaml.safe_load(f)
         except Exception as e:
             typer.echo(f"❌ Failed to load parameter map file: {e}")
             raise typer.Exit(1)
-    
+
     # Auto-detect delimiter if not specified
     if not delimiter:
         try:
-            with open(csv_file, 'r') as f:
+            with open(csv_file, "r") as f:
                 sample = f.read(1024)
-                if '\t' in sample:
-                    delimiter = '\t'
-                elif ';' in sample:
-                    delimiter = ';'
+                if "\t" in sample:
+                    delimiter = "\t"
+                elif ";" in sample:
+                    delimiter = ";"
                 else:
-                    delimiter = ','
+                    delimiter = ","
             typer.echo(f"🔍 Auto-detected delimiter: '{delimiter}'")
         except Exception as e:
             typer.echo(f"❌ Failed to read CSV file: {e}")
             raise typer.Exit(1)
-    
+
     # Statistics
     stats = {
-        'total_rows': 0,
-        'successful_imports': 0,
-        'skipped_rows': 0,
-        'validation_errors': 0,
-        'duplicate_handled': 0,
-        'errors': []
+        "total_rows": 0,
+        "successful_imports": 0,
+        "skipped_rows": 0,
+        "validation_errors": 0,
+        "duplicate_handled": 0,
+        "errors": [],
     }
-    
+
     try:
-        with open(csv_file, 'r', newline='', encoding='utf-8') as f:
+        with open(csv_file, "r", newline="", encoding="utf-8") as f:
             # Find header row (first row with # or fallback to first row)
             lines = f.readlines()
             header_row = 0
-            
+
             for i, line in enumerate(lines):
-                if line.strip().startswith('#'):
+                if line.strip().startswith("#"):
                     header_row = i
                     break
-            
+
             # Clean header
             header_line = lines[header_row].strip()
-            if header_line.startswith('# '):
+            if header_line.startswith("# "):
                 header_line = header_line[2:]
-            elif header_line.startswith('#'):
+            elif header_line.startswith("#"):
                 header_line = header_line[1:]
-            
+
             # Parse header
-            reader = csv.DictReader([header_line] + lines[header_row + 1:], delimiter=delimiter)
-            
+            reader = csv.DictReader(
+                [header_line] + lines[header_row + 1 :], delimiter=delimiter
+            )
+
             for row_num, row in enumerate(reader, start=header_row + 2):
-                stats['total_rows'] += 1
-                
+                stats["total_rows"] += 1
+
                 try:
                     # Validate required fields
-                    if not row.get('event_id'):
-                        stats['skipped_rows'] += 1
-                        stats['errors'].append(f"Row {row_num}: Missing event_id")
+                    if not row.get("event_id"):
+                        stats["skipped_rows"] += 1
+                        stats["errors"].append(f"Row {row_num}: Missing event_id")
                         continue
-                    
-                    solution_id = row.get('solution_id')
-                    solution_alias = row.get('solution_alias')
-                    
+
+                    solution_id = row.get("solution_id")
+                    solution_alias = row.get("solution_alias")
+
                     if not solution_id and not solution_alias:
-                        stats['skipped_rows'] += 1
-                        stats['errors'].append(f"Row {row_num}: Missing solution_id or solution_alias")
+                        stats["skipped_rows"] += 1
+                        stats["errors"].append(
+                            f"Row {row_num}: Missing solution_id or solution_alias"
+                        )
                         continue
-                    
-                    if not row.get('model_tags'):
-                        stats['skipped_rows'] += 1
-                        stats['errors'].append(f"Row {row_num}: Missing model_tags")
+
+                    if not row.get("model_tags"):
+                        stats["skipped_rows"] += 1
+                        stats["errors"].append(f"Row {row_num}: Missing model_tags")
                         continue
-                    
+
                     # Parse model tags
                     try:
-                        model_tags = json.loads(row['model_tags'])
+                        model_tags = json.loads(row["model_tags"])
                         if not isinstance(model_tags, list):
                             raise ValueError("model_tags must be a list")
                     except json.JSONDecodeError:
-                        stats['skipped_rows'] += 1
-                        stats['errors'].append(f"Row {row_num}: Invalid model_tags JSON")
+                        stats["skipped_rows"] += 1
+                        stats["errors"].append(
+                            f"Row {row_num}: Invalid model_tags JSON"
+                        )
                         continue
-                    
+
                     # Extract model type and higher order effects
                     model_type = None
                     higher_order_effects = []
-                    
+
                     for tag in model_tags:
-                        if tag in ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]:
+                        if tag in [
+                            "1S1L",
+                            "1S2L",
+                            "2S1L",
+                            "2S2L",
+                            "1S3L",
+                            "2S3L",
+                            "other",
+                        ]:
                             if model_type:
-                                stats['skipped_rows'] += 1
-                                stats['errors'].append(f"Row {row_num}: Multiple model types specified")
+                                stats["skipped_rows"] += 1
+                                stats["errors"].append(
+                                    f"Row {row_num}: Multiple model types specified"
+                                )
                                 continue
                             model_type = tag
-                        elif tag in ["parallax", "finite-source", "lens-orbital-motion", "xallarap", 
-                                   "gaussian-process", "stellar-rotation", "fitted-limb-darkening", "other"]:
+                        elif tag in [
+                            "parallax",
+                            "finite-source",
+                            "lens-orbital-motion",
+                            "xallarap",
+                            "gaussian-process",
+                            "stellar-rotation",
+                            "fitted-limb-darkening",
+                            "other",
+                        ]:
                             higher_order_effects.append(tag)
-                    
+
                     if not model_type:
-                        stats['skipped_rows'] += 1
-                        stats['errors'].append(f"Row {row_num}: No valid model type found in model_tags")
+                        stats["skipped_rows"] += 1
+                        stats["errors"].append(
+                            f"Row {row_num}: No valid model type found in model_tags"
+                        )
                         continue
-                    
+
                     # Parse parameters
                     parameters = {}
-                    
+
                     # First, try to parse individual parameter columns (more natural)
                     for key, value in row.items():
-                        if key not in ['event_id', 'solution_id', 'solution_alias', 'model_tags', 'notes', 'parameters']:
+                        if key not in [
+                            "event_id",
+                            "solution_id",
+                            "solution_alias",
+                            "model_tags",
+                            "notes",
+                            "parameters",
+                        ]:
                             if isinstance(value, str) and value.strip():
                                 try:
                                     # Try to parse as float first, then fall back to string
@@ -2093,26 +2279,30 @@ def import_solutions(
                                 except ValueError:
                                     # If it's not a number, keep as string
                                     parameters[key] = value
-                            elif value and str(value).strip():  # Handle non-string values
+                            elif (
+                                value and str(value).strip()
+                            ):  # Handle non-string values
                                 try:
                                     parameters[key] = float(value)
                                 except (ValueError, TypeError):
                                     parameters[key] = str(value)
-                    
+
                     # If no individual parameters found, try JSON parameters column as fallback
-                    if not parameters and row.get('parameters'):
+                    if not parameters and row.get("parameters"):
                         try:
-                            parameters = json.loads(row['parameters'])
+                            parameters = json.loads(row["parameters"])
                         except json.JSONDecodeError:
-                            stats['skipped_rows'] += 1
-                            stats['errors'].append(f"Row {row_num}: Invalid parameters JSON")
+                            stats["skipped_rows"] += 1
+                            stats["errors"].append(
+                                f"Row {row_num}: Invalid parameters JSON"
+                            )
                             continue
-                    
+
                     # Handle notes
-                    notes = row.get('notes', '').strip()
+                    notes = row.get("notes", "").strip()
                     notes_path = None
                     notes_content = None
-                    
+
                     if notes:
                         # Check if notes is a file path
                         notes_file = Path(notes)
@@ -2121,83 +2311,102 @@ def import_solutions(
                         else:
                             # Treat as raw notes content
                             notes_content = notes
-                    
+
                     # Get or create event
-                    event = submission.get_event(row['event_id'])
-                    
+                    event = submission.get_event(row["event_id"])
+
                     # Check for duplicates
                     alias_key = f"{row['event_id']} {solution_alias or solution_id}"
                     existing_solution = None
-                    
+
                     if solution_alias:
-                        existing_solution = submission.get_solution_by_alias(row['event_id'], solution_alias)
+                        existing_solution = submission.get_solution_by_alias(
+                            row["event_id"], solution_alias
+                        )
                     elif solution_id:
                         existing_solution = event.get_solution(solution_id)
-                    
+
                     if existing_solution:
                         if on_duplicate == "error":
-                            stats['skipped_rows'] += 1
-                            stats['errors'].append(f"Row {row_num}: Duplicate alias key '{alias_key}'")
+                            stats["skipped_rows"] += 1
+                            stats["errors"].append(
+                                f"Row {row_num}: Duplicate alias key '{alias_key}'"
+                            )
                             continue
                         elif on_duplicate == "ignore":
-                            stats['duplicate_handled'] += 1
+                            stats["duplicate_handled"] += 1
                             continue
                         elif on_duplicate == "override":
                             # Remove existing solution
-                            event.remove_solution(existing_solution.solution_id, force=True)
-                            stats['duplicate_handled'] += 1
-                    
+                            event.remove_solution(
+                                existing_solution.solution_id, force=True
+                            )
+                            stats["duplicate_handled"] += 1
+
                     if not dry_run:
                         # Create solution
                         solution = event.add_solution(model_type, parameters)
-                        
+
                         # Set alias if provided
                         if solution_alias:
                             solution.alias = solution_alias
                         elif solution_id:
                             solution.alias = solution_id
-                        
+
                         # Set higher order effects
                         if higher_order_effects:
                             solution.higher_order_effects = higher_order_effects
-                        
+
                         # Set notes if provided
                         if notes_path:
                             # Copy notes file to solution
                             import shutil
-                            solution_notes_path = Path(project_path) / "tmp" / f"{solution.solution_id}.md"
-                            solution_notes_path.parent.mkdir(parents=True, exist_ok=True)
+
+                            solution_notes_path = (
+                                Path(project_path)
+                                / "tmp"
+                                / f"{solution.solution_id}.md"
+                            )
+                            solution_notes_path.parent.mkdir(
+                                parents=True, exist_ok=True
+                            )
                             shutil.copy2(notes_path, solution_notes_path)
-                            solution.notes_path = str(solution_notes_path.relative_to(project_path))
+                            solution.notes_path = str(
+                                solution_notes_path.relative_to(project_path)
+                            )
                         elif notes_content:
-                            solution.set_notes(notes_content, project_path, convert_escapes=True)
-                        
+                            solution.set_notes(
+                                notes_content, project_path, convert_escapes=True
+                            )
+
                         # Validate if requested
                         if validate:
                             validation_messages = solution.run_validation()
                             if validation_messages:
-                                stats['validation_errors'] += 1
+                                stats["validation_errors"] += 1
                                 for msg in validation_messages:
-                                    stats['errors'].append(f"Row {row_num} validation: {msg}")
-                    
-                    stats['successful_imports'] += 1
-                    
+                                    stats["errors"].append(
+                                        f"Row {row_num} validation: {msg}"
+                                    )
+
+                    stats["successful_imports"] += 1
+
                 except Exception as e:
-                    stats['errors'].append(f"Row {row_num}: {str(e)}")
+                    stats["errors"].append(f"Row {row_num}: {str(e)}")
                     continue
-    
+
     except Exception as e:
         typer.echo(f"❌ Failed to read CSV file: {e}")
         raise typer.Exit(1)
-    
+
     # Save if not dry run
-    if not dry_run and stats['successful_imports'] > 0:
+    if not dry_run and stats["successful_imports"] > 0:
         try:
             submission.save()
         except Exception as e:
             typer.echo(f"❌ Failed to save submission: {e}")
             raise typer.Exit(1)
-    
+
     # Print summary
     typer.echo(f"\n📊 Import Summary:")
     typer.echo(f"   Total rows processed: {stats['total_rows']}")
@@ -2205,14 +2414,14 @@ def import_solutions(
     typer.echo(f"   Skipped rows: {stats['skipped_rows']}")
     typer.echo(f"   Validation errors: {stats['validation_errors']}")
     typer.echo(f"   Duplicates handled: {stats['duplicate_handled']}")
-    
-    if stats['errors']:
+
+    if stats["errors"]:
         typer.echo(f"\n⚠️  Errors encountered:")
-        for error in stats['errors'][:10]:  # Show first 10 errors
+        for error in stats["errors"][:10]:  # Show first 10 errors
             typer.echo(f"   {error}")
-        if len(stats['errors']) > 10:
+        if len(stats["errors"]) > 10:
             typer.echo(f"   ... and {len(stats['errors']) - 10} more errors")
-    
+
     if dry_run:
         typer.echo(f"\n🔍 Dry run completed - no changes made")
     else:

@@ -17,13 +17,13 @@ code blocks in participant notes.
 Example:
     >>> from microlens_submit import load
     >>> from microlens_submit.dossier import generate_dashboard_html
-    >>> 
+    >>>
     >>> # Load a submission
     >>> submission = load("./my_project")
-    >>> 
+    >>>
     >>> # Generate the complete dossier
     >>> generate_dashboard_html(submission, Path("./dossier_output"))
-    >>> 
+    >>>
     >>> # The dossier will be created at ./dossier_output/index.html
 """
 
@@ -40,44 +40,44 @@ from .api import Submission, Event, Solution
 
 def generate_dashboard_html(submission: Submission, output_dir: Path) -> None:
     """Generate a complete HTML dossier for the submission.
-    
+
     Creates a comprehensive HTML dashboard that provides an overview of the submission,
     including event summaries, solution statistics, and metadata. The dossier includes:
     - Main dashboard (index.html) with submission overview
     - Individual event pages for each event
     - Individual solution pages for each solution
     - Full comprehensive dossier (full_dossier_report.html) for printing
-    
+
     The function creates the output directory structure and copies necessary assets
     like logos and GitHub icons.
-    
+
     Args:
         submission: The submission object containing events and solutions.
         output_dir: Directory where the HTML files will be saved. Will be created
             if it doesn't exist.
-    
+
     Raises:
         OSError: If unable to create output directory or write files.
         ValueError: If submission data is invalid or missing required fields.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import generate_dashboard_html
         >>> from pathlib import Path
-        >>> 
+        >>>
         >>> # Load a submission project
         >>> submission = load("./my_project")
-        >>> 
+        >>>
         >>> # Generate the complete dossier
         >>> generate_dashboard_html(submission, Path("./dossier_output"))
-        >>> 
+        >>>
         >>> # Files created:
         >>> # - ./dossier_output/index.html (main dashboard)
         >>> # - ./dossier_output/EVENT001.html (event page)
         >>> # - ./dossier_output/solution_id.html (solution pages)
         >>> # - ./dossier_output/full_dossier_report.html (printable version)
         >>> # - ./dossier_output/assets/ (logos and icons)
-    
+
     Note:
         This function generates all dossier components. For partial generation
         (e.g., only specific events), use the CLI command with --event-id or
@@ -87,91 +87,106 @@ def generate_dashboard_html(submission: Submission, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "assets").mkdir(exist_ok=True)
     # (No events or solutions subfolders)
-    
+
     # Check if full dossier report exists
     full_dossier_exists = (output_dir / "full_dossier_report.html").exists()
     # Generate the main dashboard HTML
-    html_content = _generate_dashboard_content(submission, full_dossier_exists=full_dossier_exists)
-    
+    html_content = _generate_dashboard_content(
+        submission, full_dossier_exists=full_dossier_exists
+    )
+
     # Write the HTML file
     with (output_dir / "index.html").open("w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     # Copy logos if they exist in the project
     logo_source = Path(__file__).parent / "assets" / "rges-pit_logo.png"
     if logo_source.exists():
         import shutil
+
         shutil.copy2(logo_source, output_dir / "assets" / "rges-pit_logo.png")
-    
+
     # Copy GitHub logo if it exists in the project
     github_logo_source = Path(__file__).parent / "assets" / "github-desktop_logo.png"
     if github_logo_source.exists():
         import shutil
-        shutil.copy2(github_logo_source, output_dir / "assets" / "github-desktop_logo.png")
+
+        shutil.copy2(
+            github_logo_source, output_dir / "assets" / "github-desktop_logo.png"
+        )
 
     # After generating index.html, generate event pages
     for event in submission.events.values():
         generate_event_page(event, submission, output_dir)
 
 
-def _generate_dashboard_content(submission: Submission, full_dossier_exists: bool = False) -> str:
+def _generate_dashboard_content(
+    submission: Submission, full_dossier_exists: bool = False
+) -> str:
     """Generate the HTML content for the submission dashboard.
-    
+
     Creates the main dashboard HTML following the Dashboard_Design.md specification.
     The dashboard includes submission statistics, progress tracking, event tables,
     and aggregate parameter distributions.
-    
+
     Args:
         submission: The submission object containing events and solutions.
         full_dossier_exists: Whether the full dossier report exists. Currently
             ignored but kept for future use.
-    
+
     Returns:
         str: Complete HTML content as a string, ready to be written to index.html.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import _generate_dashboard_content
-        >>> 
+        >>>
         >>> submission = load("./my_project")
         >>> html_content = _generate_dashboard_content(submission)
-        >>> 
+        >>>
         >>> # Write to file
         >>> with open("dashboard.html", "w") as f:
         ...     f.write(html_content)
-    
+
     Note:
         This is an internal function. Use generate_dashboard_html() for the
         complete dossier generation workflow.
     """
     # Calculate statistics
     total_events = len(submission.events)
-    total_active_solutions = sum(len(event.get_active_solutions()) for event in submission.events.values())
+    total_active_solutions = sum(
+        len(event.get_active_solutions()) for event in submission.events.values()
+    )
     total_cpu_hours = 0
     total_wall_time_hours = 0
-    
+
     # Calculate compute time
     for event in submission.events.values():
         for solution in event.solutions.values():
             if solution.compute_info:
-                total_cpu_hours += solution.compute_info.get('cpu_hours', 0)
-                total_wall_time_hours += solution.compute_info.get('wall_time_hours', 0)
-    
+                total_cpu_hours += solution.compute_info.get("cpu_hours", 0)
+                total_wall_time_hours += solution.compute_info.get("wall_time_hours", 0)
+
     # Format hardware info
     hardware_info_str = _format_hardware_info(submission.hardware_info)
-    
+
     # Calculate progress (hardcoded total from design spec)
     TOTAL_CHALLENGE_EVENTS = 293
-    progress_percentage = (total_events / TOTAL_CHALLENGE_EVENTS) * 100 if TOTAL_CHALLENGE_EVENTS > 0 else 0
-    
+    progress_percentage = (
+        (total_events / TOTAL_CHALLENGE_EVENTS) * 100
+        if TOTAL_CHALLENGE_EVENTS > 0
+        else 0
+    )
+
     # Generate event table
     event_rows = []
     for event in sorted(submission.events.values(), key=lambda e: e.event_id):
         active_solutions = event.get_active_solutions()
         model_types = set(sol.model_type for sol in active_solutions)
         model_types_str = ", ".join(sorted(model_types)) if model_types else "None"
-        
-        event_rows.append(f"""
+
+        event_rows.append(
+            f"""
             <tr class="border-b border-gray-200 hover:bg-gray-50">
                 <td class="py-3 px-4">
                     <a href="{event.event_id}.html" class="font-medium text-rtd-accent hover:underline">
@@ -181,31 +196,38 @@ def _generate_dashboard_content(submission: Submission, full_dossier_exists: boo
                 <td class="py-3 px-4">{len(active_solutions)}</td>
                 <td class="py-3 px-4">{model_types_str}</td>
             </tr>
-        """)
-    
-    event_table = "\n".join(event_rows) if event_rows else """
+        """
+        )
+
+    event_table = (
+        "\n".join(event_rows)
+        if event_rows
+        else """
         <tr class="border-b border-gray-200">
             <td colspan="3" class="py-3 px-4 text-center text-gray-500">No events found</td>
         </tr>
     """
-    
+    )
+
     # Insert Print Full Dossier placeholder before the footer
     print_link_html = "<!--FULL_DOSSIER_LINK_PLACEHOLDER-->"
-    
+
     # GitHub repo link (if present)
     github_html = ""
-    repo_url = getattr(submission, 'repo_url', None) or (submission.repo_url if hasattr(submission, 'repo_url') else None)
+    repo_url = getattr(submission, "repo_url", None) or (
+        submission.repo_url if hasattr(submission, "repo_url") else None
+    )
     if repo_url:
         repo_name = _extract_github_repo_name(repo_url)
-        github_html = f'''
+        github_html = f"""
         <div class="flex items-center justify-center mb-4">
             <a href="{repo_url}" target="_blank" rel="noopener" class="flex items-center space-x-2 group">
                 <img src="assets/github-desktop_logo.png" alt="GitHub" class="w-6 h-6 inline-block align-middle mr-2 group-hover:opacity-80" style="display:inline;vertical-align:middle;">
                 <span class="text-base text-rtd-accent font-semibold group-hover:underline">{repo_name}</span>
             </a>
         </div>
-        '''
-    
+        """
+
     # Generate the complete HTML following the design spec
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -423,25 +445,25 @@ def _generate_dashboard_content(submission: Submission, full_dossier_exists: boo
     </div>
 </body>
 </html>"""
-    
+
     return html
 
 
 def _format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
     """Format hardware information for display in the dashboard.
-    
+
     Converts hardware information dictionary into a human-readable string
     suitable for display in the dashboard. Handles various hardware info
     formats and provides fallbacks for missing information.
-    
+
     Args:
         hardware_info: Dictionary containing hardware information. Can include
             keys like 'cpu_details', 'cpu', 'memory_gb', 'ram_gb', 'nexus_image'.
             If None or empty, returns "Not specified".
-    
+
     Returns:
         str: Formatted hardware information string for display.
-    
+
     Example:
         >>> hardware_info = {
         ...     'cpu_details': 'Intel Xeon E5-2680 v4',
@@ -450,13 +472,13 @@ def _format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
         ... }
         >>> _format_hardware_info(hardware_info)
         'CPU: Intel Xeon E5-2680 v4, RAM: 64GB, Platform: Roman Nexus'
-        
+
         >>> _format_hardware_info(None)
         'Not specified'
-        
+
         >>> _format_hardware_info({'custom_field': 'custom_value'})
         'custom_field: custom_value'
-    
+
     Note:
         This function handles multiple hardware info formats for compatibility
         with different submission sources. It prioritizes detailed CPU info
@@ -464,60 +486,60 @@ def _format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
     """
     if not hardware_info:
         return "Not specified"
-    
+
     parts = []
-    
+
     # Common hardware fields
-    if 'cpu_details' in hardware_info:
+    if "cpu_details" in hardware_info:
         parts.append(f"CPU: {hardware_info['cpu_details']}")
-    elif 'cpu' in hardware_info:
+    elif "cpu" in hardware_info:
         parts.append(f"CPU: {hardware_info['cpu']}")
-    
-    if 'memory_gb' in hardware_info:
+
+    if "memory_gb" in hardware_info:
         parts.append(f"RAM: {hardware_info['memory_gb']}GB")
-    elif 'ram_gb' in hardware_info:
+    elif "ram_gb" in hardware_info:
         parts.append(f"RAM: {hardware_info['ram_gb']}GB")
-    
-    if 'nexus_image' in hardware_info:
+
+    if "nexus_image" in hardware_info:
         parts.append(f"Platform: Roman Nexus")
-    
+
     if parts:
         return ", ".join(parts)
     else:
         # Fallback: show any available info
-        return ", ".join(f"{k}: {v}" for k, v in hardware_info.items() if v is not None) 
+        return ", ".join(f"{k}: {v}" for k, v in hardware_info.items() if v is not None)
 
 
 def generate_event_page(event: Event, submission: Submission, output_dir: Path) -> None:
     """Generate an HTML dossier page for a single event.
-    
+
     Creates a detailed HTML page for a specific microlensing event, following
     the Event_Page_Design.md specification. The page includes event overview,
     solutions table, and evaluator-only visualizations.
-    
+
     Args:
         event: The Event object containing solutions and metadata.
         submission: The parent Submission object for context and metadata.
         output_dir: The dossier directory where the HTML file will be saved.
             The file will be named {event.event_id}.html.
-    
+
     Raises:
         OSError: If unable to write the HTML file.
         ValueError: If event data is invalid.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import generate_event_page
         >>> from pathlib import Path
-        >>> 
+        >>>
         >>> submission = load("./my_project")
         >>> event = submission.get_event("EVENT001")
-        >>> 
+        >>>
         >>> # Generate event page
         >>> generate_event_page(event, submission, Path("./dossier_output"))
-        >>> 
+        >>>
         >>> # Creates: ./dossier_output/EVENT001.html
-    
+
     Note:
         This function also triggers generation of solution pages for all
         solutions in the event. The event page includes navigation links
@@ -532,55 +554,82 @@ def generate_event_page(event: Event, submission: Submission, output_dir: Path) 
     for sol in event.solutions.values():
         generate_solution_page(sol, event, submission, output_dir)
 
+
 def _generate_event_page_content(event: Event, submission: Submission) -> str:
     """Generate the HTML content for an event dossier page.
-    
+
     Creates the complete HTML content for a single event page, including
     event overview, solutions table with sorting, and evaluator-only
     visualization placeholders.
-    
+
     Args:
         event: The Event object containing solutions and metadata.
         submission: The parent Submission object for context and metadata.
-    
+
     Returns:
         str: Complete HTML content as a string for the event page.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import _generate_event_page_content
-        >>> 
+        >>>
         >>> submission = load("./my_project")
         >>> event = submission.get_event("EVENT001")
         >>> html_content = _generate_event_page_content(event, submission)
-        >>> 
+        >>>
         >>> # Write to file
         >>> with open("event_page.html", "w") as f:
         ...     f.write(html_content)
-    
+
     Note:
         Solutions are sorted by: active status (active first), relative
         probability (descending), then solution ID. The page includes
         navigation back to the dashboard and links to individual solution pages.
     """
+
     # Sort solutions: active first, then by relative_probability (desc, None last), then by solution_id
     def sort_key(sol):
         return (
             not sol.is_active,  # active first
-            -(sol.relative_probability if sol.relative_probability is not None else float('-inf')),
-            sol.solution_id
+            -(
+                sol.relative_probability
+                if sol.relative_probability is not None
+                else float("-inf")
+            ),
+            sol.solution_id,
         )
+
     solutions = sorted(event.solutions.values(), key=sort_key)
     # Table rows
     rows = []
     for sol in solutions:
-        status = '<span class="text-green-600">Active</span>' if sol.is_active else '<span class="text-red-600">Inactive</span>'
+        status = (
+            '<span class="text-green-600">Active</span>'
+            if sol.is_active
+            else '<span class="text-red-600">Inactive</span>'
+        )
         logl = f"{sol.log_likelihood:.2f}" if sol.log_likelihood is not None else "N/A"
         ndp = str(sol.n_data_points) if sol.n_data_points is not None else "N/A"
-        relprob = f"{sol.relative_probability:.3f}" if sol.relative_probability is not None else "N/A"
+        relprob = (
+            f"{sol.relative_probability:.3f}"
+            if sol.relative_probability is not None
+            else "N/A"
+        )
         # Read notes snippet from file
-        notes_snip = (sol.get_notes(project_root=Path(submission.project_path))[:50] + ("..." if len(sol.get_notes(project_root=Path(submission.project_path))) > 50 else "")) if sol.notes_path else ""
-        
+        notes_snip = (
+            (
+                sol.get_notes(project_root=Path(submission.project_path))[:50]
+                + (
+                    "..."
+                    if len(sol.get_notes(project_root=Path(submission.project_path)))
+                    > 50
+                    else ""
+                )
+            )
+            if sol.notes_path
+            else ""
+        )
+
         # Display alias as primary identifier, UUID as secondary
         if sol.alias:
             solution_display = f"""
@@ -591,8 +640,9 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
             """
         else:
             solution_display = f'<a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.solution_id[:8]}...</a>'
-        
-        rows.append(f"""
+
+        rows.append(
+            f"""
             <tr class='border-b border-gray-200 hover:bg-gray-50'>
                 <td class='py-3 px-4'>{solution_display}</td>
                 <td class='py-3 px-4'>{sol.model_type}</td>
@@ -602,10 +652,15 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
                 <td class='py-3 px-4'>{relprob}</td>
                 <td class='py-3 px-4 text-gray-600 italic'>{notes_snip}</td>
             </tr>
-        """)
-    table_body = "\n".join(rows) if rows else """
+        """
+        )
+    table_body = (
+        "\n".join(rows)
+        if rows
+        else """
         <tr class='border-b border-gray-200'><td colspan='7' class='py-3 px-4 text-center text-gray-500'>No solutions found</td></tr>
     """
+    )
     # Optional raw data link
     raw_data_html = ""
     if hasattr(event, "event_data_path") and event.event_data_path:
@@ -779,40 +834,43 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
     </div>
 </body>
 </html>"""
-    return html 
+    return html
 
-def generate_solution_page(solution: Solution, event: Event, submission: Submission, output_dir: Path) -> None:
+
+def generate_solution_page(
+    solution: Solution, event: Event, submission: Submission, output_dir: Path
+) -> None:
     """Generate an HTML dossier page for a single solution.
-    
+
     Creates a detailed HTML page for a specific microlensing solution, following
     the Solution_Page_Design.md specification. The page includes solution overview,
     parameter tables, notes (with markdown rendering), and evaluator-only sections.
-    
+
     Args:
         solution: The Solution object containing parameters, notes, and metadata.
         event: The parent Event object for context and navigation.
         submission: The grandparent Submission object for context and metadata.
         output_dir: The dossier directory where the HTML file will be saved.
             The file will be named {solution.solution_id}.html.
-    
+
     Raises:
         OSError: If unable to write the HTML file or read notes file.
         ValueError: If solution data is invalid.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import generate_solution_page
         >>> from pathlib import Path
-        >>> 
+        >>>
         >>> submission = load("./my_project")
         >>> event = submission.get_event("EVENT001")
         >>> solution = event.get_solution("solution_uuid_here")
-        >>> 
+        >>>
         >>> # Generate solution page
         >>> generate_solution_page(solution, event, submission, Path("./dossier_output"))
-        >>> 
+        >>>
         >>> # Creates: ./dossier_output/solution_uuid_here.html
-    
+
     Note:
         The solution page includes GitHub commit links if available, markdown
         rendering for notes, and navigation back to the event page and dashboard.
@@ -823,34 +881,37 @@ def generate_solution_page(solution: Solution, event: Event, submission: Submiss
     with (output_dir / f"{solution.solution_id}.html").open("w", encoding="utf-8") as f:
         f.write(html)
 
-def _generate_solution_page_content(solution: Solution, event: Event, submission: Submission) -> str:
+
+def _generate_solution_page_content(
+    solution: Solution, event: Event, submission: Submission
+) -> str:
     """Generate the HTML content for a solution dossier page.
-    
+
     Creates the complete HTML content for a single solution page, including
     parameter tables, markdown-rendered notes, plot placeholders, and
     evaluator-only sections.
-    
+
     Args:
         solution: The Solution object containing parameters, notes, and metadata.
         event: The parent Event object for context and navigation.
         submission: The grandparent Submission object for context and metadata.
-    
+
     Returns:
         str: Complete HTML content as a string for the solution page.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import _generate_solution_page_content
-        >>> 
+        >>>
         >>> submission = load("./my_project")
         >>> event = submission.get_event("EVENT001")
         >>> solution = event.get_solution("solution_uuid_here")
         >>> html_content = _generate_solution_page_content(solution, event, submission)
-        >>> 
+        >>>
         >>> # Write to file
         >>> with open("solution_page.html", "w") as f:
         ...     f.write(html_content)
-    
+
     Note:
         Parameter uncertainties are formatted as ±value or +upper/-lower
         depending on the uncertainty format. Notes are rendered from markdown
@@ -859,7 +920,9 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
     """
     # Render notes as HTML from file
     notes_md = solution.get_notes(project_root=Path(submission.project_path))
-    notes_html = markdown.markdown(notes_md or "", extensions=["extra", "tables", "fenced_code", "nl2br"])
+    notes_html = markdown.markdown(
+        notes_md or "", extensions=["extra", "tables", "fenced_code", "nl2br"]
+    )
     # Parameters table
     param_rows = []
     params = solution.parameters or {}
@@ -872,18 +935,28 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
             unc_str = f"+{unc[1]}/-{unc[0]}"
         else:
             unc_str = f"±{unc}"
-        param_rows.append(f"""
+        param_rows.append(
+            f"""
             <tr class='border-b border-gray-200 hover:bg-gray-50'>
                 <td class='py-3 px-4'>{k}</td>
                 <td class='py-3 px-4'>{v}</td>
                 <td class='py-3 px-4'>{unc_str}</td>
             </tr>
-        """)
-    param_table = "\n".join(param_rows) if param_rows else """
+        """
+        )
+    param_table = (
+        "\n".join(param_rows)
+        if param_rows
+        else """
         <tr class='border-b border-gray-200'><td colspan='3' class='py-3 px-4 text-center text-gray-500'>No parameters found</td></tr>
     """
+    )
     # Higher-order effects
-    hoe_str = ", ".join(solution.higher_order_effects) if solution.higher_order_effects else "None"
+    hoe_str = (
+        ", ".join(solution.higher_order_effects)
+        if solution.higher_order_effects
+        else "None"
+    )
     # Plot paths (relative to solution page)
     lc_plot = solution.lightcurve_plot_path or ""
     lens_plot = solution.lens_plane_plot_path or ""
@@ -892,30 +965,38 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
     phys_rows = []
     phys = solution.physical_parameters or {}
     for k, v in phys.items():
-        phys_rows.append(f"""
+        phys_rows.append(
+            f"""
             <tr class='border-b border-gray-200 hover:bg-gray-50'>
                 <td class='py-3 px-4'>{k}</td>
                 <td class='py-3 px-4'>{v}</td>
             </tr>
-        """)
-    phys_table = "\n".join(phys_rows) if phys_rows else """
+        """
+        )
+    phys_table = (
+        "\n".join(phys_rows)
+        if phys_rows
+        else """
         <tr class='border-b border-gray-200'><td colspan='2' class='py-3 px-4 text-center text-gray-500'>No physical parameters found</td></tr>
     """
+    )
     # GitHub commit link (if present)
-    repo_url = getattr(submission, 'repo_url', None) or (submission.repo_url if hasattr(submission, 'repo_url') else None)
+    repo_url = getattr(submission, "repo_url", None) or (
+        submission.repo_url if hasattr(submission, "repo_url") else None
+    )
     commit = None
     if solution.compute_info:
-        git_info = solution.compute_info.get('git_info')
+        git_info = solution.compute_info.get("git_info")
         if git_info:
-            commit = git_info.get('commit')
+            commit = git_info.get("commit")
     commit_html = ""
     if repo_url and commit:
         commit_short = commit[:8]
         commit_url = f"{repo_url.rstrip('/')}/commit/{commit}"
-        commit_html = f'''<a href="{commit_url}" target="_blank" rel="noopener" title="View this commit on GitHub" class="inline-flex items-center space-x-1 ml-2 align-middle">
+        commit_html = f"""<a href="{commit_url}" target="_blank" rel="noopener" title="View this commit on GitHub" class="inline-flex items-center space-x-1 ml-2 align-middle">
             <img src="assets/github-desktop_logo.png" alt="GitHub Commit" class="w-4 h-4 inline-block align-middle" style="display:inline;vertical-align:middle;">
             <span class="text-xs text-rtd-accent font-mono">{commit_short}</span>
-        </a>'''
+        </a>"""
     # HTML content
     html = f"""<!DOCTYPE html>
 <html lang='en'>
@@ -1149,15 +1230,21 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
     </div>
 </body>
 </html>"""
-    return html 
+    return html
 
-def _extract_main_content_body(html: str, section_type: str = None, section_id: str = None, project_root: Path = None) -> str:
+
+def _extract_main_content_body(
+    html: str,
+    section_type: str = None,
+    section_id: str = None,
+    project_root: Path = None,
+) -> str:
     """Extract main content for the full dossier using explicit markers.
-    
+
     Extracts the main content from HTML pages using explicit marker comments.
     This function is used to create the comprehensive full dossier report by
     extracting content from individual pages and combining them.
-    
+
     Args:
         html: The complete HTML content to extract from.
         section_type: Type of section being extracted. If None, extracts dashboard
@@ -1166,27 +1253,27 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
             to create section headings in the full dossier.
         project_root: Path to the project root directory. Used to access aliases.json
             for solution alias lookups.
-    
+
     Returns:
         str: Extracted and formatted HTML content ready for inclusion in
             the full dossier report.
-    
+
     Raises:
         ValueError: If required regex markers are not found in the HTML.
-    
+
     Example:
         >>> # Extract dashboard content
         >>> dashboard_html = _generate_dashboard_content(submission)
         >>> dashboard_body = _extract_main_content_body(dashboard_html)
-        >>> 
+        >>>
         >>> # Extract event content
         >>> event_html = _generate_event_page_content(event, submission)
         >>> event_body = _extract_main_content_body(event_html, 'event', 'EVENT001')
-        >>> 
+        >>>
         >>> # Extract solution content
         >>> solution_html = _generate_solution_page_content(solution, event, submission)
         >>> solution_body = _extract_main_content_body(solution_html, 'solution', 'sol_uuid', project_root)
-    
+
     Note:
         This function relies on HTML comments <!-- Regex Start --> and
         <!-- Regex Finish --> to identify content boundaries. These markers
@@ -1196,50 +1283,51 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
         # Extract everything between the markers
         start_marker = "<!-- Regex Start -->"
         finish_marker = "<!-- Regex Finish -->"
-        
+
         start_pos = html.find(start_marker)
         finish_pos = html.find(finish_marker)
-        
+
         if start_pos == -1 or finish_pos == -1:
             raise ValueError("Could not find regex markers in dashboard HTML")
-        
+
         # Extract content between markers (including the markers themselves)
-        content = html[start_pos:finish_pos + len(finish_marker)]
-        
+        content = html[start_pos : finish_pos + len(finish_marker)]
+
         # Remove the markers
         content = content.replace(start_marker, "").replace(finish_marker, "")
-        
+
         return content.strip()
     else:
         # For event/solution: extract content between markers, remove header/nav/logo, add heading, wrap in <section>
         start_marker = "<!-- Regex Start -->"
         finish_marker = "<!-- Regex Finish -->"
-        
+
         start_pos = html.find(start_marker)
         finish_pos = html.find(finish_marker)
-        
+
         if start_pos == -1 or finish_pos == -1:
             raise ValueError("Could not find regex markers in HTML")
-        
+
         # Extract content between markers
-        content = html[start_pos:finish_pos + len(finish_marker)]
-        
+        content = html[start_pos : finish_pos + len(finish_marker)]
+
         # Remove the markers
         content = content.replace(start_marker, "").replace(finish_marker, "")
-        
+
         # Optionally add a heading
-        heading = ''
-        section_class = ''
-        if section_type == 'event' and section_id:
+        heading = ""
+        section_class = ""
+        if section_type == "event" and section_id:
             heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-8">Event: {section_id}</h2>'
-            section_class = 'dossier-event-section'
-        elif section_type == 'solution' and section_id:
+            section_class = "dossier-event-section"
+        elif section_type == "solution" and section_id:
             # Look up alias from aliases.json if project_root is provided
             alias_key = None
             if project_root:
                 aliases_file = project_root / "aliases.json"
                 if aliases_file.exists():
                     import json
+
                     try:
                         with aliases_file.open("r") as f:
                             aliases = json.load(f)
@@ -1250,49 +1338,49 @@ def _extract_main_content_body(html: str, section_type: str = None, section_id: 
                                 break
                     except (json.JSONDecodeError, KeyError):
                         pass
-            
+
             if alias_key:
-                heading = f'''<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {alias_key}</h2>
-                <h3 class="text-lg text-gray-600 mb-4">UUID: {section_id}</h3>'''
+                heading = f"""<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {alias_key}</h2>
+                <h3 class="text-lg text-gray-600 mb-4">UUID: {section_id}</h3>"""
             else:
                 heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {section_id}</h2>'
-            section_class = 'dossier-solution-section'
-        
+            section_class = "dossier-solution-section"
+
         # Wrap in a section for clarity
         return f'<section class="{section_class}">\n{heading}\n{content.strip()}\n</section>'
 
 
 def _generate_full_dossier_report_html(submission, output_dir):
     """Generate a comprehensive printable HTML dossier report.
-    
+
     Creates a single HTML file that concatenates all dossier sections (dashboard,
     events, and solutions) into one comprehensive, printable document. This is
     useful for creating a complete submission overview that can be printed or
     shared as a single file.
-    
+
     Args:
         submission: The submission object containing all events and solutions.
         output_dir: Directory where the full dossier report will be saved.
             The file will be named full_dossier_report.html.
-    
+
     Raises:
         OSError: If unable to write the HTML file.
         ValueError: If submission data is invalid or extraction fails.
-    
+
     Example:
         >>> from microlens_submit import load
         >>> from microlens_submit.dossier import _generate_full_dossier_report_html
         >>> from pathlib import Path
-        >>> 
+        >>>
         >>> submission = load("./my_project")
-        >>> 
+        >>>
         >>> # Generate comprehensive dossier
         >>> _generate_full_dossier_report_html(submission, Path("./dossier_output"))
-        >>> 
+        >>>
         >>> # Creates: ./dossier_output/full_dossier_report.html
         >>> # This file contains all dashboard, event, and solution content
         >>> # in a single, printable HTML document
-    
+
     Note:
         This function creates a comprehensive report by extracting content from
         individual pages and combining them with section dividers. The report
@@ -1305,24 +1393,37 @@ def _generate_full_dossier_report_html(submission, output_dir):
     dash_html = _generate_dashboard_content(submission, full_dossier_exists=True)
     dash_body = _extract_main_content_body(dash_html)
     all_html_sections.append(dash_body)
-    all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after dashboard
-    
+    all_html_sections.append(
+        '<hr class="my-8 border-t-2 border-rtd-accent">'
+    )  # Divider after dashboard
+
     # Events and solutions
     for event in submission.events.values():
         event_html = _generate_event_page_content(event, submission)
-        event_body = _extract_main_content_body(event_html, section_type='event', section_id=event.event_id)
+        event_body = _extract_main_content_body(
+            event_html, section_type="event", section_id=event.event_id
+        )
         all_html_sections.append(event_body)
-        all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after event
-        
+        all_html_sections.append(
+            '<hr class="my-8 border-t-2 border-rtd-accent">'
+        )  # Divider after event
+
         for sol in event.get_active_solutions():
             sol_html = _generate_solution_page_content(sol, event, submission)
-            sol_body = _extract_main_content_body(sol_html, section_type='solution', section_id=sol.solution_id, project_root=Path(submission.project_path))
+            sol_body = _extract_main_content_body(
+                sol_html,
+                section_type="solution",
+                section_id=sol.solution_id,
+                project_root=Path(submission.project_path),
+            )
             all_html_sections.append(sol_body)
-            all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after solution
-    
+            all_html_sections.append(
+                '<hr class="my-8 border-t-2 border-rtd-accent">'
+            )  # Divider after solution
+
     # Compose the full HTML
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
-    header = f'''
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+    header = f"""
     <div class="text-center py-8 bg-rtd-primary text-rtd-secondary">
         <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
         <h1 class="text-3xl font-bold mb-2">Comprehensive Submission Dossier</h1>
@@ -1330,8 +1431,8 @@ def _generate_full_dossier_report_html(submission, output_dir):
         <p class="text-md">Team: {submission.team_name} | Tier: {submission.tier}</p>
     </div>
     <hr class="border-t-4 border-rtd-accent my-8">
-    '''
-    html = f'''<!DOCTYPE html>
+    """
+    html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1433,45 +1534,47 @@ def _generate_full_dossier_report_html(submission, output_dir):
         {''.join(all_html_sections)}
     </div>
 </body>
-</html>'''
+</html>"""
     with (output_dir / "full_dossier_report.html").open("w", encoding="utf-8") as f:
-        f.write(html) 
+        f.write(html)
+
 
 def _extract_github_repo_name(repo_url: str) -> str:
     """Extract owner/repo name from a GitHub URL.
-    
+
     Parses GitHub repository URLs to extract the owner and repository name
     in a display-friendly format. Handles various GitHub URL formats including
     HTTPS, SSH, and URLs with .git extension.
-    
+
     Args:
         repo_url: GitHub repository URL (e.g., https://github.com/owner/repo,
             git@github.com:owner/repo.git, etc.)
-    
+
     Returns:
         str: Repository name in "owner/repo" format, or the original URL
             if parsing fails.
-    
+
     Example:
         >>> _extract_github_repo_name("https://github.com/username/microlens-submit")
         'username/microlens-submit'
-        
+
         >>> _extract_github_repo_name("git@github.com:username/microlens-submit.git")
         'username/microlens-submit'
-        
+
         >>> _extract_github_repo_name("https://github.com/org/repo-name")
         'org/repo-name'
-        
+
         >>> _extract_github_repo_name("invalid-url")
         'invalid-url'
-    
+
     Note:
         This function uses regex to parse GitHub URLs and handles common
         variations. If the URL doesn't match expected patterns, it returns
         the original URL unchanged.
     """
     import re
-    match = re.search(r'github\.com[:/]+([\w.-]+)/([\w.-]+)', repo_url)
+
+    match = re.search(r"github\.com[:/]+([\w.-]+)/([\w.-]+)", repo_url)
     if match:
         return f"{match.group(1)}/{match.group(2).replace('.git','')}"
-    return repo_url 
+    return repo_url

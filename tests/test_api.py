@@ -26,7 +26,7 @@ Example:
     >>> import pytest
     >>> from pathlib import Path
     >>> from microlens_submit.api import load
-    >>> 
+    >>>
     >>> # Run a specific test
     >>> def test_basic_functionality(tmp_path):
     ...     project = tmp_path / "test_project"
@@ -34,7 +34,7 @@ Example:
     ...     sub.team_name = "Test Team"
     ...     sub.tier = "test"
     ...     sub.save()
-    ...     
+    ...
     ...     # Verify persistence
     ...     new_sub = load(str(project))
     ...     assert new_sub.team_name == "Test Team"
@@ -59,14 +59,14 @@ from microlens_submit.api import load, import_solutions_from_csv
 
 def test_full_lifecycle(tmp_path):
     """Test complete submission lifecycle from creation to persistence.
-    
+
     Verifies that a complete submission can be created, saved, and reloaded
     with all data intact. This includes events, solutions, compute information,
     and metadata persistence.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies the complete workflow:
         >>> # 1. Create submission with team info
@@ -74,7 +74,7 @@ def test_full_lifecycle(tmp_path):
         >>> # 3. Set compute information
         >>> # 4. Save to disk
         >>> # 5. Reload and verify all data
-    
+
     Note:
         This is a fundamental test that ensures the core persistence
         mechanism works correctly for all submission components.
@@ -104,19 +104,19 @@ def test_full_lifecycle(tmp_path):
 
 def test_compute_info_hours(tmp_path):
     """Test that CPU and wall time are correctly persisted.
-    
+
     Verifies that compute information including CPU hours and wall time
     are properly saved and restored when loading a submission.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Setting compute info with specific hours
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking values match
-    
+
     Note:
         Compute information is critical for submission evaluation
         and must be accurately preserved across save/load cycles.
@@ -136,19 +136,19 @@ def test_compute_info_hours(tmp_path):
 
 def test_deactivate_and_export(tmp_path):
     """Test that deactivated solutions are excluded from exports.
-    
+
     Verifies that when solutions are deactivated, they are properly
     excluded from submission exports while remaining in the project.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating active and inactive solutions
         >>> # 2. Exporting the submission
         >>> # 3. Checking only active solutions are included
-    
+
     Note:
         Deactivated solutions remain in the project for potential
         reactivation but are excluded from final submissions.
@@ -178,20 +178,20 @@ def test_deactivate_and_export(tmp_path):
 
 def test_export_includes_external_files(tmp_path):
     """Test that external files are properly included in exports.
-    
+
     Verifies that referenced files (posterior data, plots) are correctly
     included in submission exports with proper path handling.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solution with external file references
         >>> # 2. Creating the referenced files
         >>> # 3. Exporting and checking file inclusion
         >>> # 4. Verifying path updates in solution JSON
-    
+
     Note:
         External files are copied into the export archive and their
         paths in the solution JSON are updated to reflect the new locations.
@@ -226,19 +226,19 @@ def test_export_includes_external_files(tmp_path):
 
 def test_get_active_solutions(tmp_path):
     """Test filtering of active solutions from events.
-    
+
     Verifies that the get_active_solutions() method correctly returns
     only solutions that have not been deactivated.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating multiple solutions
         >>> # 2. Deactivating one solution
         >>> # 3. Checking only active solutions are returned
-    
+
     Note:
         This method is used extensively for submission validation
         and export operations to ensure only active solutions are processed.
@@ -258,20 +258,20 @@ def test_get_active_solutions(tmp_path):
 
 def test_clear_solutions(tmp_path):
     """Test that clear_solutions() deactivates all solutions.
-    
+
     Verifies that the clear_solutions() method deactivates all solutions
     in an event without removing them from the project.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating multiple solutions
         >>> # 2. Calling clear_solutions()
         >>> # 3. Checking all solutions are deactivated
         >>> # 4. Verifying solutions still exist in project
-    
+
     Note:
         clear_solutions() is a convenience method that deactivates
         all solutions rather than deleting them, allowing for easy
@@ -296,19 +296,19 @@ def test_clear_solutions(tmp_path):
 
 def test_posterior_path_persists(tmp_path):
     """Test that posterior file paths are correctly persisted.
-    
+
     Verifies that posterior file paths are properly saved and restored
     when loading a submission.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Setting a posterior file path
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking path matches
-    
+
     Note:
         Posterior file paths are important for submission evaluation
         and must be accurately preserved across save/load cycles.
@@ -327,19 +327,19 @@ def test_posterior_path_persists(tmp_path):
 
 def test_new_fields_persist(tmp_path):
     """Test that new solution fields are correctly persisted.
-    
+
     Verifies that newer solution fields (bands, higher-order effects,
     reference times) are properly saved and restored.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Setting various new fields on a solution
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking all fields match
-    
+
     Note:
         This test ensures backward compatibility when new fields
         are added to the solution schema.
@@ -362,19 +362,19 @@ def test_new_fields_persist(tmp_path):
 
 def test_plot_paths_persist(tmp_path):
     """Test that plot file paths are correctly persisted.
-    
+
     Verifies that lightcurve and lens plane plot paths are properly
     saved and restored when loading a submission.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Setting plot file paths
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking paths match
-    
+
     Note:
         Plot paths are important for submission documentation
         and must be accurately preserved across save/load cycles.
@@ -395,19 +395,19 @@ def test_plot_paths_persist(tmp_path):
 
 def test_relative_probability_export(tmp_path):
     """Test that relative probabilities are correctly handled in exports.
-    
+
     Verifies that relative probabilities are properly exported and that
     automatic calculation works for solutions without explicit values.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Setting explicit relative probability on one solution
         >>> # 2. Leaving another solution without relative probability
         >>> # 3. Exporting and checking automatic calculation
-    
+
     Note:
         When solutions lack explicit relative probabilities, they are
         automatically calculated based on BIC values if sufficient
@@ -437,19 +437,19 @@ def test_relative_probability_export(tmp_path):
 
 def test_validate_warnings(tmp_path):
     """Test that validation generates appropriate warnings.
-    
+
     Verifies that the validation system correctly identifies and reports
     various issues with submissions.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating submission with known issues
         >>> # 2. Running validation
         >>> # 3. Checking that expected warnings are generated
-    
+
     Note:
         Validation warnings help users identify issues before submission
         and ensure data completeness and correctness.
@@ -473,21 +473,21 @@ def test_validate_warnings(tmp_path):
 
 def test_relative_probability_range(tmp_path):
     """Test that relative probabilities are properly calculated and validated.
-    
+
     Verifies that relative probabilities are calculated correctly for solutions
     that don't have them set, and that validation catches issues with probability
     ranges and sums.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with and without relative probabilities
         >>> # 2. Checking automatic calculation using BIC
         >>> # 3. Validating probability ranges and sums
         >>> # 4. Testing validation warnings for invalid probabilities
-    
+
     Note:
         Relative probabilities must sum to 1.0 for active solutions within
         each event. The system automatically calculates missing probabilities
@@ -496,22 +496,22 @@ def test_relative_probability_range(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
     evt = sub.get_event("evt")
-    
+
     # Add solutions with different relative probabilities
     sol1 = evt.add_solution("other", {"a": 1})
     sol1.log_likelihood = -100
     sol1.n_data_points = 100
     sol1.relative_probability = 0.6
-    
+
     sol2 = evt.add_solution("other", {"b": 2})
     sol2.log_likelihood = -110
     sol2.n_data_points = 100
     sol2.relative_probability = 0.4
-    
+
     # Test validation
     warnings = sub.run_validation()
     assert not any("relative probabilities" in w.lower() for w in warnings)
-    
+
     # Test invalid probabilities
     sol1.relative_probability = 0.8  # Sum > 1.0
     warnings = sub.run_validation()
@@ -520,21 +520,21 @@ def test_relative_probability_range(tmp_path):
 
 def test_solution_aliases(tmp_path):
     """Test solution alias functionality including creation, validation, and persistence.
-    
+
     Verifies that solution aliases can be set, are validated for uniqueness,
     and are properly persisted across save/load cycles. Also tests that
     aliases are displayed correctly in dossier generation.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with aliases
         >>> # 2. Testing alias uniqueness validation
         >>> # 3. Checking alias persistence
         >>> # 4. Testing alias lookup functionality
-    
+
     Note:
         Aliases provide human-readable identifiers for solutions and must
         be unique within each event. They are used as primary identifiers
@@ -542,90 +542,98 @@ def test_solution_aliases(tmp_path):
     """
     project = tmp_path / "proj"
     sub = load(str(project))
-    
+
     # Test creating solutions with aliases
     evt1 = sub.get_event("EVENT001")
-    sol1 = evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit")
-    sol2 = evt1.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5}, alias="binary_model")
-    
+    sol1 = evt1.add_solution(
+        "1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit"
+    )
+    sol2 = evt1.add_solution(
+        "1S2L",
+        {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5},
+        alias="binary_model",
+    )
+
     # Test alias persistence
     sub.save()
     new_sub = load(str(project))
     new_sol1 = new_sub.get_event("EVENT001").solutions[sol1.solution_id]
     new_sol2 = new_sub.get_event("EVENT001").solutions[sol2.solution_id]
-    
+
     assert new_sol1.alias == "best_fit"
     assert new_sol2.alias == "binary_model"
-    
+
     # Test alias lookup
     found_sol = new_sub.get_solution_by_alias("EVENT001", "best_fit")
     assert found_sol is not None
     assert found_sol.solution_id == sol1.solution_id
-    
+
     # Test alias uniqueness validation
     evt2 = sub.get_event("EVENT002")
-    sol3 = evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit")  # Same alias, different event - should be OK
-    
+    sol3 = evt2.add_solution(
+        "1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_fit"
+    )  # Same alias, different event - should be OK
+
     # Test duplicate alias in same event - should fail
     # Create a fresh submission to test duplicate aliases
     project2 = tmp_path / "proj2"
     sub2 = load(str(project2))
     evt_dup = sub2.get_event("EVENT001")
     sol_dup1 = evt_dup.add_solution("1S1L", {"t0": 2459123.5}, alias="duplicate")
-    sol_dup2 = evt_dup.add_solution("1S2L", {"t0": 2459123.5}, alias="duplicate")  # Duplicate alias
-    
+    sol_dup2 = evt_dup.add_solution(
+        "1S2L", {"t0": 2459123.5}, alias="duplicate"
+    )  # Duplicate alias
+
     with pytest.raises(ValueError, match="Duplicate alias"):
         sub2.save()  # This should trigger validation and raise the error
 
 
 def test_alias_lookup_table(tmp_path):
     """Test that the alias lookup table is properly created and maintained.
-    
+
     Verifies that the aliases.json file is created with the correct mapping
     of "<event_id> <alias>" to solution_id, and that it's updated when
     aliases are added or removed.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with aliases
         >>> # 2. Checking alias lookup table creation
         >>> # 3. Testing lookup table updates
         >>> # 4. Verifying table structure and content
-    
+
     Note:
         The alias lookup table provides fast lookup of solutions by alias
         and is stored as aliases.json in the project root.
     """
     project = tmp_path / "proj"
     sub = load(str(project))
-    
+
     # Create solutions with aliases
     evt1 = sub.get_event("EVENT001")
     sol1 = evt1.add_solution("1S1L", {"t0": 2459123.5}, alias="fit1")
     sol2 = evt1.add_solution("1S2L", {"t0": 2459123.5}, alias="fit2")
-    
+
     evt2 = sub.get_event("EVENT002")
-    sol3 = evt2.add_solution("1S1L", {"t0": 2459123.5}, alias="fit1")  # Same alias, different event
-    
+    sol3 = evt2.add_solution(
+        "1S1L", {"t0": 2459123.5}, alias="fit1"
+    )  # Same alias, different event
+
     sub.save()
-    
+
     # Check that aliases.json was created
     alias_file = project / "aliases.json"
     assert alias_file.exists()
-    
+
     # Load and verify the lookup table
     with alias_file.open("r") as f:
         alias_lookup = json.load(f)
-    
+
     # Check that all expected aliases are in the lookup table
-    expected_aliases = [
-        "EVENT001 fit1",
-        "EVENT001 fit2", 
-        "EVENT002 fit1"
-    ]
+    expected_aliases = ["EVENT001 fit1", "EVENT001 fit2", "EVENT002 fit1"]
     assert all(key in alias_lookup for key in expected_aliases)
     assert alias_lookup["EVENT001 fit1"] == sol1.solution_id
     assert alias_lookup["EVENT001 fit2"] == sol2.solution_id
@@ -634,37 +642,39 @@ def test_alias_lookup_table(tmp_path):
 
 def test_alias_validation_warnings(tmp_path):
     """Test that alias validation warnings are properly generated.
-    
+
     Verifies that the validation system correctly identifies and reports
     issues with aliases, such as duplicate aliases within the same event.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with duplicate aliases
         >>> # 2. Running validation
         >>> # 3. Checking for appropriate warning messages
         >>> # 4. Testing validation without duplicates
-    
+
     Note:
         Alias validation is part of the overall submission validation
         process and provides clear error messages for data integrity issues.
     """
     project = tmp_path / "proj"
     sub = load(str(project))
-    
+
     # Create solutions with duplicate aliases in same event
     evt = sub.get_event("EVENT001")
     sol1 = evt.add_solution("1S1L", {"t0": 2459123.5}, alias="duplicate")
-    sol2 = evt.add_solution("1S2L", {"t0": 2459123.5}, alias="duplicate")  # Duplicate alias
-    
+    sol2 = evt.add_solution(
+        "1S2L", {"t0": 2459123.5}, alias="duplicate"
+    )  # Duplicate alias
+
     # Test validation warnings
     warnings = sub.run_validation()
     assert any("Duplicate alias" in w for w in warnings)
     assert any("duplicate" in w.lower() for w in warnings)
-    
+
     # Fix the duplicate
     sol2.alias = "unique"
     warnings = sub.run_validation()
@@ -673,61 +683,64 @@ def test_alias_validation_warnings(tmp_path):
 
 def test_alias_in_dossier_generation(tmp_path):
     """Test that aliases are properly displayed in dossier generation.
-    
+
     Verifies that when generating dossiers, solutions with aliases show
     the alias as the primary identifier and the UUID as secondary.
-    
+
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-    
+
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with aliases
         >>> # 2. Generating dossier HTML
         >>> # 3. Checking that aliases appear in the HTML
         >>> # 4. Verifying UUID is shown as secondary identifier
-    
+
     Note:
         Dossier generation should prioritize aliases for readability
         while still providing UUID access for technical reference.
     """
     project = tmp_path / "proj"
     sub = load(str(project))
-    
+
     # Create solution with alias
     evt = sub.get_event("EVENT001")
-    sol = evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_parallax_fit")
+    sol = evt.add_solution(
+        "1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}, alias="best_parallax_fit"
+    )
     sol.log_likelihood = -1234.56
     sol.n_data_points = 1250
     sol.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
-    
+
     sub.save()
-    
+
     # Generate dossier
     from microlens_submit.dossier import generate_dashboard_html
+
     dossier_dir = project / "dossier"
     generate_dashboard_html(sub, dossier_dir)
-    
+
     # Check that event page was generated
     event_page = dossier_dir / "EVENT001.html"
     assert event_page.exists()
-    
+
     # Read the HTML and check for alias display
     with event_page.open("r") as f:
         html_content = f.read()
-    
+
     # Should show alias as primary identifier
     assert "best_parallax_fit" in html_content
     # Should show UUID as secondary identifier
     assert sol.solution_id[:8] in html_content
-    
+
     # Check solution page
     solution_page = dossier_dir / f"{sol.solution_id}.html"
     assert solution_page.exists()
-    
+
     with solution_page.open("r") as f:
         sol_html = f.read()
-    
+
     # Should show alias in title and header
     assert "best_parallax_fit" in sol_html
     assert sol.solution_id[:8] in sol_html
@@ -735,7 +748,7 @@ def test_alias_in_dossier_generation(tmp_path):
 
 def test_cli_add_and_edit_alias(tmp_path):
     """Test CLI --alias option for add-solution and edit-solution commands.
-    
+
     Verifies that:
     - add-solution --alias sets the alias correctly
     - edit-solution --alias updates the alias
@@ -744,24 +757,49 @@ def test_cli_add_and_edit_alias(tmp_path):
     project = tmp_path / "proj"
     project.mkdir()
     # Add a solution with alias via CLI
-    result = subprocess.run([
-        sys.executable, "-m", "microlens_submit.cli", "add-solution",
-        "EVENT001", "1S1L", str(project),
-        "--param", "t0=2459123.5", "--param", "u0=0.1", "--param", "tE=20.0",
-        "--alias", "cli_best_fit"
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "microlens_submit.cli",
+            "add-solution",
+            "EVENT001",
+            "1S1L",
+            str(project),
+            "--param",
+            "t0=2459123.5",
+            "--param",
+            "u0=0.1",
+            "--param",
+            "tE=20.0",
+            "--alias",
+            "cli_best_fit",
+        ],
+        capture_output=True,
+        text=True,
+    )
     assert result.returncode == 0, result.stderr
     # Check that alias is set in the project
     from microlens_submit.api import load
+
     sub = load(str(project))
     sol = next(iter(sub.get_event("EVENT001").solutions.values()))
     assert sol.alias == "cli_best_fit"
     # Edit the alias via CLI
-    result2 = subprocess.run([
-        sys.executable, "-m", "microlens_submit.cli", "edit-solution",
-        sol.solution_id, str(project),
-        "--alias", "cli_renamed"
-    ], capture_output=True, text=True)
+    result2 = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "microlens_submit.cli",
+            "edit-solution",
+            sol.solution_id,
+            str(project),
+            "--alias",
+            "cli_renamed",
+        ],
+        capture_output=True,
+        text=True,
+    )
     assert result2.returncode == 0, result2.stderr
     sub2 = load(str(project))
     sol2 = sub2.get_event("EVENT001").solutions[sol.solution_id]
@@ -772,27 +810,29 @@ def test_remove_solution_and_event():
     """Test the remove_solution and remove_event functionality."""
     with tempfile.TemporaryDirectory() as tmpdir:
         submission = load(tmpdir)
-        
+
         # Create an event with solutions
         event = submission.get_event("TEST_EVENT")
         solution1 = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-        solution2 = event.add_solution("1S2L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5})
-        
+        solution2 = event.add_solution(
+            "1S2L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0, "s": 1.2, "q": 0.5}
+        )
+
         # Set notes on one solution (creates tmp file)
         solution1.set_notes("# Test notes")
-        
+
         # Test removing an unsaved solution
         assert len(event.solutions) == 2
         removed = event.remove_solution(solution1.solution_id)
         assert removed is True
         assert len(event.solutions) == 1
         assert solution1.solution_id not in event.solutions
-        
+
         # Test removing all solutions
         removed_count = event.remove_all_solutions()
         assert removed_count == 1
         assert len(event.solutions) == 0
-        
+
         # Test removing the event
         event = submission.get_event("TEST_EVENT")  # Recreate
         solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
@@ -800,29 +840,29 @@ def test_remove_solution_and_event():
         removed = submission.remove_event("TEST_EVENT")
         assert removed is True
         assert len(submission.events) == 0
-        
+
         # Test safety features with saved solutions
         event = submission.get_event("SAVED_EVENT")
         solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
         submission.save()  # Make solution saved
-        
+
         # Should fail without force
         with pytest.raises(ValueError, match="Cannot remove saved solution"):
             event.remove_solution(solution.solution_id)
-        
+
         # Should work with force
         removed = event.remove_solution(solution.solution_id, force=True)
         assert removed is True
-        
+
         # Test event removal safety
         event = submission.get_event("SAVED_EVENT2")
         solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
         submission.save()
-        
+
         # Should fail without force
         with pytest.raises(ValueError, match="Cannot remove event"):
             submission.remove_event("SAVED_EVENT2")
-        
+
         # Should work with force
         removed = submission.remove_event("SAVED_EVENT2", force=True)
         assert removed is True
@@ -833,6 +873,7 @@ def test_api_import_solutions_from_csv():
     import tempfile
     from pathlib import Path
     from microlens_submit.api import load, import_solutions_from_csv
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a test CSV file
         csv_content = """# event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
@@ -842,31 +883,27 @@ OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,
 """
         csv_file = Path(tmpdir) / "test_import.csv"
         csv_file.write_text(csv_content)
-        
+
         # Load project
         submission = load(tmpdir)
         submission.team_name = "Test Team"
-        
+
         # Test dry run
         stats = import_solutions_from_csv(
-            submission,
-            csv_file,
-            dry_run=True,
-            validate=True,
-            project_path=Path(tmpdir)
+            submission, csv_file, dry_run=True, validate=True, project_path=Path(tmpdir)
         )
-        assert stats['total_rows'] == 3
-        assert stats['successful_imports'] == 3
-        
+        assert stats["total_rows"] == 3
+        assert stats["successful_imports"] == 3
+
         # Test actual import
         stats = import_solutions_from_csv(
             submission,
             csv_file,
             dry_run=False,
             validate=True,
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['successful_imports'] == 3
+        assert stats["successful_imports"] == 3
         assert "OGLE-2023-BLG-0001" in submission.events
         assert "OGLE-2023-BLG-0002" in submission.events
         event1 = submission.events["OGLE-2023-BLG-0001"]
@@ -876,12 +913,16 @@ OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,
         aliases = [sol.alias for sol in event1.solutions.values()]
         assert "simple_1S1L" in aliases
         assert "binary_1S2L" in aliases
-        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        simple_sol = next(
+            sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L"
+        )
         assert simple_sol.model_type == "1S1L"
         assert simple_sol.parameters["t0"] == 2459123.5
         assert simple_sol.parameters["u0"] == 0.1
         assert simple_sol.parameters["tE"] == 20.0
-        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L")
+        binary_sol = next(
+            sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L"
+        )
         assert binary_sol.model_type == "1S2L"
         assert binary_sol.parameters["s"] == 1.2
         assert binary_sol.parameters["q"] == 0.5
@@ -895,19 +936,19 @@ OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,
             csv_file,
             dry_run=False,
             on_duplicate="error",
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['skipped_rows'] == 3
+        assert stats["skipped_rows"] == 3
         # Test duplicate handling (override mode)
         stats = import_solutions_from_csv(
             submission,
             csv_file,
             dry_run=False,
             on_duplicate="override",
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['duplicate_handled'] == 3
-        assert stats['successful_imports'] == 3
+        assert stats["duplicate_handled"] == 3
+        assert stats["successful_imports"] == 3
 
 
 def test_api_import_solutions_from_csv_with_data_file():
@@ -915,65 +956,65 @@ def test_api_import_solutions_from_csv_with_data_file():
     import tempfile
     from pathlib import Path
     from microlens_submit.api import load, import_solutions_from_csv
-    
+
     # Use the actual test CSV file from tests/data
     csv_file = Path(__file__).parent / "data" / "test_import.csv"
     assert csv_file.exists(), f"Test CSV file not found: {csv_file}"
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Load project
         submission = load(tmpdir)
         submission.team_name = "Test Team"
-        
+
         # Test dry run
         stats = import_solutions_from_csv(
-            submission,
-            csv_file,
-            dry_run=True,
-            validate=True,
-            project_path=Path(tmpdir)
+            submission, csv_file, dry_run=True, validate=True, project_path=Path(tmpdir)
         )
-        assert stats['total_rows'] == 6
-        assert stats['successful_imports'] == 6  # All rows are valid
-        
+        assert stats["total_rows"] == 6
+        assert stats["successful_imports"] == 6  # All rows are valid
+
         # Test actual import
         stats = import_solutions_from_csv(
             submission,
             csv_file,
             dry_run=False,
             validate=True,
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['successful_imports'] == 6
+        assert stats["successful_imports"] == 6
         assert "OGLE-2023-BLG-0001" in submission.events
         assert "OGLE-2023-BLG-0002" in submission.events
         assert "OGLE-2023-BLG-0003" in submission.events
         assert "OGLE-2023-BLG-0004" in submission.events
-        
+
         event1 = submission.events["OGLE-2023-BLG-0001"]
         event2 = submission.events["OGLE-2023-BLG-0002"]
         event3 = submission.events["OGLE-2023-BLG-0003"]
         event4 = submission.events["OGLE-2023-BLG-0004"]
-        
+
         assert len(event1.solutions) == 2
         assert len(event2.solutions) == 2
         assert len(event3.solutions) == 1
         assert len(event4.solutions) == 1
-        
+
         # Check aliases
         aliases = [sol.alias for sol in event1.solutions.values()]
         assert "simple_1S1L" in aliases
         assert "binary_parallax" in aliases
-        
+
         # Check parameters for simple solution
-        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
+        simple_sol = next(
+            sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L"
+        )
         assert simple_sol.model_type == "1S1L"
         assert simple_sol.parameters["t0"] == 2459123.5
         assert simple_sol.parameters["u0"] == 0.1
         assert simple_sol.parameters["tE"] == 20.0
-        
+
         # Check parameters for binary parallax solution
-        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_parallax")
+        binary_sol = next(
+            sol for sol in event1.solutions.values() if sol.alias == "binary_parallax"
+        )
         assert binary_sol.model_type == "1S2L"
         assert binary_sol.parameters["s"] == 1.2
         assert binary_sol.parameters["q"] == 0.5
@@ -981,30 +1022,32 @@ def test_api_import_solutions_from_csv_with_data_file():
         assert binary_sol.parameters["piEN"] == 0.1
         assert binary_sol.parameters["piEE"] == 0.05
         assert "parallax" in binary_sol.higher_order_effects
-        
+
         # Check finite source solution
-        finite_sol = next(sol for sol in event2.solutions.values() if sol.alias == "finite_source")
+        finite_sol = next(
+            sol for sol in event2.solutions.values() if sol.alias == "finite_source"
+        )
         assert finite_sol.model_type == "1S1L"
         assert "finite-source" in finite_sol.higher_order_effects
         assert finite_sol.parameters["rho"] == 0.001
-        
+
         # Test duplicate handling (error mode)
         stats = import_solutions_from_csv(
             submission,
             csv_file,
             dry_run=False,
             on_duplicate="error",
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['skipped_rows'] == 6  # All rows should be skipped as duplicates
-        
+        assert stats["skipped_rows"] == 6  # All rows should be skipped as duplicates
+
         # Test duplicate handling (override mode)
         stats = import_solutions_from_csv(
             submission,
             csv_file,
             dry_run=False,
             on_duplicate="override",
-            project_path=Path(tmpdir)
+            project_path=Path(tmpdir),
         )
-        assert stats['duplicate_handled'] == 6
-        assert stats['successful_imports'] == 6
+        assert stats["duplicate_handled"] == 6
+        assert stats["successful_imports"] == 6
