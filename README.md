@@ -35,7 +35,7 @@ Full documentation is hosted on [Read the Docs](https://microlens-submit.readthe
 
 ## Installation
 
-The package is be available on PyPI:
+The package is available on PyPI:
 
 ```bash
 pip install microlens-submit
