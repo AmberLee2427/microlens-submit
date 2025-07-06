@@ -40,40 +40,11 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ## 3. Development Roadmap & Feature Plan
 
-`microlens-submit` is currently at version 0.12.0-dev. Below is the prioritized roadmap for developing version 1.0.0.
+`microlens-submit` is currently at version 0.13.0. Below is the prioritized roadmap for developing version 1.0.0.
 
-### v0.12.2 — Critical Bug Fix (Current Release)
+### v0.13.0 — High Automation Support (Current Release)
 
-- **Task 1: Submission Dossier Generator**
-  - *Goal:* Allow participants to preview exactly what evaluators will receive.
-  - *Action:* Create a new CLI command `generate-dossier` that produces a human-readable report including:
-    - Team and submission metadata
-    - Summary of all active solutions with key parameters
-    - Rendered Markdown notes for each solution
-    - Validation status and warnings
-    - Physical parameter summaries
-    - Relative probability distributions
-    - See Dashboard_Design.md for the proposed `index.html` design plan
-    - Have subpages for event and solution summaries
-  - *Why:* Helps participants ensure their submission is complete and professional before final submission.
-
-- **Task 2: Enhanced Physical Parameter Validation**
-  - *Goal:* Validate physical parameters for reasonableness and consistency.
-  - *Action:* Extend validation logic to check:
-    - Lens mass ranges (typically 0.1-1.0 M☉)
-    - Distance ranges (typically 4-10 kpc for Galactic bulge)
-    - Planet mass ranges (typically 0.1-10 M⊕)
-    - Consistency between derived and fitted parameters
-  - *Why:* Catches physically impossible or unlikely parameter combinations.
-
-- **Task 3: Physical Parameter Uncertainties**
-  - *Goal:* Support uncertainties for physical parameters (not just model parameters).
-  - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
-  - *Why:* Physical parameters often have significant uncertainties that should be captured.
-
-### v0.13.0 — High Automation Support (Advanced Users)
-
-- **Task 4: Solution YAML Format**
+- **Task 3: Solution YAML Format**
   - *Goal:* Enable high-automation workflows for power users.
   - *Action:* Add support for `solution.yaml` files that define complete solutions including:
     - All parameters, uncertainties, and metadata
@@ -82,16 +53,32 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - File paths for plots and posteriors
   - *Why:* Allows automated generation of solutions from analysis pipelines.
 
-- **Task 5: Batch Solution Import**
-  - *Goal:* Import multiple solutions from structured files.
-  - *Action:* CLI command to import solutions from directories of YAML files.
-  - *Why:* Streamlines workflows for users with many solutions to add.
-
-- **Task 6: Bulk CSV Import**
+- **Task 4: Bulk CSV Import** ✅ **COMPLETED**
   - *Goal:* Allow users to import multiple solutions at once from a CSV file.
   - *Action:* Add a new CLI command `import-solutions` supporting column mapping, alias handling, duplicate handling, notes, dry-run, and validation options.
   - *Why:* Streamlines workflows for large teams and automated pipelines.
   - *Test Data:* See `tests/data/test_import.csv` for a comprehensive example used in both CLI and API tests.
+
+- **Task 5: Solution Aliases** ✅ **COMPLETED**
+  - *Goal:* Provide human-readable identifiers for solutions.
+  - *Action:* Add alias support with uniqueness validation within events.
+  - *Why:* Makes solutions easier to identify and reference in documentation and discussions.
+
+### v0.14.0 - Physical Parameter Support (Next Release)
+
+- **Task 6: Enhanced Physical Parameter Validation**
+  - *Goal:* Validate physical parameters for reasonableness and consistency.
+  - *Action:* Extend validation logic to check:
+    - Lens mass ranges (typically 0.1-1.0 M☉)
+    - Distance ranges (typically 4-10 kpc for Galactic bulge)
+    - Planet mass ranges (typically 0.1-10 M⊕)
+    - Consistency between derived and fitted parameters
+  - *Why:* Catches physically impossible or unlikely parameter combinations.
+
+- **Task 7: Physical Parameter Uncertainties**
+  - *Goal:* Support uncertainties for physical parameters (not just model parameters).
+  - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
+  - *Why:* Physical parameters often have significant uncertainties that should be captured.
 
 ### v1.0.0 — Official Release
 
@@ -364,9 +351,9 @@ twine check dist/*
 
 ### 10.4. Version Numbering Strategy
 
-- **Patch releases (0.12.0 → 0.12.2):** Bug fixes, minor improvements
-- **Minor releases (0.12.0 → 0.13.0):** New features, non-breaking changes
-- **Major releases (0.12.0 → 1.0.0):** Breaking changes, major rewrites
+- **Patch releases (0.13.0 → 0.13.1):** Bug fixes, minor improvements
+- **Minor releases (0.13.0 → 0.14.0):** New features, non-breaking changes
+- **Major releases (0.13.0 → 1.0.0):** Breaking changes, major rewrites
 
 ### 10.5. Release Notes Template
 
@@ -394,7 +381,7 @@ When creating a release, include:
 
 After creating a release:
 
-1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.12.0 → 0.12.2-dev)
+1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.13.0 → 0.13.1-dev)
 2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
 3. **Update Roadmap:** Mark completed tasks in this document
 
@@ -409,19 +396,18 @@ For future automation, consider implementing:
 ### 10.8. Current Release Status
 
 - **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
+- **v0.12.0:** ✅ Released - Comprehensive Documentation, Enhanced Dossier Generation, Parameter File Support
+- **v0.12.1:** ✅ Released - Hardware Info Management, Enhanced Documentation, Example Parameter Files
 - **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict
-- **v0.13.0:** 📋 Planned - High Automation Support
+- **v0.13.0:** ✅ Released (2024-12-19) - High Automation Support, Bulk CSV Import, Solution Aliases
 - **v1.0.0:** 📋 Planned - Official Release
 
-### v0.12.2 Highlights
-- **New CLI Commands:** `set-hardware-info` for managing computational resources
-- **Parameter File Support:** YAML and JSON parameter files with `--params-file`
-- **Enhanced GitHub Integration:** Logo packaging, repo URL management, commit links
-- **Higher-Order Effects:** Comprehensive CLI support for all microlensing effects
-- **Full Dossier Report:** Single printable HTML with all submission content
-- **Google-Style Documentation:** Complete docstring coverage with examples
-- **Improved Validation:** Professional output format with better error messages
-- **Hardware Info Management:** CLI and API support for reproducibility tracking
-
-- **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict, breaking Sphinx documentation generation
+### v0.13.0 Highlights
+- **Bulk CSV Import:** New CLI command `import-solutions` and API function for importing multiple solutions from CSV files
+- **Solution Aliases:** Human-readable identifiers for solutions with uniqueness validation within events
+- **Enhanced Notes Handling:** Proper conversion of literal `\n` characters to actual newlines in CSV imports
+- **Code Quality Improvements:** Better formatting and readability throughout the codebase
+- **Comprehensive Test Data:** Added `tests/data/test_import.csv` as a template for CSV import functionality
+- **Documentation Updates:** Updated tutorial, README, and API documentation for new features
+- **CLI Enhancements:** Added alias support to all solution-related CLI commands
 

@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microlens-submit"
-version = "0.12.2"
+version = "0.13.0"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
   {name = "Roman Science Platform Team", email = "roman-science-platform@stsci.edu"}
 ]
-description = "A toolkit for managing microlensing data challenge submissions"
+description = "A tool for managing and submitting microlensing solutions"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }

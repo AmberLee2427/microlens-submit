@@ -1,6 +1,6 @@
 # Testing the Dossier Generation Feature
 
-This directory contains a test script to demonstrate the new dossier generation feature in `microlens-submit` v0.12.2.
+This directory contains a test script to demonstrate the new dossier generation feature in `microlens-submit` v0.13.0.
 
 ## Quick Test
 

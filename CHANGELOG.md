@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2024-12-19
+
+### Added
+- **Bulk CSV Import**: New CLI command `import-solutions` and API function `import_solutions_from_csv()` for importing multiple solutions from a CSV file in one step
+  - Supports column mapping via YAML parameter map files
+  - Handles solution aliases with uniqueness validation within events
+  - Supports duplicate handling (error/override/ignore), notes, dry-run, and validation options
+  - Properly converts literal `\n` characters to actual newlines in notes from CSV files
+  - See the tutorial and README for usage examples
+- **Solution Aliases**: Human-readable identifiers for solutions with automatic uniqueness validation
+  - Aliases are displayed prominently in dossier generation and CLI output
+  - Integrated into all CLI commands that reference solutions
+  - Supports alias-based solution identification and management
+- **Enhanced Notes Handling**: Improved handling of notes with literal escape sequences
+  - CSV import automatically converts literal `\n` and `\r` to actual newlines
+  - Added `convert_escapes` parameter to `set_notes()` method for controlled conversion
+  - Maintains backward compatibility with existing notes functionality
+- **Test Data**: Added `tests/data/test_import.csv` as a comprehensive test file for CSV import functionality
+  - Used in both CLI and API tests as a real-world example and template for users
+  - Includes various parameter types, aliases, notes, and edge cases for testing
+
+### Changed
+- **Code Quality**: Improved formatting and readability throughout the codebase
+  - Added proper spacing and logical grouping in dense functions
+  - Enhanced code maintainability and debugging capabilities
+- **Documentation**: Updated tutorial, README, and API documentation to cover CSV import and alias features
+- **CLI Enhancements**: Added alias support to all solution-related CLI commands
+
+### Fixed
+- **Notes Rendering**: Fixed issue where literal `\n` characters in notes were rendered as text instead of line breaks in HTML
+  - CSV import now properly converts escape sequences to actual newlines
+  - Maintains compatibility with existing notes that don't need conversion
+
 ## [0.12.2] - 2024-12-19
 
 ### Fixed
@@ -83,15 +116,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Initial Implementation**: Core functionality for microlensing submission management
-
-## [Unreleased]
-
-### Added
-- **Bulk CSV Import**: New CLI command `import-solutions` for importing multiple solutions from a CSV file in one step.
-  - Supports column mapping, alias handling, duplicate handling (error/override/ignore), notes, dry-run, and validation options.
-  - See the tutorial and README for usage examples.
-- **Test Data**: Added `tests/data/test_import.csv` as a comprehensive test file for CSV import functionality.
-  - Used in both CLI and API tests as a real-world example and template for users.
-
-### Changed
-- Documentation and tutorial updated to cover CSV import and test data usage.
