@@ -617,7 +617,7 @@ def test_alias_lookup_table(tmp_path):
     assert alias_file.exists()
     
     # Load and verify the lookup table
-    with alias_file.open("r") as f:
+    with alias_file.open("r", encoding="utf-8") as f:
         alias_lookup = json.load(f)
     
     # Check that all expected aliases are in the lookup table
@@ -713,7 +713,7 @@ def test_alias_in_dossier_generation(tmp_path):
     assert event_page.exists()
     
     # Read the HTML and check for alias display
-    with event_page.open("r") as f:
+    with event_page.open("r", encoding="utf-8") as f:
         html_content = f.read()
     
     # Should show alias as primary identifier
@@ -725,7 +725,7 @@ def test_alias_in_dossier_generation(tmp_path):
     solution_page = dossier_dir / f"{sol.solution_id}.html"
     assert solution_page.exists()
     
-    with solution_page.open("r") as f:
+    with solution_page.open("r", encoding="utf-8") as f:
         sol_html = f.read()
     
     # Should show alias in title and header
