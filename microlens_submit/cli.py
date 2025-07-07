@@ -933,22 +933,61 @@ def generate_dossier(
     """
     sub = load(str(project_path))
     output_dir = Path(project_path) / "dossier"
-    # Always generate dashboard (even if partial)
-    from .dossier import _generate_full_dossier_report_html
+    
+    # Import dossier generation functions
+    from .dossier import (
+        generate_dashboard_html,
+        generate_event_page,
+        generate_solution_page,
+        _generate_full_dossier_report_html,
+    )
 
-    generate_dashboard_html(sub, output_dir)
-
-    # Determine if it's a full generation (no specific event/solution requested)
-    is_full_generation = not event_id and not solution_id
-
-    # Generate event/solution pages as needed (for now, always generate all, but this is where you'd restrict)
-    # TODO: In future, restrict event/solution generation if flags are set
-
-    if is_full_generation:
+    if solution_id:
+        # Find the solution across all events (same pattern as other CLI commands)
+        solution = None
+        containing_event_id = None
+        for eid, event in sub.events.items():
+            if solution_id in event.solutions:
+                solution = event.solutions[solution_id]
+                containing_event_id = eid
+                break
+        
+        if solution is None:
+            console.print(f"Solution {solution_id} not found", style="bold red")
+            raise typer.Exit(1)
+        
+        # Generate only the specific solution page
+        event = sub.events[containing_event_id]
+        console.print(
+            Panel(f"Generating dossier for solution {solution_id} in event {containing_event_id}...", style="cyan")
+        )
+        generate_solution_page(solution, event, sub, output_dir)
+        
+    elif event_id:
+        # Generate only the specific event page
+        if event_id not in sub.events:
+            console.print(f"Event {event_id} not found", style="bold red")
+            raise typer.Exit(1)
+        
+        event = sub.events[event_id]
+        console.print(
+            Panel(f"Generating dossier for event {event_id}...", style="cyan")
+        )
+        generate_event_page(event, sub, output_dir)
+        
+    else:
+        # Generate full dossier (all events and solutions)
+        console.print(
+            Panel("Generating comprehensive dossier for all events and solutions...", style="cyan")
+        )
+        generate_dashboard_html(sub, output_dir)
+        
+        # Generate comprehensive printable dossier
         console.print(
             Panel("Generating comprehensive printable dossier...", style="cyan")
         )
         _generate_full_dossier_report_html(sub, output_dir)
+        
         # Replace placeholder in index.html with the real link
         dashboard_path = output_dir / "index.html"
         if dashboard_path.exists():
