@@ -1390,6 +1390,77 @@ OGLE-2023-BLG-0001,test_solution,"[""1S1L""]",2459123.5,0.1,20.0,"First import"
         assert "Successful imports: 1" in result4.stdout
 
 
+def test_cli_import_calls_api(monkeypatch, tmp_path):
+    """Ensure CLI import-solutions delegates to the API function."""
+    csv_file = tmp_path / "dummy.csv"
+    csv_file.write_text("dummy")
+
+    from microlens_submit.api import load as load_api
+
+    submission = load_api(tmp_path)
+    submission.team_name = "Test Team"
+    submission.save()
+
+    called: dict = {}
+
+    def fake_import(
+        submission,
+        csv_file,
+        parameter_map_file=None,
+        delimiter=None,
+        dry_run=False,
+        validate=False,
+        on_duplicate="error",
+        project_path=None,
+    ):
+        called.update(
+            dict(
+                csv_file=csv_file,
+                delimiter=delimiter,
+                dry_run=dry_run,
+                validate=validate,
+                on_duplicate=on_duplicate,
+                project_path=project_path,
+                parameter_map_file=parameter_map_file,
+            )
+        )
+        return {
+            "total_rows": 1,
+            "successful_imports": 1,
+            "skipped_rows": 0,
+            "validation_errors": 0,
+            "duplicate_handled": 0,
+            "errors": [],
+        }
+
+    monkeypatch.setattr("microlens_submit.cli.import_solutions_from_csv", fake_import)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "import-solutions",
+            str(csv_file),
+            "--project-path",
+            str(tmp_path),
+            "--delimiter",
+            ";",
+            "--dry-run",
+            "--validate",
+            "--on-duplicate",
+            "override",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert called["csv_file"] == csv_file
+    assert called["delimiter"] == ";"
+    assert called["dry_run"] is True
+    assert called["validate"] is True
+    assert called["on_duplicate"] == "override"
+    assert called["project_path"] == tmp_path
+    assert "Successful imports: 1" in result.stdout
+
+
 def test_csv_import_from_data_file():
     """Test CSV import using the actual test file from tests/data."""
     import tempfile
