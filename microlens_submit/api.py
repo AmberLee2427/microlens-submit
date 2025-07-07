@@ -1907,20 +1907,40 @@ def import_solutions_from_csv(
     on_duplicate: str = "error",
     project_path: Optional[Path] = None,
 ) -> dict:
-    """Import solutions from a CSV file into a Submission object (API version).
+    """Import solutions from a CSV file into a :class:`Submission`.
+
+    The CSV must contain an ``event_id`` column along with either ``solution_id``
+    or ``solution_alias`` and a ``model_tags`` column. Parameter values can be
+    provided as individual columns or via a JSON-encoded ``parameters`` column.
+    Additional columns such as ``notes`` are also supported. The optional
+    ``parameter_map_file`` can map arbitrary CSV column names to the expected
+    attribute names.
 
     Args:
-        submission: The loaded Submission object.
-        csv_file: Path to the CSV file.
-        parameter_map_file: Optional YAML file mapping CSV columns to solution attributes.
-        delimiter: CSV delimiter (auto-detected if not specified).
-        dry_run: If True, do not persist changes.
-        validate: If True, run solution validation.
-        on_duplicate: How to handle duplicate alias keys: error, override, ignore.
-        project_path: Project root for resolving file paths (default: cwd).
+        submission: The active :class:`Submission` object.
+        csv_file: Path to the CSV file to read.
+        parameter_map_file: Optional YAML file that remaps CSV column names.
+        delimiter: CSV delimiter. If ``None`` the delimiter is automatically
+            detected.
+        dry_run: If ``True``, parse and validate the file but do not persist
+            any changes.
+        validate: If ``True``, run solution validation as each row is imported.
+        on_duplicate: Policy for handling duplicate alias keys: ``error``,
+            ``override``, or ``ignore``.
+        project_path: Project root used for resolving relative file paths.
 
     Returns:
-        dict: Summary statistics of the import process.
+        dict: Summary statistics describing the import operation.
+
+    Example:
+        >>> from microlens_submit.api import load, import_solutions_from_csv
+        >>> sub = load("./project")
+        >>> stats = import_solutions_from_csv(sub, Path("solutions.csv"), validate=True)
+        >>> print(stats["successful_imports"], "solutions imported")
+
+    Note:
+        This function performs no console output. Use the CLI wrapper
+        :func:`microlens_submit.cli.import_solutions` for user-facing messages.
     """
     if on_duplicate not in ["error", "override", "ignore"]:
         raise ValueError(f"Invalid on_duplicate: {on_duplicate}")

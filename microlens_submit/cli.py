@@ -50,7 +50,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .api import load
+from .api import load, import_solutions_from_csv
 from .dossier import generate_dashboard_html
 from . import __version__
 
@@ -2062,353 +2062,73 @@ def import_solutions(
         help="How to handle duplicate alias keys: error, override, or ignore",
     ),
 ) -> None:
-    """Import solutions from a CSV file.
+    """Import solutions from a CSV file into the current project.
 
-    Import multiple solutions from a CSV file with automatic validation and
-    error handling. The CSV should contain columns for event_id, solution_id
-    or solution_alias, model_tags, and parameters.
-
-    Required CSV columns:
-    - event_id: Which event the solution belongs to
-    - solution_id OR solution_alias: Unique identifier (UUID or alias string)
-    - model_tags: List of model tags (e.g., ["1S1L", "parallax"])
-    - parameters: Individual parameter columns (e.g., t0, u0, tE, s, q, alpha) OR JSON object
-
-    Parameter specification:
-    - Individual columns: Add parameter columns directly (e.g., t0, u0, tE, s, q, alpha, piEN, piEE, rho)
-    - JSON fallback: Use a 'parameters' column with JSON object if individual columns are not available
-    - Numeric values are automatically parsed as floats, non-numeric as strings
+    This command delegates all CSV parsing and solution creation to
+    :func:`microlens_submit.api.import_solutions_from_csv` and focuses solely on
+    validating command-line options, saving the project, and presenting a user
+    friendly summary. The CSV file must contain the required columns described
+    in the API documentation (``event_id``, ``solution_id`` or ``solution_alias``,
+    ``model_tags`` and parameter columns).
 
     Args:
-        csv_file: Path to the CSV file containing solutions to import.
-        parameter_map_file: Optional YAML file mapping CSV columns to solution attributes.
-        project_path: Path to the submission project directory.
-        delimiter: CSV delimiter (comma, tab, semicolon, etc.).
-        dry_run: Show what would be imported without making changes.
-        validate: Validate solution parameters during import.
-        on_duplicate: How to handle duplicate alias keys (error, override, ignore).
+        csv_file: Path to the CSV file containing solutions.
+        parameter_map_file: Optional YAML file mapping CSV columns to solution
+            attributes.
+        project_path: Directory of the submission project.
+        delimiter: CSV delimiter. If not provided the delimiter is auto
+            detected.
+        dry_run: If ``True``, show what would be imported without saving
+            changes.
+        validate: If ``True``, run solution validation during the import.
+        on_duplicate: How to handle duplicate alias keys. Choose from ``error``
+            (abort that row), ``override`` (replace the existing solution), or
+            ``ignore`` (skip the row).
 
     Example:
-        # CSV with individual parameter columns (recommended):
-        # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
-        # OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,"Simple fit"
-        # OGLE-2023-BLG-0001,binary,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"Binary fit"
-
-        >>> microlens-submit import-solutions solutions.csv --validate ./my_project
-        ✅ Imported 15 solutions successfully
-        ⚠️  Skipped 2 rows due to missing required fields
-        ❌ 1 row failed validation
+        >>> microlens-submit import-solutions solutions.csv \
+        ...     --project-path ./my_project --validate --on-duplicate override
 
     Note:
-        This command automatically saves changes to disk unless --dry-run is used.
-        File paths in the CSV are resolved relative to the current working directory.
-        Individual parameter columns are preferred over JSON for better usability.
+        Only a short summary of results is printed to the console. For a full
+        description of import behaviour, see ``import_solutions_from_csv`` in
+        the API module.
     """
-    import csv
-    import json
-    import yaml
-    from pathlib import Path
-    from typing import Dict, Any, List, Optional
 
-    # Validate on_duplicate option
     if on_duplicate not in ["error", "override", "ignore"]:
         typer.echo(f"❌ Invalid --on-duplicate option: {on_duplicate}")
         typer.echo("   Valid options: error, override, ignore")
         raise typer.Exit(1)
 
-    # Load submission
     try:
         submission = load(str(project_path))
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - unexpected I/O errors
         typer.echo(f"❌ Failed to load submission: {e}")
         raise typer.Exit(1)
 
-    # Load parameter mapping if provided
-    column_mapping = {}
-    if parameter_map_file:
-        try:
-            with open(parameter_map_file, "r", encoding="utf-8") as f:
-                column_mapping = yaml.safe_load(f)
-        except Exception as e:
-            typer.echo(f"❌ Failed to load parameter map file: {e}")
-            raise typer.Exit(1)
-
-    # Auto-detect delimiter if not specified
-    if not delimiter:
-        try:
-            with open(csv_file, "r", encoding="utf-8") as f:
-                sample = f.read(1024)
-                if "\t" in sample:
-                    delimiter = "\t"
-                elif ";" in sample:
-                    delimiter = ";"
-                else:
-                    delimiter = ","
-            typer.echo(f"🔍 Auto-detected delimiter: '{delimiter}'")
-        except Exception as e:
-            typer.echo(f"❌ Failed to read CSV file: {e}")
-            raise typer.Exit(1)
-
-    # Statistics
-    stats = {
-        "total_rows": 0,
-        "successful_imports": 0,
-        "skipped_rows": 0,
-        "validation_errors": 0,
-        "duplicate_handled": 0,
-        "errors": [],
-    }
-
     try:
-        with open(csv_file, "r", newline="", encoding="utf-8") as f:
-            # Find header row (first row with # or fallback to first row)
-            lines = f.readlines()
-            header_row = 0
-
-            for i, line in enumerate(lines):
-                if line.strip().startswith("#"):
-                    header_row = i
-                    break
-
-            # Clean header
-            header_line = lines[header_row].strip()
-            if header_line.startswith("# "):
-                header_line = header_line[2:]
-            elif header_line.startswith("#"):
-                header_line = header_line[1:]
-
-            # Parse header
-            reader = csv.DictReader(
-                [header_line] + lines[header_row + 1 :], delimiter=delimiter
-            )
-
-            for row_num, row in enumerate(reader, start=header_row + 2):
-                stats["total_rows"] += 1
-
-                try:
-                    # Validate required fields
-                    if not row.get("event_id"):
-                        stats["skipped_rows"] += 1
-                        stats["errors"].append(f"Row {row_num}: Missing event_id")
-                        continue
-
-                    solution_id = row.get("solution_id")
-                    solution_alias = row.get("solution_alias")
-
-                    if not solution_id and not solution_alias:
-                        stats["skipped_rows"] += 1
-                        stats["errors"].append(
-                            f"Row {row_num}: Missing solution_id or solution_alias"
-                        )
-                        continue
-
-                    if not row.get("model_tags"):
-                        stats["skipped_rows"] += 1
-                        stats["errors"].append(f"Row {row_num}: Missing model_tags")
-                        continue
-
-                    # Parse model tags
-                    try:
-                        model_tags = json.loads(row["model_tags"])
-                        if not isinstance(model_tags, list):
-                            raise ValueError("model_tags must be a list")
-                    except json.JSONDecodeError:
-                        stats["skipped_rows"] += 1
-                        stats["errors"].append(
-                            f"Row {row_num}: Invalid model_tags JSON"
-                        )
-                        continue
-
-                    # Extract model type and higher order effects
-                    model_type = None
-                    higher_order_effects = []
-
-                    for tag in model_tags:
-                        if tag in [
-                            "1S1L",
-                            "1S2L",
-                            "2S1L",
-                            "2S2L",
-                            "1S3L",
-                            "2S3L",
-                            "other",
-                        ]:
-                            if model_type:
-                                stats["skipped_rows"] += 1
-                                stats["errors"].append(
-                                    f"Row {row_num}: Multiple model types specified"
-                                )
-                                continue
-                            model_type = tag
-                        elif tag in [
-                            "parallax",
-                            "finite-source",
-                            "lens-orbital-motion",
-                            "xallarap",
-                            "gaussian-process",
-                            "stellar-rotation",
-                            "fitted-limb-darkening",
-                            "other",
-                        ]:
-                            higher_order_effects.append(tag)
-
-                    if not model_type:
-                        stats["skipped_rows"] += 1
-                        stats["errors"].append(
-                            f"Row {row_num}: No valid model type found in model_tags"
-                        )
-                        continue
-
-                    # Parse parameters
-                    parameters = {}
-
-                    # First, try to parse individual parameter columns (more natural)
-                    for key, value in row.items():
-                        if key not in [
-                            "event_id",
-                            "solution_id",
-                            "solution_alias",
-                            "model_tags",
-                            "notes",
-                            "parameters",
-                        ]:
-                            if isinstance(value, str) and value.strip():
-                                try:
-                                    # Try to parse as float first, then fall back to string
-                                    parameters[key] = float(value)
-                                except ValueError:
-                                    # If it's not a number, keep as string
-                                    parameters[key] = value
-                            elif (
-                                value and str(value).strip()
-                            ):  # Handle non-string values
-                                try:
-                                    parameters[key] = float(value)
-                                except (ValueError, TypeError):
-                                    parameters[key] = str(value)
-
-                    # If no individual parameters found, try JSON parameters column as fallback
-                    if not parameters and row.get("parameters"):
-                        try:
-                            parameters = json.loads(row["parameters"])
-                        except json.JSONDecodeError:
-                            stats["skipped_rows"] += 1
-                            stats["errors"].append(
-                                f"Row {row_num}: Invalid parameters JSON"
-                            )
-                            continue
-
-                    # Handle notes
-                    notes = row.get("notes", "").strip()
-                    notes_path = None
-                    notes_content = None
-
-                    if notes:
-                        # Check if notes is a file path
-                        notes_file = Path(notes)
-                        if notes_file.exists() and notes_file.is_file():
-                            notes_path = str(notes_file)
-                        else:
-                            # Treat as raw notes content
-                            notes_content = notes
-
-                    # Get or create event
-                    event = submission.get_event(row["event_id"])
-
-                    # Check for duplicates
-                    alias_key = f"{row['event_id']} {solution_alias or solution_id}"
-                    existing_solution = None
-
-                    if solution_alias:
-                        existing_solution = submission.get_solution_by_alias(
-                            row["event_id"], solution_alias
-                        )
-                    elif solution_id:
-                        existing_solution = event.get_solution(solution_id)
-
-                    if existing_solution:
-                        if on_duplicate == "error":
-                            stats["skipped_rows"] += 1
-                            stats["errors"].append(
-                                f"Row {row_num}: Duplicate alias key '{alias_key}'"
-                            )
-                            continue
-                        elif on_duplicate == "ignore":
-                            stats["duplicate_handled"] += 1
-                            continue
-                        elif on_duplicate == "override":
-                            # Remove existing solution
-                            event.remove_solution(
-                                existing_solution.solution_id, force=True
-                            )
-                            stats["duplicate_handled"] += 1
-
-                    if not dry_run:
-                        # Create solution
-                        solution = event.add_solution(model_type, parameters)
-
-                        # Set alias if provided
-                        if solution_alias:
-                            solution.alias = solution_alias
-                        elif solution_id:
-                            solution.alias = solution_id
-
-                        # Set higher order effects
-                        if higher_order_effects:
-                            solution.higher_order_effects = higher_order_effects
-
-                        # Set notes if provided
-                        if notes_path:
-                            # Copy notes file to solution
-                            import shutil
-
-                            solution_notes_path = (
-                                Path(project_path)
-                                / "tmp"
-                                / f"{solution.solution_id}.md"
-                            )
-                            solution_notes_path.parent.mkdir(
-                                parents=True, exist_ok=True
-                            )
-                            shutil.copy2(notes_path, solution_notes_path)
-                            solution.notes_path = str(
-                                solution_notes_path.relative_to(project_path)
-                            )
-                        elif notes_content:
-                            solution.set_notes(
-                                notes_content, project_path, convert_escapes=True
-                            )
-
-                        # Validate if requested
-                        if validate:
-                            validation_messages = solution.run_validation()
-                            if validation_messages:
-                                stats["validation_errors"] += 1
-                                for msg in validation_messages:
-                                    stats["errors"].append(
-                                        f"Row {row_num} validation: {msg}"
-                                    )
-
-                    stats["successful_imports"] += 1
-
-                except Exception as e:
-                    stats["errors"].append(f"Row {row_num}: {str(e)}")
-                    continue
-
-    except Exception as e:
-        typer.echo(f"❌ Failed to read CSV file: {e}")
+        stats = import_solutions_from_csv(
+            submission=submission,
+            csv_file=csv_file,
+            parameter_map_file=parameter_map_file,
+            delimiter=delimiter,
+            dry_run=dry_run,
+            validate=validate,
+            on_duplicate=on_duplicate,
+            project_path=project_path,
+        )
+    except Exception as e:  # pragma: no cover - unexpected parse errors
+        typer.echo(f"❌ Failed to import solutions: {e}")
         raise typer.Exit(1)
 
-    # Save if not dry run
     if not dry_run and stats["successful_imports"] > 0:
         try:
             submission.save()
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - disk failures
             typer.echo(f"❌ Failed to save submission: {e}")
             raise typer.Exit(1)
 
-    # Print summary
-    typer.echo(f"\n📊 Import Summary:")
+    typer.echo("\n📊 Import Summary:")
     typer.echo(f"   Total rows processed: {stats['total_rows']}")
     typer.echo(f"   Successful imports: {stats['successful_imports']}")
     typer.echo(f"   Skipped rows: {stats['skipped_rows']}")
@@ -2416,16 +2136,16 @@ def import_solutions(
     typer.echo(f"   Duplicates handled: {stats['duplicate_handled']}")
 
     if stats["errors"]:
-        typer.echo(f"\n⚠️  Errors encountered:")
-        for error in stats["errors"][:10]:  # Show first 10 errors
+        typer.echo("\n⚠️  Errors encountered:")
+        for error in stats["errors"][:10]:
             typer.echo(f"   {error}")
         if len(stats["errors"]) > 10:
             typer.echo(f"   ... and {len(stats['errors']) - 10} more errors")
 
     if dry_run:
-        typer.echo(f"\n🔍 Dry run completed - no changes made")
+        typer.echo("\n🔍 Dry run completed - no changes made")
     else:
-        typer.echo(f"\n✅ Import completed successfully")
+        typer.echo("\n✅ Import completed successfully")
 
 
 if __name__ == "__main__":  # pragma: no cover
