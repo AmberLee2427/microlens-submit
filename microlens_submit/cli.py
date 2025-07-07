@@ -50,7 +50,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .api import load, import_solutions_from_csv
+from .utils import load, import_solutions_from_csv
 from .dossier import generate_dashboard_html
 from . import __version__
 

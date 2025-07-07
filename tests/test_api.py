@@ -25,7 +25,7 @@ including creation, persistence, validation, and export operations.
 Example:
     >>> import pytest
     >>> from pathlib import Path
-    >>> from microlens_submit.api import load
+    >>> from microlens_submit.utils import load
     >>>
     >>> # Run a specific test
     >>> def test_basic_functionality(tmp_path):
@@ -54,7 +54,8 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from microlens_submit.api import load, import_solutions_from_csv
+from microlens_submit import Event, Solution, Submission
+from microlens_submit.utils import load, import_solutions_from_csv
 
 
 def test_full_lifecycle(tmp_path):
@@ -780,7 +781,7 @@ def test_cli_add_and_edit_alias(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     # Check that alias is set in the project
-    from microlens_submit.api import load
+    from microlens_submit.utils import load
 
     sub = load(str(project))
     sol = next(iter(sub.get_event("EVENT001").solutions.values()))
@@ -872,7 +873,7 @@ def test_api_import_solutions_from_csv():
     """Test the API import_solutions_from_csv function directly."""
     import tempfile
     from pathlib import Path
-    from microlens_submit.api import load, import_solutions_from_csv
+    from microlens_submit.utils import load, import_solutions_from_csv
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create a test CSV file
@@ -955,7 +956,7 @@ def test_api_import_solutions_from_csv_with_data_file():
     """Test the API import_solutions_from_csv function using the actual test file."""
     import tempfile
     from pathlib import Path
-    from microlens_submit.api import load, import_solutions_from_csv
+    from microlens_submit.utils import load, import_solutions_from_csv
 
     # Use the actual test CSV file from tests/data
     csv_file = Path(__file__).parent / "data" / "test_import.csv"

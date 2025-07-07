@@ -11,12 +11,15 @@ import math
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from .event import Event
 from .solution import Solution
+
+if TYPE_CHECKING:
+    from .event import Event
 
 
 class Submission(BaseModel):

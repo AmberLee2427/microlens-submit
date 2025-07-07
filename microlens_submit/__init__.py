@@ -8,6 +8,6 @@ the command line interface.
 __version__ = "0.13.0"
 
 from .models import Solution, Event, Submission
-from .api import load
+from .utils import load
 
 __all__ = ["Event", "Solution", "Submission", "load"]

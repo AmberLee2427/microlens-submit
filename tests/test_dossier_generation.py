@@ -22,7 +22,14 @@ import time
 import json
 import os
 import shlex
-from microlens_submit.api import load
+import tempfile
+from unittest.mock import patch
+
+import pytest
+
+from microlens_submit import Event, Solution, Submission
+from microlens_submit.utils import load
+from microlens_submit.dossier import generate_dashboard_html
 
 
 def run_command(cmd, check=True, capture_output=True):

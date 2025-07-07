@@ -1,62 +1,36 @@
+#!/usr/bin/env python3
 """
-Submission validation module for microlens-submit.
+Validate a microlens-submit submission.
 
-This module provides standalone validation functionality for microlensing challenge
-submissions. It defines the core data models (Solution, Event, Submission) and
-provides functions to load and validate submission directories against these models.
+This script validates a submission project directory and reports any issues.
+It can be used as a standalone validation tool or integrated into CI/CD pipelines.
 
-The module can be used both as a standalone script and as an imported module for
-validation purposes. It supports the complete submission structure including
-events, solutions, and metadata validation.
+Usage:
+    python validate_submission.py <project_directory>
 
-**Core Components:**
-- Solution: Individual model fit with parameters and metadata
-- Event: Container for multiple solutions for a single microlensing event
-- Submission: Top-level container for all events and team information
-
-**Validation Features:**
-- JSON schema validation using Pydantic models
-- File structure validation
-- Data type and format checking
-- Optional field handling with defaults
+The script will:
+1. Load the submission from the specified directory
+2. Run comprehensive validation on all events and solutions
+3. Report any validation issues found
+4. Exit with code 0 if valid, 1 if issues found
 
 Example:
-    >>> from validate_submission import load_submission
-    >>>
-    >>> # Validate a submission directory
-    >>> try:
-    ...     submission = load_submission("./my_submission")
-    ...     print("Submission is valid!")
-    ... except Exception as e:
-    ...     print(f"Validation failed: {e}")
-    >>>
-    >>> # Access submission data
-    >>> print(f"Team: {submission.team_name}")
-    >>> print(f"Events: {len(submission.events)}")
-    >>> for event_id, event in submission.events.items():
-    ...     print(f"  {event_id}: {len(event.solutions)} solutions")
+    python validate_submission.py ./my_submission_project
 
-Note:
-    This module is designed to work with the standard microlens-submit project
-    structure. It expects submission.json in the root and events/ subdirectories
-    with event.json and solutions/ subdirectories.
+Exit codes:
+    0: Submission is valid (no issues found)
+    1: Submission has validation issues
+    2: Error loading submission or other fatal error
 """
-
-from __future__ import annotations
 
 import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
-from pydantic import ValidationError
-
-from microlens_submit.api import Event, Solution, Submission
-
-
-# The Solution, Event, and Submission classes are imported from
-# ``microlens_submit.api`` to ensure consistency with the main library.
+from microlens_submit.models import Event, Solution, Submission
+from microlens_submit.utils import load
 
 
 def load_submission(path: str) -> Submission:

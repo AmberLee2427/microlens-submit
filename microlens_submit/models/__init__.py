@@ -22,4 +22,6 @@ from .solution import Solution
 from .event import Event
 from .submission import Submission
 
+Event.model_rebuild()
+
 __all__ = ["Solution", "Event", "Submission"] 

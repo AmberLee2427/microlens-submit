@@ -7,11 +7,14 @@ for a single microlensing event.
 
 import uuid
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING, Annotated
 
 from pydantic import BaseModel, Field
 
 from .solution import Solution
+
+if TYPE_CHECKING:
+    from .submission import Submission
 
 
 class Event(BaseModel):
@@ -61,7 +64,7 @@ class Event(BaseModel):
 
     event_id: str
     solutions: Dict[str, Solution] = Field(default_factory=dict)
-    submission: Optional["Submission"] = Field(default=None, exclude=True)
+    submission: Optional[Annotated["Submission", Field(exclude=True)]] = None
 
     def add_solution(
         self, model_type: str, parameters: dict, alias: Optional[str] = None

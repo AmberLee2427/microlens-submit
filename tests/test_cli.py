@@ -78,7 +78,8 @@ from pathlib import Path
 from typer.testing import CliRunner
 import pytest
 
-from microlens_submit import api
+from microlens_submit import Event, Solution, Submission
+from microlens_submit.utils import load
 from microlens_submit.cli import app
 
 runner = CliRunner()
@@ -168,7 +169,7 @@ def test_cli_init_and_add():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
+        sub = load(".")
         evt = sub.get_event("test-event")
         assert len(evt.solutions) == 1
         sol_id = next(iter(evt.solutions))
@@ -221,7 +222,7 @@ def test_cli_export():
             ).exit_code
             == 0
         )
-        sub = api.load(".")
+        sub = load(".")
         evt = sub.get_event("evt")
         sol1, sol2 = list(evt.solutions.keys())
 
@@ -277,7 +278,7 @@ def test_cli_list_solutions():
             ).exit_code
             == 0
         )
-        sub = api.load(".")
+        sub = load(".")
         evt = sub.get_event("evt")
         ids = list(evt.solutions.keys())
         result = runner.invoke(app, ["list-solutions", "evt"])
@@ -442,8 +443,8 @@ def test_params_file_option_and_bands():
             ],
         )
         assert result.exit_code == 0
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters == params
         assert sol.bands == ["0", "1"]
         assert sol.higher_order_effects == ["parallax"]
@@ -509,17 +510,17 @@ def test_cli_activate():
             ).exit_code
             == 0
         )
-        sub = api.load(".")
-        sol_id = next(iter(sub.get_event("evt").solutions))
+        sub = load(".")
+        sol_id = next(iter(load(".").get_event("evt").solutions))
 
         assert runner.invoke(app, ["deactivate", sol_id]).exit_code == 0
-        sub = api.load(".")
-        assert not sub.get_event("evt").solutions[sol_id].is_active
+        sub = load(".")
+        assert not load(".").get_event("evt").solutions[sol_id].is_active
 
         result = runner.invoke(app, ["activate", sol_id])
         assert result.exit_code == 0
-        sub = api.load(".")
-        assert sub.get_event("evt").solutions[sol_id].is_active
+        sub = load(".")
+        assert load(".").get_event("evt").solutions[sol_id].is_active
 
 
 def test_cli_validate_solution():
@@ -547,8 +548,8 @@ def test_cli_validate_solution():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol_id = next(iter(sub.get_event("evt").solutions))
+        sub = load(".")
+        sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test validation of valid solution
         result = runner.invoke(app, ["validate-solution", sol_id])
@@ -571,8 +572,8 @@ def test_cli_validate_solution():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol_id2 = next(iter(sub.get_event("evt2").solutions))
+        sub = load(".")
+        sol_id2 = next(iter(load(".").get_event("evt2").solutions))
 
         result = runner.invoke(app, ["validate-solution", sol_id2])
         assert result.exit_code == 0
@@ -688,8 +689,8 @@ def test_cli_edit_solution():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol_id = next(iter(sub.get_event("evt").solutions))
+        sub = load(".")
+        sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test updating notes
         result = runner.invoke(
@@ -798,8 +799,8 @@ uncertainties:
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
         assert sol.parameters["tE"] == 25.0
@@ -838,8 +839,8 @@ def test_cli_structured_json_params_file():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
         assert sol.parameters["tE"] == 25.0
@@ -875,8 +876,8 @@ def test_cli_simple_params_file():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
         assert sol.parameters["tE"] == 25.0
@@ -1025,8 +1026,8 @@ def test_cli_higher_order_effects_editing():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol_id = next(iter(sub.get_event("evt").solutions))
+        sub = load(".")
+        sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test updating higher-order effects
         result = runner.invoke(
@@ -1081,8 +1082,8 @@ def test_cli_compute_info_options():
         )
         assert result.exit_code == 0
 
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.compute_info["cpu_hours"] == 15.5
         assert sol.compute_info["wall_time_hours"] == 3.2
 
@@ -1116,8 +1117,8 @@ def test_markdown_notes_round_trip():
             ],
         )
         assert result.exit_code == 0
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.notes == md_note
         # Now update via edit-solution
         new_md = md_note + "\n---\nAppended"
@@ -1125,8 +1126,8 @@ def test_markdown_notes_round_trip():
             app, ["edit-solution", sol.solution_id, "--notes", new_md]
         )
         assert result.exit_code == 0
-        sub = api.load(".")
-        sol2 = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol2 = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol2.notes == new_md
 
 
@@ -1161,8 +1162,8 @@ def test_markdown_notes_in_list_and_compare():
             ],
         )
         assert result.exit_code == 0
-        sub = api.load(".")
-        sol = next(iter(sub.get_event("evt").solutions.values()))
+        sub = load(".")
+        sol = next(iter(load(".").get_event("evt").solutions.values()))
         # Check list-solutions output
         result = runner.invoke(app, ["list-solutions", "evt"])
         assert result.exit_code == 0
@@ -1340,8 +1341,7 @@ def test_cli_generate_dossier_selective_solution():
         assert result.exit_code == 0
 
         # Get the solution ID from the first solution
-        from microlens_submit import api
-        submission = api.load(".")
+        submission = load(".")
         event = submission.events["EVENT001"]
         # Find the 1S1L solution specifically (not using next(iter()) which is non-deterministic)
         solution_id = None
@@ -1475,8 +1475,7 @@ def test_cli_generate_dossier_full_generation():
         assert (dossier_dir / "EVENT002.html").exists()
 
         # Should have solution pages
-        from microlens_submit import api
-        submission = api.load(".")
+        submission = load(".")
         for event in submission.events.values():
             for solution_id in event.solutions:
                 assert (dossier_dir / f"{solution_id}.html").exists()
@@ -1509,8 +1508,7 @@ def test_cli_generate_dossier_priority_flags():
         assert result.exit_code == 0
 
         # Get the solution ID
-        from microlens_submit import api
-        submission = api.load(".")
+        submission = load(".")
         event = submission.events["EVENT001"]
         solution_id = next(iter(event.solutions.keys()))
 
@@ -1545,8 +1543,6 @@ OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,
         csv_file.write_text(csv_content)
 
         # Load project
-        from microlens_submit.api import load
-
         submission = load(tmpdir)
         submission.team_name = "Test Team"
 
@@ -1638,8 +1634,6 @@ OGLE-2023-BLG-0001,test_solution,"[""1S1L""]",2459123.5,0.1,20.0,"First import"
         csv_file.write_text(csv_content)
 
         # Load project
-        from microlens_submit.api import load
-
         submission = load(tmpdir)
         submission.team_name = "Test Team"
 
@@ -1725,7 +1719,7 @@ def test_cli_import_calls_api(monkeypatch, tmp_path):
     csv_file = tmp_path / "dummy.csv"
     csv_file.write_text("dummy")
 
-    from microlens_submit.api import load as load_api
+    from microlens_submit.utils import load as load_api
 
     submission = load_api(tmp_path)
     submission.team_name = "Test Team"
@@ -1802,8 +1796,6 @@ def test_csv_import_from_data_file():
         assert csv_file.exists(), f"Test CSV file not found: {csv_file}"
 
         # Load project
-        from microlens_submit.api import load
-
         submission = load(tmpdir)
         submission.team_name = "Test Team"
 

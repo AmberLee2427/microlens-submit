@@ -39,7 +39,7 @@ try:
 except ImportError:
     import importlib_resources
 
-from .api import Submission, Event, Solution
+from .models import Submission, Event, Solution
 
 
 def generate_dashboard_html(submission: Submission, output_dir: Path) -> None:
