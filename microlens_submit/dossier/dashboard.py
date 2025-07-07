@@ -82,26 +82,25 @@ def generate_dashboard_html(submission: Submission, output_dir: Path) -> None:
         f.write(html_content)
 
     # Copy logos using importlib_resources for robust package data access
+    def _get_asset_path(package, filename):
+        try:
+            # Python 3.9+ or importlib_resources >= 3.1
+            return importlib_resources.files(package).joinpath(filename)
+        except AttributeError:
+            # Python 3.8 fallback
+            with importlib_resources.path(package, filename) as p:
+                return p
+
     try:
-        logo_path = importlib_resources.files('microlens_submit.assets').joinpath('rges-pit_logo.png')
+        logo_path = _get_asset_path('microlens_submit.assets', 'rges-pit_logo.png')
         shutil.copy2(logo_path, output_dir / "assets" / "rges-pit_logo.png")
     except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-        # Fallback for older Python versions
-        try:
-            logo_path = importlib_resources.path('microlens_submit.assets', 'rges-pit_logo.png')
-            shutil.copy2(logo_path, output_dir / "assets" / "rges-pit_logo.png")
-        except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-            pass
+        pass
     try:
-        github_logo_path = importlib_resources.files('microlens_submit.assets').joinpath('github-desktop_logo.png')
+        github_logo_path = _get_asset_path('microlens_submit.assets', 'github-desktop_logo.png')
         shutil.copy2(github_logo_path, output_dir / "assets" / "github-desktop_logo.png")
     except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-        # Fallback for older Python versions
-        try:
-            github_logo_path = importlib_resources.path('microlens_submit.assets', 'github-desktop_logo.png')
-            shutil.copy2(github_logo_path, output_dir / "assets" / "github-desktop_logo.png")
-        except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-            pass
+        pass
 
     # After generating index.html, generate event pages
     # Import here to avoid circular imports

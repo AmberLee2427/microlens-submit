@@ -198,244 +198,127 @@ microlens-submit export --output "final_submission.zip"
 ```plaintext
 <project_path>/
 ├── submission.json
+├── aliases.json
 ├── events/
+│   ├── <event_id>/
+│   │   ├── event.json
+│   │   └── solutions/
+│   │       ├── <solution_id>.json
+│   │       └── <solution_id>.md
 │   └── <event_id>/
 │       ├── event.json
 │       └── solutions/
-│           ├── <solution_id_A>.json
-│           └── <solution_id_B>.json
-```
-
-### Example Solution File
-
-```json
-{
-  "solution_id": "a1b2c3d4-e5f6-...",
-  "creation_timestamp": "2025-07-15T13:45:10Z",
-  "is_active": true,
-  "model_type": "1S2L",
-  "bands": ["0", "1", "2"],
-  "higher_order_effects": ["parallax", "finite-source"],
-  "t_ref": 2459123.5,
-  "parameters": {"t0": 555.5, "u0": 0.1, "tE": 25.0, "s": 1.2, "q": 0.001, "alpha": 45.0},
-  "parameter_uncertainties": {"t0": [0.1, 0.1], "u0": 0.02, "tE": [0.3, 0.4]},
-  "physical_parameters": {"M_L": 0.5, "D_L": 7.8, "M_planet": 1.5, "a": 2.8},
-  "log_likelihood": -1234.56,
-  "relative_probability": 0.7,
-  "n_data_points": 1250,
-  "posterior_path": "posteriors/posterior_A.h5",
-  "lightcurve_plot_path": "plots/event001_lc.png",
-  "lens_plane_plot_path": "plots/event001_lens.png",
-  "notes": "# Binary Lens Solution\n\n## Model Overview\nThis solution represents a **binary lens** with a planetary companion...",
-  "compute_info": {
-    "cpu_hours": 15.5,
-    "wall_time_hours": 2.1,
-    "dependencies": [
-      "numpy==1.21.2",
-      "scipy==1.7.1",
-      "emcee==3.1.0"
-    ],
-    "git_info": {
-      "commit": "f4ac2a9f...e1",
-      "branch": "feature/new-model",
-      "is_dirty": true
-    }
-  }
-}
-```
-
-> **Note:** The `notes` field supports Markdown formatting for rich documentation. `posterior_path`, `lightcurve_plot_path`, and `lens_plane_plot_path` should point to files within the project directory.
-
----
-
-## 7. Example Usage: Full Lifecycle
-
-```python
-import microlens_submit
-
-# Initialize the submission
-sub = microlens_submit.load(project_path="./my_challenge_submission")
-sub.team_name = "Planet Pounders"
-sub.tier = "advanced"
-sub.hardware_info = {"cpu": "Intel i9", "ram_gb": 64}
-
-# Add a solution
-evt = sub.get_event("event-001")
-params = {"t0": 123.5, "u0": 0.1, "tE": 12.0, "q": 0.1, "s": 1.2, "alpha": 45.0}
-sol = evt.add_solution(model_type="1S2L", parameters=params)
-sol.bands = ["0", "1"]
-sol.higher_order_effects = ["parallax"]
-sol.t_ref = 2459123.5
-sol.set_compute_info(cpu_hours=24.0)
-sol.notes = "# Binary Lens Solution\n\n## Model Overview\nThis solution represents a **binary lens**..."
-sol.physical_parameters = {"M_L": 0.5, "D_L": 7.8, "M_planet": 1.5, "a": 2.8}
-sol.parameter_uncertainties = {"t0": 0.1, "u0": 0.02, "tE": 0.5}
-sol.log_likelihood = -1234.56
-sol.relative_probability = 0.7
-sol.n_data_points = 1250
-
-# Validate the solution
-validation_messages = sol.validate()
-if validation_messages:
-    print("Validation warnings:", validation_messages)
-
-# Save work
-sub.save()
-
-# Final export
-sub = microlens_submit.load(project_path="./my_challenge_submission")
-sub.export(filename="planet_pounders_final.zip")
+│           ├── <solution_id>.json
+│           └── <solution_id>.md
+└── tmp/
+    └── <solution_id>.md
 ```
 
 ---
 
-## 8. Style Guidelines
+## 7. Development Environment Notes
 
-- **Formatting:** Use `black` for all Python code
-- **Type Hinting:** Required for all functions
-- **Docstrings:** Google-style for all public APIs
-- **Commits:** Follow Conventional Commits
+### Test Conda Environments
 
----
+For local testing across different Python versions, we use the following conda environments:
 
-## 9. Distribution & Installation
+- **`test_py38`**: Python 3.8 environment for testing compatibility with older Python versions
+- **`test_py311`**: Python 3.11 environment for testing with newer Python features
 
-The tool is published to **PyPI**.
+These environments are used to verify that the codebase works correctly across the supported Python version range (3.8+).
 
-### Installation
+### Environment Setup Commands
 
 ```bash
-pip install microlens-submit
+# Create Python 3.8 test environment
+conda create -y -n test_py38 python=3.8
+conda activate test_py38
+pip install -e ".[dev]"
+
+# Create Python 3.11 test environment  
+conda create -y -n test_py311 python=3.11
+conda activate test_py311
+pip install -e ".[dev]"
 ```
 
-### Development Setup
+### Key Compatibility Notes
 
-To run the tests and build the project locally, install the development
-dependencies with either `pip install -e .[dev]` or
-`pip install -r requirements-dev.txt`. The latter installs the project in
-editable mode and includes all packages required for the test suite.
-After installing, run `pytest` to ensure the tests pass.
-
-### Packaging
-
-The project uses `pyproject.toml` for dependency and entry point configuration.
+- The project uses `importlib_resources` compatibility shims for asset loading to support both Python 3.8 and 3.9+
+- Type annotations use `typing` module imports for Python 3.8 compatibility (e.g., `List`, `Optional` instead of `list`, `|`)
+- All tests should pass in both environments before merging changes
 
 ---
 
-## 10. Release Management & Instructions for Agents
+## 8. Pre-Release Checklist
 
-### 10.1. Release Process Overview
+Before releasing any version, ensure the following:
 
-Before creating any PRs that implement new features or significant changes, agents should follow this release process to ensure proper versioning and distribution.
+### Code Quality
+- [ ] All tests pass locally (`pytest --cov=microlens_submit --cov-report=xml`)
+- [ ] All tests pass in CI (GitHub Actions)
+- [ ] Code coverage is maintained or improved
+- [ ] No linting errors (`flake8`, `black`, `isort`)
+- [ ] Type hints are complete and accurate
+- [ ] Documentation is up to date
 
-### 10.2. Pre-Release Checklist
+### Compatibility
+- [ ] Tests pass on Python 3.8 (`conda activate test_py38`)
+- [ ] Tests pass on Python 3.11 (`conda activate test_py311`)
+- [ ] No breaking changes to public API
+- [ ] Backward compatibility maintained where possible
 
-Before creating a release, ensure:
+### Documentation
+- [ ] README.md is current and accurate
+- [ ] CHANGELOG.md is updated with new features/fixes
+- [ ] API documentation is complete
+- [ ] CLI help text is comprehensive
+- [ ] Examples in documentation work correctly
 
-1. **Code Quality:**
-   - All tests pass (`pytest`)
-   - Code is formatted (`black .`)
-   - No linting errors
-   - Working tree is clean (`git status`)
+### Release Process
+- [ ] Version number updated in `pyproject.toml`
+- [ ] Version number updated in `microlens_submit/__init__.py`
+- [ ] CHANGELOG.md updated with release notes
+- [ ] Git tag created for the release
+- [ ] Release notes prepared for GitHub release
 
-2. **Documentation:**
-   - README.md is up to date
-   - API documentation is current
-   - CHANGELOG.md exists and is updated
-   - Tutorial notebook is current
+### Testing
+- [ ] Manual testing of CLI commands
+- [ ] Manual testing of Python API
+- [ ] Export functionality tested with real data
+- [ ] Dossier generation tested
+- [ ] Validation warnings tested
 
-3. **Version Management:**
-   - Update version in `pyproject.toml`
-   - Update version in `microlens_submit/__init__.py`
-   - Consider if this is a major, minor, or patch release
+### Deployment
+- [ ] Package builds successfully (`python -m build`)
+- [ ] Package installs correctly in clean environment
+- [ ] All dependencies are correctly specified
+- [ ] No sensitive data in package
+- [ ] License and metadata are correct
 
-### 10.3. Release Commands for Agents
+---
 
-When ready to create a release, execute these commands in sequence:
+## 9. Release Notes Template
 
-```bash
-# 1. Ensure working tree is clean
-git status
+### Version X.Y.Z - [Date]
 
-# 2. Run tests to ensure everything works
-pytest
+#### Added
+- New feature 1
+- New feature 2
 
-# 3. Format code
-black .
+#### Changed
+- Changed behavior 1
+- Changed behavior 2
 
-# 4. Create and push the git tag
-git tag -a v<X.Y.Z> -m "Release v<X.Y.Z> - <brief description>"
-git push origin v<X.Y.Z>
+#### Fixed
+- Bug fix 1
+- Bug fix 2
 
-# 5. Build the distribution
-python -m build
+#### Removed
+- Removed feature 1 (if any)
 
-# 6. Check the built distribution
-twine check dist/*
+#### Breaking Changes
+- Breaking change 1 (if any)
 
-# 7. Upload to PyPI (if this is a production release)
-# twine upload dist/*
-```
-
-### 10.4. Version Numbering Strategy
-
-- **Patch releases (0.14.0 → 0.14.1):** Bug fixes, minor improvements
-- **Minor releases (0.14.0 → 0.15.0):** New features, non-breaking changes
-- **Major releases (0.14.0 → 1.0.0):** Breaking changes, major rewrites
-
-### 10.5. Release Notes Template
-
-When creating a release, include:
-
-```markdown
-## Release v<X.Y.Z>
-
-### What's New
-- [Feature 1]
-- [Feature 2]
-
-### Bug Fixes
-- [Bug fix 1]
-- [Bug fix 2]
-
-### Breaking Changes
-- [Any breaking changes]
-
-### Dependencies
-- Updated [dependency] to version [X.Y.Z]
-```
-
-### 10.6. Post-Release Tasks
-
-After creating a release:
-
-1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.14.0 → 0.14.1-dev)
-2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
-3. **Update Roadmap:** Mark completed tasks in this document
-
-### 10.7. Automated Release Workflow
-
-For future automation, consider implementing:
-
-1. **GitHub Actions** for automated testing and building
-2. **Release drafter** for automatic changelog generation
-3. **Automated PyPI publishing** on tag creation
-
-### 10.8. Current Release Status
-
-- **v0.11.0:** ✅ Released - Enhanced Parameter Validation, YAML Support, Markdown Notes
-- **v0.12.0:** ✅ Released - Comprehensive Documentation, Enhanced Dossier Generation, Parameter File Support
-- **v0.12.1:** ✅ Released - Hardware Info Management, Enhanced Documentation, Example Parameter Files
-- **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict
-- **v0.13.0:** ✅ Released (2024-12-19) - High Automation Support, Bulk CSV Import, Solution Aliases
-- **v0.14.0:** ✅ Released (2024-12-19) - Modular Architecture, Enhanced Error Messaging, Improved CLI Help
-- **v1.0.0:** 📋 Planned - Official Release
-
-### v0.14.0 Highlights
-- **Modular Architecture:** Complete refactoring for improved maintainability with organized packages and modules
-- **Enhanced Error Messaging:** Comprehensive error handling with actionable suggestions and user-friendly guidance
-- **Improved CLI Help:** Enhanced command-line interface with [BASIC]/[ADVANCED] tags and practical usage examples
-- **Code Organization:** Better separation of concerns while maintaining backward compatibility
-- **Developer Experience:** Improved code readability, debugging capabilities, and maintainability
-- **User Experience:** Better error recovery and clearer guidance throughout the application
+#### Migration Guide
+- How to migrate from previous version (if needed)
 
