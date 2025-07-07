@@ -29,6 +29,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
 
+    - name: Verify package installation
+      run: |
+        python -c "import microlens_submit.dossier; print('Package imported successfully')"
+
     - name: Run tests with pytest
       run: |
-        PYTHONPATH=$PYTHONPATH:. pytest --cov=microlens_submit --cov-report=xml
+        pytest --cov=microlens_submit --cov-report=xml
