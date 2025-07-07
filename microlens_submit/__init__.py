@@ -5,7 +5,7 @@ validate, and export a challenge submission using either the Python API or
 the command line interface.
 """
 
-__version__ = "0.13.0"
+__version__ = "0.14.0"
 
 from .models import Solution, Event, Submission
 from .utils import load

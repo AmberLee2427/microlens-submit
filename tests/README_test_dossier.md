@@ -1,13 +1,13 @@
 # Testing the Dossier Generation Feature
 
-This directory contains a test script to demonstrate the new dossier generation feature and batch CSV import functionality in `microlens-submit` v0.13.0.
+This directory contains a test script to demonstrate the new dossier generation feature and batch CSV import functionality in `microlens-submit` v0.14.0.
 
 ## Quick Test
 
 To test the dossier generation feature:
 
 ```bash
-# Make sure you have microlens-submit installed (version>=0.13.0)
+# Make sure you have microlens-submit installed (version>=0.14.0)
 pip install microlens-submit
 
 # Run the test script (from project root)
@@ -130,45 +130,3 @@ To remove the test files:
 ```bash
 rm -rf test_submission_project test_dossier_output
 ```
-
-## Troubleshooting
-
-If the script fails:
-
-1. **Check microlens-submit installation:**
-   ```bash
-   microlens-submit --version
-   ```
-
-2. **Verify the command works:**
-   ```bash
-   microlens-submit --help
-   ```
-
-3. **Check for any error messages** in the script output
-
-4. **Manual browser opening:** If the automatic browser opening fails, manually open the `test_dossier_output/index.html` file in your browser
-
-5. **Path issues:** Make sure you're running the script from the project root directory
-
-6. **CSV import issues:** Verify that `tests/data/test_import.csv` exists and is readable
-
-## Integration with Test Suite
-
-This test script is designed to work alongside the existing test suite:
-
-- **Location:** `tests/test_dossier_generation.py`
-- **Compatible with:** `pytest` (though it's primarily a demonstration script)
-- **Dependencies:** Requires `microlens-submit` to be installed
-- **Test Data:** Uses `tests/data/test_import.csv` for comprehensive import testing
-- **Output:** Creates test artifacts in project root (not in tests directory)
-
-## Next Steps
-
-This test demonstrates the core dossier generation functionality and batch import capabilities. Future versions will include:
-
-- Individual event pages with detailed solution information
-- Real parameter distribution plots (instead of placeholders)
-- Enhanced metadata display
-- Export functionality for sharing dossiers
-- Additional batch import features and validation options 

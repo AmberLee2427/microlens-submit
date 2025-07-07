@@ -1,0 +1,30 @@
+{
+  "solution_id": "c90739bc-522f-47f6-ac87-5ee4d2529d7c",
+  "model_type": "1S1L",
+  "bands": [],
+  "higher_order_effects": [],
+  "t_ref": null,
+  "parameters": {
+    "t0": 2459123.5,
+    "u0": 0.1,
+    "tE": 20.0,
+    "invalid_param": 123
+  },
+  "is_active": true,
+  "alias": null,
+  "compute_info": {},
+  "posterior_path": null,
+  "lightcurve_plot_path": null,
+  "lens_plane_plot_path": null,
+  "notes_path": "events/EVENT123/solutions/c90739bc-522f-47f6-ac87-5ee4d2529d7c.md",
+  "used_astrometry": false,
+  "used_postage_stamps": false,
+  "limb_darkening_model": null,
+  "limb_darkening_coeffs": null,
+  "parameter_uncertainties": {},
+  "physical_parameters": null,
+  "log_likelihood": null,
+  "relative_probability": null,
+  "n_data_points": null,
+  "creation_timestamp": "2025-07-07T03:34:04.543412"
+}

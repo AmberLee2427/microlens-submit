@@ -40,33 +40,43 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ## 3. Development Roadmap & Feature Plan
 
-`microlens-submit` is currently at version 0.13.0. Below is the prioritized roadmap for developing version 1.0.0.
+`microlens-submit` is currently at version 0.14.0. Below is the prioritized roadmap for developing version 1.0.0.
 
-### v0.13.0 — High Automation Support (Current Release)
+### v0.14.0 — Modular Architecture & Enhanced UX (Current Release)
 
-- **Task 3: Solution YAML Format**
-  - *Goal:* Enable high-automation workflows for power users.
-  - *Action:* Add support for `solution.yaml` files that define complete solutions including:
-    - All parameters, uncertainties, and metadata
-    - Markdown notes with full formatting
-    - Compute information
-    - File paths for plots and posteriors
-  - *Why:* Allows automated generation of solutions from analysis pipelines.
+- **Task 1: Modular Architecture** ✅ **COMPLETED**
+  - *Goal:* Improve code maintainability and organization.
+  - *Action:* Split monolithic files into modular packages:
+    - Split `dossier.py` into `dossier/` package with specialized modules
+    - Refactored CLI into `cli/` package with organized command modules
+    - Created `dossier/generator.py` for HTML generation logic
+    - Created `dossier/templates.py` for template management
+    - Created `dossier/utils.py` for dossier-specific utilities
+    - Created `cli/commands/` directory with specialized command modules
+    - Created `cli/utils.py` for CLI-specific utilities
+  - *Why:* Enhanced code readability, debugging capabilities, and maintainability while preserving backward compatibility.
 
-- **Task 4: Bulk CSV Import** ✅ **COMPLETED**
-  - *Goal:* Allow users to import multiple solutions at once from a CSV file.
-  - *Action:* Add a new CLI command `import-solutions` supporting column mapping, alias handling, duplicate handling, notes, dry-run, and validation options.
-  - *Why:* Streamlines workflows for large teams and automated pipelines.
-  - *Test Data:* See `tests/data/test_import.csv` for a comprehensive example used in both CLI and API tests.
+- **Task 2: Enhanced Error Messaging** ✅ **COMPLETED**
+  - *Goal:* Provide better user guidance and error recovery.
+  - *Action:* Implement comprehensive error handling improvements:
+    - Added actionable suggestions for common typos and parameter errors
+    - Integrated validation warnings with helpful guidance
+    - Enhanced CLI error messages with specific recommendations
+    - Added parameter validation with user-friendly error descriptions
+  - *Why:* Reduces user frustration and improves error recovery experience.
 
-- **Task 5: Solution Aliases** ✅ **COMPLETED**
-  - *Goal:* Provide human-readable identifiers for solutions.
-  - *Action:* Add alias support with uniqueness validation within events.
-  - *Why:* Makes solutions easier to identify and reference in documentation and discussions.
+- **Task 3: Improved CLI Help** ✅ **COMPLETED**
+  - *Goal:* Enhance command-line interface usability.
+  - *Action:* Improved CLI help system:
+    - Added [BASIC] and [ADVANCED] tags to help users understand option complexity
+    - Enhanced option descriptions with practical usage examples
+    - Improved help text for complex parameters like `--limb-darkening-model`
+    - Added usage examples in command docstrings for better user guidance
+  - *Why:* Makes the CLI more accessible to users of all experience levels.
 
-### v0.14.0 - Physical Parameter Support (Next Release)
+### v0.15.0 - Physical Parameter Support (Next Release)
 
-- **Task 6: Enhanced Physical Parameter Validation**
+- **Task 4: Enhanced Physical Parameter Validation**
   - *Goal:* Validate physical parameters for reasonableness and consistency.
   - *Action:* Extend validation logic to check:
     - Lens mass ranges (typically 0.1-1.0 M☉)
@@ -75,7 +85,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Consistency between derived and fitted parameters
   - *Why:* Catches physically impossible or unlikely parameter combinations.
 
-- **Task 7: Physical Parameter Uncertainties**
+- **Task 5: Physical Parameter Uncertainties**
   - *Goal:* Support uncertainties for physical parameters (not just model parameters).
   - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
   - *Why:* Physical parameters often have significant uncertainties that should be captured.
@@ -369,9 +379,9 @@ twine check dist/*
 
 ### 10.4. Version Numbering Strategy
 
-- **Patch releases (0.13.0 → 0.13.1):** Bug fixes, minor improvements
-- **Minor releases (0.13.0 → 0.14.0):** New features, non-breaking changes
-- **Major releases (0.13.0 → 1.0.0):** Breaking changes, major rewrites
+- **Patch releases (0.14.0 → 0.14.1):** Bug fixes, minor improvements
+- **Minor releases (0.14.0 → 0.15.0):** New features, non-breaking changes
+- **Major releases (0.14.0 → 1.0.0):** Breaking changes, major rewrites
 
 ### 10.5. Release Notes Template
 
@@ -399,7 +409,7 @@ When creating a release, include:
 
 After creating a release:
 
-1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.13.0 → 0.13.1-dev)
+1. **Update Development Version:** Increment the version in `pyproject.toml` to the next development version (e.g., 0.14.0 → 0.14.1-dev)
 2. **Create Release Branch:** If implementing new features, create a new branch from the release tag
 3. **Update Roadmap:** Mark completed tasks in this document
 
@@ -418,14 +428,14 @@ For future automation, consider implementing:
 - **v0.12.1:** ✅ Released - Hardware Info Management, Enhanced Documentation, Example Parameter Files
 - **v0.12.2:** ✅ Released (2024-12-19) - Critical bug fix: renamed Solution.validate() to Solution.run_validation() to resolve Pydantic conflict
 - **v0.13.0:** ✅ Released (2024-12-19) - High Automation Support, Bulk CSV Import, Solution Aliases
+- **v0.14.0:** ✅ Released (2024-12-19) - Modular Architecture, Enhanced Error Messaging, Improved CLI Help
 - **v1.0.0:** 📋 Planned - Official Release
 
-### v0.13.0 Highlights
-- **Bulk CSV Import:** New CLI command `import-solutions` and API function for importing multiple solutions from CSV files
-- **Solution Aliases:** Human-readable identifiers for solutions with uniqueness validation within events
-- **Enhanced Notes Handling:** Proper conversion of literal `\n` characters to actual newlines in CSV imports
-- **Code Quality Improvements:** Better formatting and readability throughout the codebase
-- **Comprehensive Test Data:** Added `tests/data/test_import.csv` as a template for CSV import functionality
-- **Documentation Updates:** Updated tutorial, README, and API documentation for new features
-- **CLI Enhancements:** Added alias support to all solution-related CLI commands
+### v0.14.0 Highlights
+- **Modular Architecture:** Complete refactoring for improved maintainability with organized packages and modules
+- **Enhanced Error Messaging:** Comprehensive error handling with actionable suggestions and user-friendly guidance
+- **Improved CLI Help:** Enhanced command-line interface with [BASIC]/[ADVANCED] tags and practical usage examples
+- **Code Organization:** Better separation of concerns while maintaining backward compatibility
+- **Developer Experience:** Improved code readability, debugging capabilities, and maintainability
+- **User Experience:** Better error recovery and clearer guidance throughout the application
 

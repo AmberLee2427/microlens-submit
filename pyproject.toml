@@ -1,12 +1,12 @@
 # pyproject.toml
 
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "microlens-submit"
-version = "0.13.0"
+version = "0.14.0"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
   {name = "Roman Science Platform Team", email = "roman-science-platform@stsci.edu"}

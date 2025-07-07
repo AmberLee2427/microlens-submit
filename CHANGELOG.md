@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2024-12-19
+
+### Added
+- **Modular Architecture**: Complete refactoring of the codebase for improved maintainability
+  - Split monolithic `dossier.py` into modular `dossier/` package with specialized modules
+  - Refactored CLI into `cli/` package with commands organized into separate modules
+  - Created `dossier/generator.py` for HTML generation logic
+  - Created `dossier/templates.py` for template management
+  - Created `dossier/utils.py` for dossier-specific utilities
+  - Created `cli/commands/` directory with specialized command modules
+  - Created `cli/utils.py` for CLI-specific utilities
+- **Enhanced Error Messaging**: Comprehensive error handling improvements
+  - Added actionable suggestions for common typos and parameter errors
+  - Integrated validation warnings with helpful guidance
+  - Enhanced CLI error messages with specific recommendations
+  - Added parameter validation with user-friendly error descriptions
+- **Improved CLI Help**: Enhanced command-line interface usability
+  - Added [BASIC] and [ADVANCED] tags to help users understand option complexity
+  - Improved option descriptions with practical usage examples
+  - Enhanced help text for complex parameters like `--limb-darkening-model`
+  - Added usage examples in command docstrings for better user guidance
+
+### Changed
+- **Code Organization**: Improved project structure and maintainability
+  - Separated concerns between dossier generation, CLI commands, and utilities
+  - Enhanced code readability and debugging capabilities
+  - Maintained backward compatibility with existing API and CLI interfaces
+  - Preserved all existing functionality while improving internal organization
+- **Documentation**: Updated internal documentation to reflect new modular structure
+  - Enhanced docstrings with usage examples and parameter descriptions
+  - Improved code comments for better developer experience
+  - Maintained user-facing documentation consistency
+
+### Fixed
+- **Maintainability**: Resolved technical debt through modularization
+  - Eliminated monolithic files that were difficult to maintain
+  - Improved test organization and coverage
+  - Enhanced code reusability and separation of concerns
+- **User Experience**: Better error handling and guidance
+  - More helpful error messages with actionable suggestions
+  - Clearer CLI help text with practical examples
+  - Improved parameter validation with user-friendly feedback
+
 ## [0.13.0] - 2024-12-19
 
 ### Added
