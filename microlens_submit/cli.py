@@ -54,6 +54,13 @@ from .utils import load, import_solutions_from_csv
 from .dossier import generate_dashboard_html
 from . import __version__
 
+# Import dossier generation functions
+from .dossier import (
+    generate_event_page,
+    generate_solution_page,
+)
+from .dossier.full_report import generate_full_dossier_report_html
+
 console = Console()
 app = typer.Typer()
 
@@ -934,14 +941,6 @@ def generate_dossier(
     sub = load(str(project_path))
     output_dir = Path(project_path) / "dossier"
     
-    # Import dossier generation functions
-    from .dossier import (
-        generate_dashboard_html,
-        generate_event_page,
-        generate_solution_page,
-        _generate_full_dossier_report_html,
-    )
-
     if solution_id:
         # Find the solution across all events (same pattern as other CLI commands)
         solution = None
@@ -994,7 +993,7 @@ def generate_dossier(
         console.print(
             Panel("Generating comprehensive printable dossier...", style="cyan")
         )
-        _generate_full_dossier_report_html(sub, output_dir)
+        generate_full_dossier_report_html(sub, output_dir)
         
         # Replace placeholder in index.html with the real link
         dashboard_path = output_dir / "index.html"

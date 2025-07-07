@@ -5,7 +5,8 @@ from pathlib import Path
 import tempfile
 
 from microlens_submit.utils import load
-from microlens_submit.dossier import _generate_dashboard_content, generate_event_page, generate_dashboard_html
+from microlens_submit.dossier import generate_event_page, generate_dashboard_html
+from microlens_submit.dossier.dashboard import _generate_dashboard_content
 
 
 def _basic_submission(tmp_path: Path):

@@ -73,3 +73,6 @@ microlens_submit/
 
 6. Test
   * Run the full test suite after each major move
+
+7. Git
+  * status. add. commit
