@@ -94,11 +94,7 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
     def sort_key(sol):
         return (
             not sol.is_active,  # active first
-            -(
-                sol.relative_probability
-                if sol.relative_probability is not None
-                else float("-inf")
-            ),
+            -(sol.relative_probability if sol.relative_probability is not None else float("-inf")),
             sol.solution_id,
         )
 
@@ -113,21 +109,12 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         )
         logl = f"{sol.log_likelihood:.2f}" if sol.log_likelihood is not None else "N/A"
         ndp = str(sol.n_data_points) if sol.n_data_points is not None else "N/A"
-        relprob = (
-            f"{sol.relative_probability:.3f}"
-            if sol.relative_probability is not None
-            else "N/A"
-        )
+        relprob = f"{sol.relative_probability:.3f}" if sol.relative_probability is not None else "N/A"
         # Read notes snippet from file
         notes_snip = (
             (
                 sol.get_notes(project_root=Path(submission.project_path))[:50]
-                + (
-                    "..."
-                    if len(sol.get_notes(project_root=Path(submission.project_path)))
-                    > 50
-                    else ""
-                )
+                + ("..." if len(sol.get_notes(project_root=Path(submission.project_path))) > 50 else "")
             )
             if sol.notes_path
             else ""
@@ -137,12 +124,17 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         if sol.alias:
             solution_display = f"""
                 <div>
-                    <a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.alias}</a>
+                    <a href="{sol.solution_id}.html"
+                       class="font-medium text-rtd-accent hover:underline">{sol.alias}</a>
                     <div class="text-xs text-gray-500 font-mono">{sol.solution_id[:8]}...</div>
                 </div>
             """
         else:
-            solution_display = f'<a href="{sol.solution_id}.html" class="font-medium text-rtd-accent hover:underline">{sol.solution_id[:8]}...</a>'
+            solution_display = (
+                f'<a href="{sol.solution_id}.html" '
+                f'class="font-medium text-rtd-accent hover:underline">'
+                f"{sol.solution_id[:8]}...</a>"
+            )
 
         rows.append(
             f"""
@@ -161,13 +153,21 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         "\n".join(rows)
         if rows
         else """
-        <tr class='border-b border-gray-200'><td colspan='7' class='py-3 px-4 text-center text-gray-500'>No solutions found</td></tr>
+        <tr class='border-b border-gray-200'>
+            <td colspan='7' class='py-3 px-4 text-center text-gray-500'>
+                No solutions found
+            </td>
+        </tr>
     """
     )
     # Optional raw data link
     raw_data_html = ""
     if hasattr(event, "event_data_path") and event.event_data_path:
-        raw_data_html = f'<p class="text-rtd-text">Raw Event Data: <a href="{event.event_data_path}" class="text-rtd-accent hover:underline">Download Data</a></p>'
+        raw_data_html = (
+            f'<p class="text-rtd-text">Raw Event Data: '
+            f'<a href="{event.event_data_path}" '
+            f'class="text-rtd-accent hover:underline">Download Data</a></p>'
+        )
     # HTML content
     html = f"""<!DOCTYPE html>
 <html lang='en'>
@@ -194,74 +194,76 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
         }},
       }};
     </script>
-    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' \
+rel='stylesheet'>
     <!-- Highlight.js for code syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link rel="stylesheet" \
+href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <style> 
-        .prose {{ 
-            color: #000; 
-            line-height: 1.6; 
+    <style>
+        .prose {{
+            color: #000;
+            line-height: 1.6;
         }}
-        .prose h1 {{ 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: #361d49; 
-            margin-top: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose h1 {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #361d49;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
-        .prose h2 {{ 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #361d49; 
-            margin-top: 1.25rem; 
-            margin-bottom: 0.5rem; 
+        .prose h2 {{
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #361d49;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose h3 {{ 
-            font-size: 1.125rem; 
-            font-weight: 600; 
-            color: #a859e4; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem; 
+        .prose h3 {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #a859e4;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose p {{ 
-            margin-bottom: 0.75rem; 
+        .prose p {{
+            margin-bottom: 0.75rem;
         }}
-        .prose ul, .prose ol {{ 
-            margin-left: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose ul, .prose ol {{
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
         .prose ul {{ list-style-type: disc; }}
         .prose ol {{ list-style-type: decimal; }}
-        .prose li {{ 
-            margin-bottom: 0.25rem; 
+        .prose li {{
+            margin-bottom: 0.25rem;
         }}
-        .prose code {{ 
-            background: #f3f3f3; 
-            padding: 2px 4px; 
-            border-radius: 4px; 
+        .prose code {{
+            background: #f3f3f3;
+            padding: 2px 4px;
+            border-radius: 4px;
             font-family: 'Courier New', monospace;
             font-size: 0.875rem;
         }}
-        .prose pre {{ 
-            background: #f8f8f8; 
-            padding: 1rem; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            margin: 1rem 0; 
+        .prose pre {{
+            background: #f8f8f8;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
             border: 1px solid #e5e5e5;
         }}
-        .prose pre code {{ 
-            background: none; 
-            padding: 0; 
+        .prose pre code {{
+            background: none;
+            padding: 0;
         }}
-        .prose blockquote {{ 
-            border-left: 4px solid #a859e4; 
-            padding-left: 1rem; 
-            margin: 1rem 0; 
-            font-style: italic; 
-            color: #666; 
+        .prose blockquote {{
+            border-left: 4px solid #a859e4;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #666;
         }}
     </style>
 </head>
@@ -271,8 +273,12 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
             <!-- Header & Navigation -->
             <div class='text-center py-8'>
                 <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
-                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Event Dossier: {event.event_id}</h1>
-                <p class='text-xl text-rtd-accent text-center mb-4'>Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'}</p>
+                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>
+                    Event Dossier: {event.event_id}
+                </h1>
+                <p class='text-xl text-rtd-accent text-center mb-4'>
+                    Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'}
+                </p>
                 <nav class='flex justify-center space-x-4 mb-8'>
                     <a href='index.html' class='text-rtd-accent hover:underline'>&larr; Back to Dashboard</a>
                 </nav>
@@ -285,12 +291,16 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
             <!-- Event Summary -->
             <section class='mb-10 px-8'>
                 <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Event Overview</h2>
-                <p class='text-rtd-text'>This page provides details for microlensing event {event.event_id}.</p>
+                <p class='text-rtd-text'>
+                    This page provides details for microlensing event {event.event_id}.
+                </p>
                 {raw_data_html}
             </section>
             <!-- Solutions Table -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Solutions for Event {event.event_id}</h2>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Solutions for Event {event.event_id}
+                </h2>
                 <table class='w-full text-left table-auto border-collapse'>
                     <thead class='bg-rtd-primary text-rtd-secondary uppercase text-sm'>
                         <tr>
@@ -310,19 +320,38 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
             </section>
             <!-- Event-Specific Data Visualizations (Evaluator-Only Placeholders) -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Event Data Visualizations (Evaluator-Only)</h2>
-                <p class='text-sm text-gray-500 italic mb-4'>Note: These advanced plots, including comparisons to simulation truths and other teams' results, are available in the Evaluator Dossier.</p>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Event Data Visualizations (Evaluator-Only)
+                </h2>
+                <p class='text-sm text-gray-500 italic mb-4'>
+                    Note: These advanced plots, including comparisons to simulation truths and
+                    other teams' results, are available in the Evaluator Dossier.
+                </p>
                 <div class='mb-6'>
-                    <img src='https://placehold.co/800x450/dfc5fa/361d49?text=Raw+Lightcurve+and+Astrometry+Data+(Evaluator+Only)' alt='Raw Data Plot' class='w-full rounded-lg shadow-md'>
-                    <p class='text-sm text-gray-600 mt-2'>Raw lightcurve and astrometry data for Event {event.event_id}, with true model overlaid (Evaluator View).</p>
+                    <img
+                        src='https://placehold.co/800x450/dfc5fa/361d49?text=Raw+Lightcurve+and+Astrometry+Data+
+                        (Evaluator+Only)'
+                        alt='Raw Data Plot'
+                        class='w-full rounded-lg shadow-md'
+                    >
+                    <p class='text-sm text-gray-600 mt-2'>
+                        Raw lightcurve and astrometry data for Event
+                        {event.event_id}, with true model overlaid (Evaluator View).
+                    </p>
                 </div>
                 <div class='mb-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Mass+vs+Distance+Scatter+Plot+(Evaluator+Only)' alt='Mass vs Distance Plot' class='w-full rounded-lg shadow-md'>
-                    <p class='text-sm text-gray-600 mt-2'>Derived Lens Mass vs. Lens Distance for solutions of Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
+                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Mass+vs+Distance+Scatter+Plot+
+(Evaluator+Only)'
+alt='Mass vs Distance Plot' class='w-full rounded-lg shadow-md'>
+                    <p class='text-sm text-gray-600 mt-2'>Derived Lens Mass vs. Lens Distance for solutions of \
+Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
                 </div>
                 <div class='mb-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Proper+Motion+N+vs+E+Plot+(Evaluator+Only)' alt='Proper Motion Plot' class='w-full rounded-lg shadow-md'>
-                    <p class='text-sm text-gray-600 mt-2'>Proper Motion North vs. East components for solutions of Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
+                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Proper+Motion+N+vs+E+Plot+
+(Evaluator+Only)'
+alt='Proper Motion Plot' class='w-full rounded-lg shadow-md'>
+                    <p class='text-sm text-gray-600 mt-2'>Proper Motion North vs. East components for solutions of \
+Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
                 </div>
             </section>
 
@@ -337,4 +366,4 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
     </div>
 </body>
 </html>"""
-    return html 
+    return html

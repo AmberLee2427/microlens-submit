@@ -1,24 +1,18 @@
 """Utility functions for microlens-submit.
 
-This module contains utility functions for importing data and loading submissions.
+This module contains utility functions for importing data and loading
+submissions.
 """
 
 import csv
 import json
-import logging
-import os
 import shutil
-import subprocess
-import sys
-import uuid
-import zipfile
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
-import yaml
-
-from .models import Submission
+# Resolve forward references
+from .models.event import Event
+from .models.submission import Submission
 
 
 def load(project_path: str) -> Submission:
@@ -36,24 +30,25 @@ def load(project_path: str) -> Submission:
 
     Example:
         >>> from microlens_submit import load
-        >>> 
+        >>>
         >>> # Load or create a submission project
         >>> submission = load("./my_project")
-        >>> 
+        >>>
         >>> # Set submission metadata
         >>> submission.team_name = "Team Alpha"
         >>> submission.tier = "advanced"
         >>> submission.repo_url = "https://github.com/team/repo"
-        >>> 
+        >>>
         >>> # Add an event and solution
         >>> event = submission.get_event("EVENT001")
-        >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
+        >>> solution = event.add_solution("1S1L", params)
         >>> solution.log_likelihood = -1234.56
         >>> solution.set_compute_info(cpu_hours=2.5, wall_time_hours=0.5)
-        >>> 
+        >>>
         >>> # Save the submission
         >>> submission.save()
-        >>> 
+        >>>
         >>> # Export for submission
         >>> submission.export("submission.zip")
 
@@ -70,7 +65,10 @@ def load(project_path: str) -> Submission:
         submission = Submission(project_path=str(project))
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
             fh.write(
-                submission.model_dump_json(exclude={"events", "project_path"}, indent=2)
+                submission.model_dump_json(
+                    exclude={"events", "project_path"},
+                    indent=2,
+                )
             )
         return submission
 
@@ -83,7 +81,6 @@ def load(project_path: str) -> Submission:
         submission = Submission(project_path=str(project))
 
     if events_dir.exists():
-        from .models.event import Event
         for event_dir in events_dir.iterdir():
             if event_dir.is_dir():
                 event = Event._from_dir(event_dir, submission)
@@ -130,7 +127,11 @@ def import_solutions_from_csv(
     Example:
         >>> from microlens_submit.utils import load, import_solutions_from_csv
         >>> sub = load("./project")
-        >>> stats = import_solutions_from_csv(sub, Path("solutions.csv"), validate=True)
+        >>> stats = import_solutions_from_csv(
+        ...     sub,
+        ...     Path("solutions.csv"),
+        ...     validate=True,
+        ... )
         >>> print(stats["successful_imports"], "solutions imported")
 
     Note:
@@ -144,10 +145,10 @@ def import_solutions_from_csv(
         project_path = Path(".")
 
     # Load parameter mapping if provided
-    column_mapping = {}
     if parameter_map_file:
         with open(parameter_map_file, "r", encoding="utf-8") as f:
-            column_mapping = yaml.safe_load(f)
+            # TODO: Implement parameter mapping functionality
+            pass
 
     # Auto-detect delimiter if not specified
     if not delimiter:
@@ -185,7 +186,8 @@ def import_solutions_from_csv(
             header_line = header_line[1:]
 
         reader = csv.DictReader(
-            [header_line] + lines[header_row + 1 :], delimiter=delimiter
+            [header_line] + lines[header_row + 1 :],
+            delimiter=delimiter,
         )
 
         for row_num, row in enumerate(reader, start=header_row + 2):
@@ -195,7 +197,7 @@ def import_solutions_from_csv(
                 # Validate required fields
                 if not row.get("event_id"):
                     stats["skipped_rows"] += 1
-                    stats["errors"].append(f"Row {row_num}: Missing event_id")
+                    stats["errors"].append(f"Row {row_num}: " f"Missing event_id")
                     continue
 
                 solution_id = row.get("solution_id")
@@ -203,14 +205,12 @@ def import_solutions_from_csv(
 
                 if not solution_id and not solution_alias:
                     stats["skipped_rows"] += 1
-                    stats["errors"].append(
-                        f"Row {row_num}: Missing solution_id or solution_alias"
-                    )
+                    stats["errors"].append(f"Row {row_num}: " "Missing solution_id or solution_alias")
                     continue
 
                 if not row.get("model_tags"):
                     stats["skipped_rows"] += 1
-                    stats["errors"].append(f"Row {row_num}: Missing model_tags")
+                    stats["errors"].append(f"Row {row_num}: " f"Missing model_tags")
                     continue
 
                 # Parse model tags
@@ -220,20 +220,19 @@ def import_solutions_from_csv(
                         raise ValueError("model_tags must be a list")
                 except json.JSONDecodeError:
                     stats["skipped_rows"] += 1
-                    stats["errors"].append(f"Row {row_num}: Invalid model_tags JSON")
+                    stats["errors"].append(f"Row {row_num}: " f"Invalid model_tags JSON")
                     continue
 
                 # Extract model type and higher order effects
                 model_type = None
                 higher_order_effects = []
+                allowed_tags = ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]
 
                 for tag in model_tags:
-                    if tag in ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]:
+                    if tag in allowed_tags:
                         if model_type:
                             stats["skipped_rows"] += 1
-                            stats["errors"].append(
-                                f"Row {row_num}: Multiple model types specified"
-                            )
+                            stats["errors"].append(f"Row {row_num}:" "Multiple model types specified")
                             continue
                         model_type = tag
                     elif tag in [
@@ -250,9 +249,7 @@ def import_solutions_from_csv(
 
                 if not model_type:
                     stats["skipped_rows"] += 1
-                    stats["errors"].append(
-                        f"Row {row_num}: No valid model type found in model_tags"
-                    )
+                    stats["errors"].append(f"Row {row_num}: " f"No valid model type found in model_tags")
                     continue
 
                 # Parse parameters
@@ -282,9 +279,7 @@ def import_solutions_from_csv(
                         parameters = json.loads(row["parameters"])
                     except json.JSONDecodeError:
                         stats["skipped_rows"] += 1
-                        stats["errors"].append(
-                            f"Row {row_num}: Invalid parameters JSON"
-                        )
+                        stats["errors"].append(f"Row {row_num}: " f"Invalid parameters JSON")
                         continue
 
                 # Handle notes
@@ -297,8 +292,10 @@ def import_solutions_from_csv(
                     if notes_file.exists() and notes_file.is_file():
                         notes_path = str(notes_file)
                     else:
-                        # CSV files encode newlines as literal \n, so we convert them to real newlines here.
-                        # We do NOT do this when reading .md files or in set_notes(), because users may want literal '\n'.
+                        # CSV files encode newlines as literal \n, so we convert
+                        # them to real newlines here.
+                        # We do NOT do this when reading .md files or in
+                        # set_notes(), because users may want literal '\n'.
                         notes_content = notes.replace("\\n", "\n").replace("\\r", "\r")
                 else:
                     pass
@@ -312,7 +309,8 @@ def import_solutions_from_csv(
 
                 if solution_alias:
                     existing_solution = submission.get_solution_by_alias(
-                        row["event_id"], solution_alias
+                        row["event_id"],
+                        solution_alias,
                     )
                 elif solution_id:
                     existing_solution = event.get_solution(solution_id)
@@ -320,15 +318,16 @@ def import_solutions_from_csv(
                 if existing_solution:
                     if on_duplicate == "error":
                         stats["skipped_rows"] += 1
-                        stats["errors"].append(
-                            f"Row {row_num}: Duplicate alias key '{alias_key}'"
-                        )
+                        stats["errors"].append(f"Row {row_num}: " f"Duplicate alias key '{alias_key}'")
                         continue
                     elif on_duplicate == "ignore":
                         stats["duplicate_handled"] += 1
                         continue
                     elif on_duplicate == "override":
-                        event.remove_solution(existing_solution.solution_id, force=True)
+                        event.remove_solution(
+                            existing_solution.solution_id,
+                            force=True,
+                        )
                         stats["duplicate_handled"] += 1
 
                 if not dry_run:
@@ -343,17 +342,19 @@ def import_solutions_from_csv(
                         solution.higher_order_effects = higher_order_effects
 
                     if notes_path:
-                        solution_notes_path = (
-                            Path(project_path) / "tmp" / f"{solution.solution_id}.md"
+                        tmp_path = Path(project_path) / "tmp"
+                        solution_notes_path = tmp_path / f"{solution.solution_id}.md"
+                        solution_notes_path.parent.mkdir(
+                            parents=True,
+                            exist_ok=True,
                         )
-                        solution_notes_path.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(notes_path, solution_notes_path)
-                        solution.notes_path = str(
-                            solution_notes_path.relative_to(project_path)
-                        )
+                        solution.notes_path = str(solution_notes_path.relative_to(project_path))
                     elif notes_content:
                         solution.set_notes(
-                            notes_content, project_path, convert_escapes=True
+                            notes_content,
+                            project_path,
+                            convert_escapes=True,
                         )
 
                     if validate:
@@ -361,9 +362,7 @@ def import_solutions_from_csv(
                         if validation_messages:
                             stats["validation_errors"] += 1
                             for msg in validation_messages:
-                                stats["errors"].append(
-                                    f"Row {row_num} validation: {msg}"
-                                )
+                                stats["errors"].append(f"Row {row_num} validation: " f"{msg}")
 
                 stats["successful_imports"] += 1
 
@@ -372,10 +371,3 @@ def import_solutions_from_csv(
                 continue
 
     return stats
-
-
-# Resolve forward references
-from .models.event import Event
-from .models.submission import Submission
-Event.model_rebuild()
-Submission.model_rebuild() 

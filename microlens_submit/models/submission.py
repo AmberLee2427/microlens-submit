@@ -11,15 +11,12 @@ import math
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING, List
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 from .event import Event
 from .solution import Solution
-
-if TYPE_CHECKING:
-    from .event import Event
 
 
 class Submission(BaseModel):
@@ -54,7 +51,8 @@ class Submission(BaseModel):
         >>> solution1 = event1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
         >>>
         >>> event2 = submission.get_event("EVENT002")
-        >>> solution2 = event2.add_solution("1S2L", {"t0": 2459156.2, "u0": 0.08, "tE": 35.7, "s": 0.95, "q": 0.0005, "alpha": 78.3})
+        >>> params2 = {"t0": 2459156.2, "u0": 0.08, "tE": 35.7, "s": 0.95, "q": 0.0005, "alpha": 78.3}
+        >>> solution2 = event2.add_solution("1S2L", params2)
         >>>
         >>> # Validate the submission
         >>> warnings = submission.run_validation()
@@ -118,7 +116,7 @@ class Submission(BaseModel):
             messages.append("tier is required")
         if not self.repo_url:
             messages.append("repo_url is required (GitHub repository URL)")
-        
+
         # Check hardware info
         if not self.hardware_info:
             messages.append("Hardware info is missing")
@@ -259,31 +257,25 @@ class Submission(BaseModel):
 
     def print_solution_status(self) -> None:
         status = self.get_solution_status()
-        print(f"📊 Solution Status Summary:")
+        print("📊 Solution Status Summary:")
         print(f"   Total solutions: {status['total']}")
         print(f"   Saved to disk: {status['saved']}")
         print(f"   Unsaved (in memory): {status['unsaved']}")
         if status["unsaved"] > 0:
-            print(f"   💾 Call submission.save() to persist unsaved solutions")
+            print("   💾 Call submission.save() to persist unsaved solutions")
         if status["duplicate_aliases"]:
-            print(f"   ❌ Alias conflicts found:")
+            print("   ❌ Alias conflicts found:")
             for error in status["duplicate_aliases"]:
                 print(f"      {error}")
-            print(f"   💡 Resolve conflicts before saving")
+            print("   💡 Resolve conflicts before saving")
         for event_id, event_status in status["events"].items():
             print(f"\n📁 Event {event_id}:")
-            print(
-                f"   Solutions: {event_status['saved']} saved, {event_status['unsaved']} unsaved"
-            )
+            print(f"   Solutions: {event_status['saved']} saved, {event_status['unsaved']} unsaved")
             for sol_id, sol_status in event_status["solutions"].items():
                 status_icon = "✅" if sol_status["saved"] else "⏳"
-                alias_info = (
-                    f" (alias: {sol_status['alias']})" if sol_status["alias"] else ""
-                )
+                alias_info = f" (alias: {sol_status['alias']})" if sol_status["alias"] else ""
                 active_info = "" if sol_status["is_active"] else " [inactive]"
-                print(
-                    f"   {status_icon} {sol_id} - {sol_status['model_type']}{alias_info}{active_info}"
-                )
+                print(f"   {status_icon} {sol_id} - {sol_status['model_type']}{alias_info}{active_info}")
 
     def save(self) -> None:
         alias_errors = self._validate_alias_uniqueness()
@@ -291,17 +283,10 @@ class Submission(BaseModel):
             print("❌ Save failed due to alias validation errors:")
             for error in alias_errors:
                 print(f"   {error}")
-            print(
-                "💡 Solutions with duplicate aliases remain in memory but are not saved"
-            )
+            print("💡 Solutions with duplicate aliases remain in memory but are not saved")
             print("   Use different aliases or remove aliases to resolve conflicts")
             raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
-        unsaved_count = sum(
-            1
-            for event in self.events.values()
-            for sol in event.solutions.values()
-            if not sol.saved
-        )
+        unsaved_count = sum(1 for event in self.events.values() for sol in event.solutions.values() if not sol.saved)
         project = Path(self.project_path)
         events_dir = project / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
@@ -310,12 +295,7 @@ class Submission(BaseModel):
                 if sol.notes_path:
                     notes_path = Path(sol.notes_path)
                     if notes_path.parts and notes_path.parts[0] == "tmp":
-                        canonical = (
-                            Path("events")
-                            / event.event_id
-                            / "solutions"
-                            / f"{sol.solution_id}.md"
-                        )
+                        canonical = Path("events") / event.event_id / "solutions" / f"{sol.solution_id}.md"
                         src = project / notes_path
                         dst = project / canonical
                         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -360,13 +340,9 @@ class Submission(BaseModel):
                 rel_prob_map: Dict[str, float] = {}
                 if active_sols:
                     provided_sum = sum(
-                        s.relative_probability or 0.0
-                        for s in active_sols
-                        if s.relative_probability is not None
+                        s.relative_probability or 0.0 for s in active_sols if s.relative_probability is not None
                     )
-                    need_calc = [
-                        s for s in active_sols if s.relative_probability is None
-                    ]
+                    need_calc = [s for s in active_sols if s.relative_probability is None]
                     if need_calc:
                         can_calc = True
                         for s in need_calc:
@@ -381,23 +357,14 @@ class Submission(BaseModel):
                         remaining = max(1.0 - provided_sum, 0.0)
                         if can_calc:
                             bic_vals = {
-                                s.solution_id: len(s.parameters)
-                                * math.log(s.n_data_points)
-                                - 2 * s.log_likelihood
+                                s.solution_id: len(s.parameters) * math.log(s.n_data_points) - 2 * s.log_likelihood
                                 for s in need_calc
                             }
                             bic_min = min(bic_vals.values())
-                            weights = {
-                                sid: math.exp(-0.5 * (bic - bic_min))
-                                for sid, bic in bic_vals.items()
-                            }
+                            weights = {sid: math.exp(-0.5 * (bic - bic_min)) for sid, bic in bic_vals.items()}
                             wsum = sum(weights.values())
                             for sid, w in weights.items():
-                                rel_prob_map[sid] = (
-                                    remaining * w / wsum
-                                    if wsum > 0
-                                    else remaining / len(weights)
-                                )
+                                rel_prob_map[sid] = remaining * w / wsum if wsum > 0 else remaining / len(weights)
                             logging.warning(
                                 "relative_probability calculated for event %s using BIC",
                                 event.event_id,
@@ -413,9 +380,7 @@ class Submission(BaseModel):
                 for sol in active_sols:
                     sol_path = event_dir / "solutions" / f"{sol.solution_id}.json"
                     if sol_path.exists():
-                        arc = (
-                            f"events/{event.event_id}/solutions/{sol.solution_id}.json"
-                        )
+                        arc = f"events/{event.event_id}/solutions/{sol.solution_id}.json"
                         export_sol = sol.model_copy()
                         for attr in [
                             "posterior_path",
@@ -435,9 +400,7 @@ class Submission(BaseModel):
                                 export_sol.notes_path = notes_arc
                                 zf.write(notes_file, arcname=notes_arc)
                         if export_sol.relative_probability is None:
-                            export_sol.relative_probability = rel_prob_map.get(
-                                sol.solution_id
-                            )
+                            export_sol.relative_probability = rel_prob_map.get(sol.solution_id)
                         zf.writestr(arc, export_sol.model_dump_json(indent=2))
                     sol_dir_arc = f"events/{event.event_id}/solutions/{sol.solution_id}"
                     for attr in [
@@ -450,7 +413,8 @@ class Submission(BaseModel):
                             file_path = Path(self.project_path) / path
                             if not file_path.exists():
                                 raise ValueError(
-                                    f"Error: File specified by {attr} in solution {sol.solution_id} does not exist: {file_path}"
+                                    f"Error: File specified by {attr} in solution {sol.solution_id} "
+                                    f"does not exist: {file_path}"
                                 )
                             zf.write(
                                 file_path,
@@ -479,11 +443,9 @@ class Submission(BaseModel):
                             full_path.unlink()
                             print(f"🗑️  Removed temporary notes file: {notes_path}")
                     except OSError as e:
-                        print(
-                            f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}"
-                        )
+                        print(f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}")
         del self.events[event_id]
         print(f"🗑️  Removed event '{event_id}' with {len(event.solutions)} solutions")
         return True
 
-    # ... (all methods from Submission class, unchanged, including docstrings) 
+    # ... (all methods from Submission class, unchanged, including docstrings)

@@ -36,18 +36,18 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
 
    # Install the toolkit
    pip install microlens-submit
-   
+
    # Initialize your project
    microlens-submit init --team-name "Your Team" --tier "standard" ./my_submission
-   
+
    # Add your first solution
    microlens-submit add-solution EVENT123 1S1L \
         --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
         --log-likelihood -1234.56 --n-data-points 1250
-   
+
    # Generate a dossier for review
    microlens-submit generate-dossier
-   
+
    # Export your submission
    microlens-submit export submission.zip
 

@@ -6,44 +6,44 @@
     --rtd-color-background: #faf7fd;
     --rtd-color-text: #000;
   }
-  
+
   /* Main background and text */
   body {
     background: var(--rtd-color-background) !important;
     color: var(--rtd-color-text) !important;
   }
-  
+
   /* behind logo */
   .wy-side-nav-search, .wy-nav-top {
     background: var(--rtd-color-primary) !important;
   }
-  
+
   /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo img {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   /* ? */
   .wy-side-nav-search .wy-side-nav-search__logo,
   .wy-side-nav-search .wy-side-nav-search__logo a {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   /* Search input and dropdown */
   .wy-side-nav-search input, .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-background) !important;
     color: var(--rtd-color-secondary) !important;
   }
-  
+
   .wy-side-nav-search .wy-dropdown .wy-dropdown-toggle:hover {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   /* Links and accents */
   a, .wy-menu-vertical a {
     color: var(--rtd-color-accent) !important;
@@ -51,72 +51,72 @@
   a:hover {
     color: var(--rtd-color-secondary) !important;
   }
-  
+
   /* Navigation menu */
   .wy-menu-vertical li.current > a {
     background: var(--rtd-color-accent) !important;
     color: #fff !important;
   }
-  
+
   .wy-menu-vertical li.current > a:hover {
     background: var(--rtd-color-primary) !important;
   }
-  
+
   /* Version selector */
   .wy-side-nav-search .wy-dropdown {
     background: var(--rtd-color-accent) !important;
     color: var(--rtd-color-secondary) !important;
   }
-  
+
   /* Mobile menu button */
   .wy-nav-top {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   /* Function and class definition boxes */
   .sig {
     background: var(--rtd-color-background) !important;
     border: 2px solid var(--rtd-color-accent) !important;
     border-radius: 4px !important;
   }
-  
+
   .sig-name {
     color: var(--rtd-color-accent) !important;
   }
-  
+
   .sig-prename {
     color: var(--rtd-color-text) !important;
   }
-  
+
   .sig-paren {
     color: var(--rtd-color-accent) !important;
   }
-  
+
   /* Class keyword and function arguments */
   .sig-prename .pre {
     color: var(--rtd-color-accent) !important;
   }
-  
+
   .sig-param {
     color: var(--rtd-color-secondary) !important;
   }
-  
+
   /* Additional targeting for class/function signatures */
   .sig .k, .sig .n {
     color: var(--rtd-color-secondary) !important;
   }
-  
+
   /* Method and attribute definitions */
   .descclassname, .descname {
     color: var(--rtd-color-accent) !important;
   }
-  
+
   /* Code blocks and inline code */
   .highlight {
     background: var(--rtd-color-background) !important;
     border: 1px solid var(--rtd-color-accent) !important;
   }
-  
+
   code {
     color: var(--rtd-color-accent) !important;
   }
@@ -129,7 +129,7 @@
     margin: 1em 0 !important;
     padding: 0.5em 1em !important;
   }
-  
+
   .admonition-title {
     background: var(--rtd-color-accent) !important;
     color: #fff !important;
@@ -138,48 +138,48 @@
     padding: 0.5em 1em !important;
     border-radius: 4px 4px 0 0 !important;
   }
-  
+
   /* Specific admonition types */
   .admonition.note {
     border-color: var(--rtd-color-secondary) !important;
   }
-  
+
   .admonition.note .admonition-title {
     background: var(--rtd-color-secondary) !important;
   }
-  
+
   .admonition.warning {
     border-color: #e74c3c !important;
   }
-  
+
   .admonition.warning .admonition-title {
     background: #e74c3c !important;
   }
-  
+
   .admonition.tip {
     border-color: #27ae60 !important;
   }
-  
+
   .admonition.tip .admonition-title {
     background: #27ae60 !important;
   }
-  
+
   .admonition.important {
     border-color: var(--rtd-color-accent) !important;
   }
-  
+
   .admonition.important .admonition-title {
     background: var(--rtd-color-accent) !important;
   }
-  
+
   .admonition.seealso {
     border-color: var(--rtd-color-secondary) !important;
   }
-  
+
   .admonition.seealso .admonition-title {
     background: var(--rtd-color-secondary) !important;
   }
-  
+
   /* Example boxes */
   .example {
     background: var(--rtd-color-background) !important;
@@ -188,7 +188,7 @@
     margin: 1em 0 !important;
     padding: 0.5em 1em !important;
   }
-  
+
   .example .admonition-title {
     background: var(--rtd-color-accent) !important;
     color: #fff !important;
@@ -206,13 +206,13 @@
   .wy-nav-side .wy-menu-vertical li a {
       color: var(--rtd-color-background) !important;
   }
-  
+
   /* Sidebar nav item background on hover */
   .wy-nav-side .wy-menu-vertical li a:hover {
       background: var(--rtd-color-accent) !important;
       color: var(--rtd-color-background) !important;
   }
-  
+
   /* Current page indicator */
   .wy-nav-side .wy-menu-vertical li.current a {
       background: var(--rtd-color-background) !important;

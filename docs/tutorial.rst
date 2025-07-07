@@ -135,7 +135,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    **Parameter File Formats:**
 
    **Simple format (parameters only):**
-   
+
    .. code-block:: json
 
      {
@@ -153,7 +153,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      tE: 25.0
 
    **Structured format (parameters + uncertainties):**
-   
+
    .. code-block:: json
 
      {
@@ -243,10 +243,10 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       # Validate a specific solution
       microlens-submit validate-solution <solution_id>
-      
+
       # Validate all solutions for an event
       microlens-submit validate-event EVENT123
-      
+
       # Validate the entire submission
       microlens-submit validate-submission
 
@@ -301,20 +301,20 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    Completely remove solutions or events that were created by mistake:
 
    .. code-block:: bash
-      
+
       # Remove a saved solution (requires --force for safety)
       microlens-submit remove-solution <solution_id> --force
-      
+
       # Remove an entire event and all its solutions (requires --force for safety)
       microlens-submit remove-event <event_id> --force
 
    **CLI vs Python API:**
-   
+
    - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
    - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
-   
+
    **What happens if you forget --force?**
-   
+
    If you try to remove a saved solution or event without --force, you'll get a helpful error message and nothing will be deleted. For example:
 
    .. code-block:: text
@@ -324,13 +324,13 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       💡 Use --force to override safety checks, or use deactivate to keep the solution
 
    **When to use removal vs deactivation:**
-   
+
    - **Use deactivate()** when you want to keep the solution data but exclude it from exports
    - **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
    - **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
-   
+
    **Safety features:**
-   
+
    - Saved solutions/events require ``--force`` to prevent accidental data loss
    - Removal cannot be undone - use deactivate() if you're unsure
    - Temporary files (notes in tmp/) are automatically cleaned up
@@ -343,25 +343,25 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
      # Update relative probability
      microlens-submit edit-solution <solution_id> --relative-probability 0.7
-     
+
      # Append to notes
      microlens-submit edit-solution <solution_id> --append-notes "Updated after model comparison"
-     
+
      # Update compute info
      microlens-submit edit-solution <solution_id> --cpu-hours 25.5 --wall-time-hours 6.2
-     
+
      # Fix a parameter typo
      microlens-submit edit-solution <solution_id> --param t0=2459123.6
-     
+
      # Update an uncertainty
      microlens-submit edit-solution <solution_id> --param-uncertainty t0=[0.05,0.05]
-     
+
      # Add higher-order effects
      microlens-submit edit-solution <solution_id> --higher-order-effect parallax,finite-source
-     
+
      # Clear an attribute
      microlens-submit edit-solution <solution_id> --clear-relative-probability
-     
+
      # See what would change without saving
      microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
 
@@ -445,7 +445,7 @@ Use structured parameter files for complex models:
      s: 0.05
      alpha: 2.0
    EOF
-   
+
    # Use the parameter file
    microlens-submit add-solution EVENT123 1S2L --params-file params.yaml
 
@@ -457,10 +457,10 @@ Manage multiple events and solutions efficiently:
 
    # List all events
    ls events/
-   
+
    # Check project status
    microlens-submit validate-submission
-   
+
    # View project structure
    tree -I '*.pyc|__pycache__'
 
@@ -506,5 +506,3 @@ Manage multiple events and solutions efficiently:
 4. **Version control**: Use git to track changes to your project
 5. **Backup regularly**: Keep copies of your project directory
 6. **Test export**: Verify your submission package before final submission
-
-

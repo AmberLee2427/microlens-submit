@@ -1,7 +1,7 @@
 # Development Plan: `microlens-submit`
 
-**Version:** 2.0.0 
-**Author:** Gemini & Amber  
+**Version:** 2.0.0
+**Author:** Gemini & Amber
 **Date:** July 3, 2025
 
 ---
@@ -235,7 +235,7 @@ conda create -y -n test_py38 python=3.8
 conda activate test_py38
 pip install -e ".[dev]"
 
-# Create Python 3.11 test environment  
+# Create Python 3.11 test environment
 conda create -y -n test_py311 python=3.11
 conda activate test_py311
 pip install -e ".[dev]"
@@ -321,4 +321,3 @@ Before releasing any version, ensure the following:
 
 #### Migration Guide
 - How to migrate from previous version (if needed)
-

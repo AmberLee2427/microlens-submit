@@ -7,7 +7,7 @@ the command line interface.
 
 __version__ = "0.14.0"
 
-from .models import Solution, Event, Submission
+from .models import Event, Solution, Submission
 from .utils import load
 
 __all__ = ["Event", "Solution", "Submission", "load"]

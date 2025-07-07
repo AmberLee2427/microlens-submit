@@ -3,16 +3,14 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from microlens_submit.utils import load, import_solutions_from_csv
 from microlens_submit.error_messages import enhance_validation_messages, format_cli_error_with_suggestions
+from microlens_submit.utils import import_solutions_from_csv, load
 
 console = Console()
 
@@ -44,7 +42,9 @@ def _params_file_callback(ctx: typer.Context, value: Optional[Path]) -> Optional
 
 
 def _parse_structured_params_file(params_file: Path) -> Tuple[Dict, Dict]:
-    """Parse a structured parameter file that can contain both parameters and uncertainties."""
+    """Parse a structured parameter file that can contain both parameters and
+    uncertainties.
+    """
     import yaml
 
     with params_file.open("r", encoding="utf-8") as fh:
@@ -73,104 +73,139 @@ def add_solution(
         help="Type of model used for the solution (e.g., 1S1L, 1S2L)",
     ),
     param: Optional[List[str]] = typer.Option(
-        None, help="Model parameters as key=value [BASIC]"
+        None,
+        help="Model parameters as key=value [BASIC]",
     ),
-    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood [BASIC]"),
+    log_likelihood: Optional[float] = typer.Option(
+        None,
+        help="Log likelihood [BASIC]",
+    ),
     n_data_points: Optional[int] = typer.Option(
         None,
         "--n-data-points",
         help="Number of data points used in this solution [BASIC]",
     ),
-    project_path: Path = typer.Argument(Path("."), help="Project directory [BASIC]"),
+    project_path: Path = typer.Argument(
+        Path("."),
+        help="Project directory [BASIC]",
+    ),
     # ADVANCED OPTIONS
     params_file: Optional[Path] = typer.Option(
         None,
         "--params-file",
-        help="Path to JSON or YAML file with model parameters and uncertainties [ADVANCED]",
+        help=("Path to JSON or YAML file with model parameters " "and uncertainties [ADVANCED]"),
         callback=_params_file_callback,
     ),
     bands: Optional[List[str]] = typer.Option(
         None,
         "--bands",
-        help="Photometric bands used (e.g., 0,1,2). Required if using band-specific flux parameters [ADVANCED]",
+        help=("Photometric bands used (e.g., 0,1,2). " "Required if using band-specific flux parameters [ADVANCED]"),
     ),
     higher_order_effect: Optional[List[str]] = typer.Option(
         None,
         "--higher-order-effect",
-        help="Higher-order effects: parallax, finite-source, lens-orbital-motion, xallarap, gaussian-process, stellar-rotation, fitted-limb-darkening [ADVANCED]",
+        help=(
+            "Higher-order effects: parallax, finite-source, lens-orbital-motion, "
+            "xallarap, gaussian-process, stellar-rotation, fitted-limb-darkening "
+            "[ADVANCED]"
+        ),
     ),
     t_ref: Optional[float] = typer.Option(
         None,
         "--t-ref",
-        help="Reference time for time-dependent effects (Julian Date). Required for parallax, xallarap, etc. [ADVANCED]",
+        help=(
+            "Reference time for time-dependent effects (Julian Date). "
+            "Required for parallax, xallarap, etc. [ADVANCED]"
+        ),
     ),
-    used_astrometry: bool = typer.Option(False, help="Set if astrometry data was used in the fit [ADVANCED]"),
+    used_astrometry: bool = typer.Option(
+        False,
+        help="Set if astrometry data was used in the fit [ADVANCED]",
+    ),
     used_postage_stamps: bool = typer.Option(
-        False, help="Set if postage stamp images were used in the analysis [ADVANCED]"
+        False,
+        help=("Set if postage stamp images were used in the analysis [ADVANCED]"),
     ),
     limb_darkening_model: Optional[str] = typer.Option(
-        None, help="Fixed limb darkening model name (e.g., 'claret'). Use --higher-order-effect fitted-limb-darkening for fitted coefficients [ADVANCED]"
+        None,
+        help=(
+            "Fixed limb darkening model name (e.g., 'claret'). "
+            "Use --higher-order-effect fitted-limb-darkening for fitted coefficients "
+            "[ADVANCED]"
+        ),
     ),
     limb_darkening_coeff: Optional[List[str]] = typer.Option(
         None,
         "--limb-darkening-coeff",
-        help="Limb darkening coefficients as key=value. Use with fitted-limb-darkening higher-order effect [ADVANCED]",
+        help=(
+            "Limb darkening coefficients as key=value. " "Use with fitted-limb-darkening higher-order effect [ADVANCED]"
+        ),
     ),
     parameter_uncertainty: Optional[List[str]] = typer.Option(
         None,
         "--param-uncertainty",
-        help="Parameter uncertainties as key=value. Can be single value (symmetric) or [lower,upper] (asymmetric) [ADVANCED]",
+        help=(
+            "Parameter uncertainties as key=value. "
+            "Can be single value (symmetric) or [lower,upper] (asymmetric) [ADVANCED]"
+        ),
     ),
     physical_param: Optional[List[str]] = typer.Option(
         None,
         "--physical-param",
-        help="Physical parameters (M_L, D_L, M_planet, a, etc.) derived from model parameters [ADVANCED]",
+        help=("Physical parameters (M_L, D_L, M_planet, a, etc.) " "derived from model parameters [ADVANCED]"),
     ),
     relative_probability: Optional[float] = typer.Option(
         None,
         "--relative-probability",
-        help="Relative probability of this solution (0-1). Used for model comparison [ADVANCED]",
+        help=("Relative probability of this solution (0-1). " "Used for model comparison [ADVANCED]"),
     ),
     cpu_hours: Optional[float] = typer.Option(
         None,
         "--cpu-hours",
-        help="CPU hours used for this solution. Automatically captured if not specified [ADVANCED]",
+        help="CPU hours used for this solution. " "Automatically captured if not specified [ADVANCED]",
     ),
     wall_time_hours: Optional[float] = typer.Option(
         None,
         "--wall-time-hours",
-        help="Wall time hours used for this solution. Automatically captured if not specified [ADVANCED]",
+        help="Wall time hours used for this solution. " "Automatically captured if not specified [ADVANCED]",
     ),
     lightcurve_plot_path: Optional[Path] = typer.Option(
-        None, "--lightcurve-plot-path", help="Path to lightcurve plot file (relative to project directory) [ADVANCED]"
+        None,
+        "--lightcurve-plot-path",
+        help="Path to lightcurve plot file " "(relative to project directory) [ADVANCED]",
     ),
     lens_plane_plot_path: Optional[Path] = typer.Option(
-        None, "--lens-plane-plot-path", help="Path to lens plane plot file (relative to project directory) [ADVANCED]"
+        None,
+        "--lens-plane-plot-path",
+        help="Path to lens plane plot file " "(relative to project directory) [ADVANCED]",
     ),
     alias: Optional[str] = typer.Option(
         None,
         "--alias",
-        help="Human-readable alias for the solution (e.g., 'best_fit', 'parallax_model'). Must be unique within the event [ADVANCED]",
+        help=("Set or update the human-readable alias for this solution " "(must be unique within the event)"),
     ),
     notes: Optional[str] = typer.Option(
-        None, help="Solution notes in Markdown format. Supports headers, lists, code blocks, etc. [ADVANCED]"
+        None,
+        help=("Notes for the solution (supports Markdown formatting)"),
     ),
     notes_file: Optional[Path] = typer.Option(
         None,
         "--notes-file",
-        help="Path to a Markdown file for solution notes (mutually exclusive with --notes) [ADVANCED]",
+        help=("Path to a Markdown file for solution notes " "(mutually exclusive with --notes)"),
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Show what would be created without saving. Useful for testing parameter parsing [ADVANCED]",
+        help="Show what would be created without saving. " "Useful for testing parameter parsing [ADVANCED]",
     ),
 ) -> None:
     """Add a new solution entry for a microlensing event.
 
-    Basic usage: microlens-submit add-solution EVENT123 1S1L --param t0=2459123.5 --param u0=0.1 --param tE=20.0 --log-likelihood -1234.56 --n-data-points 1250
+    Basic usage: microlens-submit add-solution EVENT123 1S1L --param t0=2459123.5
+    --param u0=0.1 --param tE=20.0 --log-likelihood -1234.56 --n-data-points 1250
 
-    Use --help to see all options including higher-order effects, uncertainties, and metadata.
+    Use --help to see all options including higher-order effects, uncertainties,
+    and metadata.
     """
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
@@ -202,11 +237,7 @@ def add_solution(
         raise typer.BadParameter(enhanced_error)
     if bands and len(bands) == 1 and "," in bands[0]:
         bands = bands[0].split(",")
-    if (
-        higher_order_effect
-        and len(higher_order_effect) == 1
-        and "," in higher_order_effect[0]
-    ):
+    if higher_order_effect and len(higher_order_effect) == 1 and "," in higher_order_effect[0]:
         higher_order_effect = higher_order_effect[0].split(",")
     sol = evt.add_solution(model_type=model_type, parameters=params, alias=alias)
     sol.bands = bands or []
@@ -223,16 +254,10 @@ def add_solution(
     sol.n_data_points = n_data_points
     if cpu_hours is not None or wall_time_hours is not None:
         sol.set_compute_info(cpu_hours=cpu_hours, wall_time_hours=wall_time_hours)
-    sol.lightcurve_plot_path = (
-        str(lightcurve_plot_path) if lightcurve_plot_path else None
-    )
-    sol.lens_plane_plot_path = (
-        str(lens_plane_plot_path) if lens_plane_plot_path else None
-    )
+    sol.lightcurve_plot_path = str(lightcurve_plot_path) if lightcurve_plot_path else None
+    sol.lens_plane_plot_path = str(lens_plane_plot_path) if lens_plane_plot_path else None
     # Handle notes file logic
-    canonical_notes_path = (
-        Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
-    )
+    canonical_notes_path = Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
     if notes_file is not None:
         sol.notes_path = str(notes_file)
     else:
@@ -256,12 +281,8 @@ def add_solution(
             "n_data_points": n_data_points,
             "cpu_hours": cpu_hours,
             "wall_time_hours": wall_time_hours,
-            "lightcurve_plot_path": (
-                str(lightcurve_plot_path) if lightcurve_plot_path else None
-            ),
-            "lens_plane_plot_path": (
-                str(lens_plane_plot_path) if lens_plane_plot_path else None
-            ),
+            "lightcurve_plot_path": (str(lightcurve_plot_path) if lightcurve_plot_path else None),
+            "lens_plane_plot_path": (str(lens_plane_plot_path) if lens_plane_plot_path else None),
             "alias": alias,
             "notes_path": sol.notes_path,
         }
@@ -297,8 +318,10 @@ def add_solution(
         for msg in enhanced_messages:
             console.print(f"  • {msg}")
     else:
-        console.print(Panel("Solution validated successfully!", style="green"))
-    console.print(f"Created solution: [bold cyan]{sol.solution_id}[/bold cyan]")
+        console.print(
+            f"✅ Solution {sol.solution_id} created successfully!",
+            style="green",
+        )
 
 
 def deactivate(
@@ -339,16 +362,12 @@ def activate(
 
     solution.activate()
     submission.save()
-    console.print(
-        f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]"
-    )
+    console.print(f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]")
 
 
 def remove_solution(
     solution_id: str,
-    force: bool = typer.Option(
-        False, "--force", help="Force removal of saved solutions (use with caution)"
-    ),
+    force: bool = typer.Option(False, "--force", help="Force removal of saved solutions (use with caution)"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Completely remove a solution from the submission."""
@@ -371,16 +390,14 @@ def remove_solution(
         removed = submission.events[event_id].remove_solution(solution_id, force=force)
         if removed:
             submission.save()
-            console.print(
-                f"[green]✅ Solution {solution_id[:8]}... removed from event {event_id}[/green]"
-            )
+            console.print(f"[green]✅ Solution {solution_id[:8]}... removed from event " f"{event_id}[/green]")
         else:
             console.print(f"[red]Error: Failed to remove solution {solution_id}[/red]")
             raise typer.Exit(1)
     except ValueError as e:
         console.print(f"[red]Error: {e}[/red]")
         console.print(
-            f"[yellow]💡 Use --force to override safety checks, or use deactivate to keep the solution[/yellow]"
+            "[yellow]💡 Use --force to override safety checks, or use deactivate to " "keep the solution[/yellow]"
         )
         raise typer.Exit(1)
 
@@ -392,7 +409,10 @@ def edit_solution(
         "--relative-probability",
         help="Relative probability of this solution",
     ),
-    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
+    log_likelihood: Optional[float] = typer.Option(
+        None,
+        help="Log likelihood [BASIC]",
+    ),
     n_data_points: Optional[int] = typer.Option(
         None,
         "--n-data-points",
@@ -401,57 +421,54 @@ def edit_solution(
     alias: Optional[str] = typer.Option(
         None,
         "--alias",
-        help="Set or update the human-readable alias for this solution (must be unique within the event)",
+        help=("Set or update the human-readable alias for this solution " "(must be unique within the event)"),
     ),
     notes: Optional[str] = typer.Option(
-        None, help="Notes for the solution (supports Markdown formatting)"
+        None,
+        help=("Notes for the solution (supports Markdown formatting)"),
     ),
     notes_file: Optional[Path] = typer.Option(
         None,
         "--notes-file",
-        help="Path to a Markdown file for solution notes (mutually exclusive with --notes)",
+        help=("Path to a Markdown file for solution notes " "(mutually exclusive with --notes)"),
     ),
     append_notes: Optional[str] = typer.Option(
         None,
         "--append-notes",
-        help="Append text to existing notes (use --notes to replace instead)",
+        help=("Append text to existing notes (use --notes to replace instead)"),
     ),
     clear_notes: bool = typer.Option(False, help="Clear all notes"),
-    clear_relative_probability: bool = typer.Option(
-        False, help="Clear relative probability"
-    ),
+    clear_relative_probability: bool = typer.Option(False, help="Clear relative probability"),
     clear_log_likelihood: bool = typer.Option(False, help="Clear log likelihood"),
     clear_n_data_points: bool = typer.Option(False, help="Clear n_data_points"),
-    clear_parameter_uncertainties: bool = typer.Option(
-        False, help="Clear parameter uncertainties"
-    ),
-    clear_physical_parameters: bool = typer.Option(
-        False, help="Clear physical parameters"
-    ),
+    clear_parameter_uncertainties: bool = typer.Option(False, help="Clear parameter uncertainties"),
+    clear_physical_parameters: bool = typer.Option(False, help="Clear physical parameters"),
     cpu_hours: Optional[float] = typer.Option(None, help="CPU hours used"),
     wall_time_hours: Optional[float] = typer.Option(None, help="Wall time hours used"),
     param: Optional[List[str]] = typer.Option(
-        None, help="Model parameters as key=value (updates existing parameters)"
+        None,
+        help=("Model parameters as key=value (updates existing parameters)"),
     ),
     param_uncertainty: Optional[List[str]] = typer.Option(
         None,
         "--param-uncertainty",
-        help="Parameter uncertainties as key=value (updates existing uncertainties)",
+        help=("Parameter uncertainties as key=value (updates existing uncertainties)"),
     ),
     higher_order_effect: Optional[List[str]] = typer.Option(
         None,
         "--higher-order-effect",
         help="Higher-order effects (replaces existing effects)",
     ),
-    clear_higher_order_effects: bool = typer.Option(
-        False, help="Clear all higher-order effects"
-    ),
+    clear_higher_order_effects: bool = typer.Option(False, help="Clear all higher-order effects"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
         help="Show what would be changed without saving",
     ),
-    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+    project_path: Path = typer.Argument(
+        Path("."),
+        help="Project directory [BASIC]",
+    ),
 ) -> None:
     """Edit an existing solution's attributes, including file-based notes and alias."""
     sub = load(str(project_path))
@@ -472,14 +489,12 @@ def edit_solution(
             target_solution.alias = alias
     if clear_relative_probability:
         if target_solution.relative_probability is not None:
-            changes.append(
-                f"Clear relative_probability: {target_solution.relative_probability}"
-            )
+            changes.append(f"Clear relative_probability: {target_solution.relative_probability}")
             target_solution.relative_probability = None
     elif relative_probability is not None:
         if target_solution.relative_probability != relative_probability:
             changes.append(
-                f"Update relative_probability: {target_solution.relative_probability} → {relative_probability}"
+                f"Update relative_probability: " f"{target_solution.relative_probability} " f"→ {relative_probability}"
             )
             target_solution.relative_probability = relative_probability
     if clear_log_likelihood:
@@ -488,9 +503,7 @@ def edit_solution(
             target_solution.log_likelihood = None
     elif log_likelihood is not None:
         if target_solution.log_likelihood != log_likelihood:
-            changes.append(
-                f"Update log_likelihood: {target_solution.log_likelihood} → {log_likelihood}"
-            )
+            changes.append(f"Update log_likelihood: {target_solution.log_likelihood} " f"→ {log_likelihood}")
             target_solution.log_likelihood = log_likelihood
     if clear_n_data_points:
         if target_solution.n_data_points is not None:
@@ -498,17 +511,11 @@ def edit_solution(
             target_solution.n_data_points = None
     elif n_data_points is not None:
         if target_solution.n_data_points != n_data_points:
-            changes.append(
-                f"Update n_data_points: {target_solution.n_data_points} → {n_data_points}"
-            )
+            changes.append(f"Update n_data_points: {target_solution.n_data_points} " f"→ {n_data_points}")
             target_solution.n_data_points = n_data_points
     # Notes file logic
     canonical_notes_path = (
-        Path(project_path)
-        / "events"
-        / target_event_id
-        / "solutions"
-        / f"{target_solution.solution_id}.md"
+        Path(project_path) / "events" / target_event_id / "solutions" / f"{target_solution.solution_id}.md"
     )
     if notes_file is not None:
         target_solution.notes_path = str(notes_file)
@@ -521,15 +528,9 @@ def edit_solution(
     elif append_notes is not None:
         if target_solution.notes_path:
             notes_file_path = Path(project_path) / target_solution.notes_path
-            old_content = (
-                notes_file_path.read_text(encoding="utf-8")
-                if notes_file_path.exists()
-                else ""
-            )
+            old_content = notes_file_path.read_text(encoding="utf-8") if notes_file_path.exists() else ""
             notes_file_path.parent.mkdir(parents=True, exist_ok=True)
-            notes_file_path.write_text(
-                old_content + "\n" + append_notes, encoding="utf-8"
-            )
+            notes_file_path.write_text(old_content + "\n" + append_notes, encoding="utf-8")
             changes.append(f"Appended notes in {notes_file_path}")
     elif clear_notes:
         if target_solution.notes_path:
@@ -554,9 +555,7 @@ def edit_solution(
             changes.append(f"Update wall_time_hours: {old_wall} → {wall_time_hours}")
         target_solution.set_compute_info(
             cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
-            wall_time_hours=(
-                wall_time_hours if wall_time_hours is not None else old_wall
-            ),
+            wall_time_hours=(wall_time_hours if wall_time_hours is not None else old_wall),
         )
     if param:
         for p in param:
@@ -588,23 +587,17 @@ def edit_solution(
                 target_solution.parameter_uncertainties[key] = new_value
     if clear_higher_order_effects:
         if target_solution.higher_order_effects:
-            changes.append(
-                f"Clear higher_order_effects: {target_solution.higher_order_effects}"
-            )
+            changes.append(f"Clear higher_order_effects: {target_solution.higher_order_effects}")
             target_solution.higher_order_effects = []
     elif higher_order_effect:
         if target_solution.higher_order_effects != higher_order_effect:
             changes.append(
-                f"Update higher_order_effects: {target_solution.higher_order_effects} → {higher_order_effect}"
+                f"Update higher_order_effects: " f"{target_solution.higher_order_effects} " f"→ {higher_order_effect}"
             )
             target_solution.higher_order_effects = higher_order_effect
     if dry_run:
         if changes:
-            console.print(
-                Panel(
-                    f"Changes for {solution_id} (event {target_event_id})", style="cyan"
-                )
-            )
+            console.print(Panel(f"Changes for {solution_id} (event {target_event_id})", style="cyan"))
             for change in changes:
                 console.print(f"  • {change}")
         else:
@@ -612,9 +605,7 @@ def edit_solution(
         return
     if changes:
         sub.save()
-        console.print(
-            Panel(f"Updated {solution_id} (event {target_event_id})", style="green")
-        )
+        console.print(Panel(f"Updated {solution_id} (event {target_event_id})", style="green"))
         for change in changes:
             console.print(f"  • {change}")
     else:
@@ -667,18 +658,10 @@ def import_solutions(
         "--parameter-map-file",
         help="YAML file mapping CSV columns to solution attributes",
     ),
-    project_path: Path = typer.Option(
-        Path("."), "--project-path", help="Project directory"
-    ),
-    delimiter: Optional[str] = typer.Option(
-        None, "--delimiter", help="CSV delimiter (auto-detected if not specified)"
-    ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Show what would be imported without making changes"
-    ),
-    validate: bool = typer.Option(
-        False, "--validate", help="Validate solution parameters during import"
-    ),
+    project_path: Path = typer.Option(Path("."), "--project-path", help="Project directory"),
+    delimiter: Optional[str] = typer.Option(None, "--delimiter", help="CSV delimiter (auto-detected if not specified)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be imported without making changes"),
+    validate: bool = typer.Option(False, "--validate", help="Validate solution parameters during import"),
     on_duplicate: str = typer.Option(
         "error",
         "--on-duplicate",
@@ -736,4 +719,4 @@ def import_solutions(
     if dry_run:
         typer.echo("\n🔍 Dry run completed - no changes made")
     else:
-        typer.echo("\n✅ Import completed successfully") 
+        typer.echo("\n✅ Import completed successfully")

@@ -4,10 +4,10 @@
   </a>
 </p>
 
-# <font face="Helvetica" size="7"> Microlensing Submission Format Manual </font>  
+# <font face="Helvetica" size="7"> Microlensing Submission Format Manual </font>
 
 > **A Note from the Organizers:** We strongly recommend using the official `microlens-submit` tool for a validated, error-free experience. It handles all the tedious formatting and metadata generation for you.
-> 
+>
 > However, if you insist on building your own submission package programmatically, this document provides the exact specification required. Proceed at your own risk.
 
 ## 1\. Directory Structure

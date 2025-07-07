@@ -130,4 +130,3 @@ A comprehensive test CSV file is provided at `tests/data/test_import.csv`. This 
 If you use **microlens-submit** in your research, please cite the project using
 the metadata provided in the `CITATION.cff` file. Most reference managers can
 import this file directly.
-

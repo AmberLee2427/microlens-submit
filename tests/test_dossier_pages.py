@@ -1,12 +1,12 @@
 """Tests for dossier page generation utilities."""
 
-import pytest
 from pathlib import Path
-import tempfile
 
-from microlens_submit.utils import load
-from microlens_submit.dossier import generate_event_page, generate_dashboard_html
+import pytest
+
+from microlens_submit.dossier import generate_event_page
 from microlens_submit.dossier.dashboard import _generate_dashboard_content
+from microlens_submit.utils import load
 
 
 def _basic_submission(tmp_path: Path):

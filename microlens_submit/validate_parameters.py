@@ -57,8 +57,7 @@ Note:
     custom parameters and future model types.
 """
 
-from typing import Dict, List, Any, Optional, Union
-
+from typing import Any, Dict, List, Optional
 
 MODEL_DEFINITIONS = {
     # Single Source, Single Lens (PSPL)
@@ -77,9 +76,18 @@ MODEL_DEFINITIONS = {
         "required_params_core": ["t0", "u0", "tE"],  # Core lens params
     },
     # Add other model types as needed:
-    # "2S2L": { "description": "Binary Source, Binary Point Lens", "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha"]},
-    # "1S3L": { "description": "Point Source, Triple Point Lens", "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]},
-    # "2S3L": { "description": "Binary Source, Triple Point Lens", "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]},
+    # "2S2L": {
+    #     "description": "Binary Source, Binary Point Lens",
+    #     "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha"]
+    # },
+    # "1S3L": {
+    #     "description": "Point Source, Triple Point Lens",
+    #     "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]
+    # },
+    # "2S3L": {
+    #     "description": "Binary Source, Triple Point Lens",
+    #     "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]
+    # },
 }
 
 HIGHER_ORDER_EFFECT_DEFINITIONS = {
@@ -100,9 +108,7 @@ HIGHER_ORDER_EFFECT_DEFINITIONS = {
         "description": "Orbital motion of the lens components",
         "requires_t_ref": True,
         "required_higher_order_params": ["dsdt", "dadt"],
-        "optional_higher_order_params": [
-            "dzdt"
-        ],  # Relative radial rate of change of lenses (if needed)
+        "optional_higher_order_params": ["dzdt"],  # Relative radial rate of change of lenses (if needed)
     },
     "xallarap": {
         "description": "Source orbital motion (xallarap)",
@@ -361,9 +367,8 @@ def get_required_flux_params(model_type: str, bands: List[str]) -> List[str]:
         elif model_type.startswith("2S"):  # Binary source models
             flux_params.append(f"F{band}_S1")  # First source flux for this band
             flux_params.append(f"F{band}_S2")  # Second source flux for this band
-            flux_params.append(
-                f"F{band}_B"
-            )  # Blend flux for this band (common for binary sources)
+            flux_params.append(f"F{band}_B")  # Blend flux for this band
+            # (common for binary sources)
         # Add more source types (e.g., 3S) if necessary in the future
     return flux_params
 
@@ -424,7 +429,12 @@ def check_solution_completeness(
         ...     "s": 1.2, "q": 0.5, "alpha": 45.0,
         ...     "piEN": 0.1, "piEE": 0.05
         ... }
-        >>> messages = check_solution_completeness("1S2L", params, ["parallax"], t_ref=2459123.0)
+        >>> messages = check_solution_completeness(
+        ...     "1S2L",
+        ...     params,
+        ...     ["parallax"],
+        ...     t_ref=2459123.0
+        ... )
         >>> print(messages)
         []
 
@@ -443,9 +453,7 @@ def check_solution_completeness(
 
     # Validate model type
     if model_type not in MODEL_DEFINITIONS:
-        messages.append(
-            f"Unknown model type: '{model_type}'. Valid types: {list(MODEL_DEFINITIONS.keys())}"
-        )
+        messages.append(f"Unknown model type: '{model_type}'. " f"Valid types: {list(MODEL_DEFINITIONS.keys())}")
         return messages
 
     model_def = MODEL_DEFINITIONS[model_type]
@@ -454,16 +462,15 @@ def check_solution_completeness(
     required_core_params = model_def.get("required_params_core", [])
     for param in required_core_params:
         if param not in parameters:
-            messages.append(
-                f"Missing required core parameter '{param}' for model type '{model_type}'"
-            )
+            messages.append(f"Missing required core parameter '{param}' for model type " f"'{model_type}'")
 
     # Validate higher-order effects
     if higher_order_effects:
         for effect in higher_order_effects:
             if effect not in HIGHER_ORDER_EFFECT_DEFINITIONS:
                 messages.append(
-                    f"Unknown higher-order effect: '{effect}'. Valid effects: {list(HIGHER_ORDER_EFFECT_DEFINITIONS.keys())}"
+                    f"Unknown higher-order effect: '{effect}'. "
+                    f"Valid effects: {list(HIGHER_ORDER_EFFECT_DEFINITIONS.keys())}"
                 )
                 continue
 
@@ -473,32 +480,24 @@ def check_solution_completeness(
             effect_required = effect_def.get("required_higher_order_params", [])
             for param in effect_required:
                 if param not in parameters:
-                    messages.append(
-                        f"Missing required parameter '{param}' for effect '{effect}'"
-                    )
+                    messages.append(f"Missing required parameter '{param}' for effect " f"'{effect}'")
 
             # Check optional parameters for this effect
             effect_optional = effect_def.get("optional_higher_order_params", [])
             for param in effect_optional:
                 if param not in parameters:
-                    messages.append(
-                        f"Warning: Optional parameter '{param}' not provided for effect '{effect}'"
-                    )
+                    messages.append(f"Warning: Optional parameter '{param}' not provided " f"for effect '{effect}'")
 
             # Check if t_ref is required for this effect
             if effect_def.get("requires_t_ref", False) and t_ref is None:
-                messages.append(
-                    f"Reference time (t_ref) required for effect '{effect}'"
-                )
+                messages.append(f"Reference time (t_ref) required for effect '{effect}'")
 
     # Validate band-specific parameters
     if bands:
         required_flux_params = get_required_flux_params(model_type, bands)
         for param in required_flux_params:
             if param not in parameters:
-                messages.append(
-                    f"Missing required flux parameter '{param}' for bands {bands}"
-                )
+                messages.append(f"Missing required flux parameter '{param}' for bands " f"{bands}")
 
     # Check for invalid parameters (not in any definition)
     all_valid_params = set()
@@ -511,12 +510,8 @@ def check_solution_completeness(
         for effect in higher_order_effects:
             if effect in HIGHER_ORDER_EFFECT_DEFINITIONS:
                 effect_def = HIGHER_ORDER_EFFECT_DEFINITIONS[effect]
-                all_valid_params.update(
-                    effect_def.get("required_higher_order_params", [])
-                )
-                all_valid_params.update(
-                    effect_def.get("optional_higher_order_params", [])
-                )
+                all_valid_params.update(effect_def.get("required_higher_order_params", []))
+                all_valid_params.update(effect_def.get("optional_higher_order_params", []))
 
     # Add band-specific parameters if bands are specified
     if bands:
@@ -525,14 +520,15 @@ def check_solution_completeness(
     # Check for invalid parameters
     invalid_params = set(parameters.keys()) - all_valid_params
     for param in invalid_params:
-        messages.append(
-            f"Warning: Parameter '{param}' not recognized for model type '{model_type}'"
-        )
+        messages.append(f"Warning: Parameter '{param}' not recognized for model type " f"'{model_type}'")
 
     return messages
 
 
-def validate_parameter_types(parameters: Dict[str, Any], model_type: str) -> List[str]:
+def validate_parameter_types(
+    parameters: Dict[str, Any],
+    model_type: str,
+) -> List[str]:
     """Validate parameter types and value ranges against expected types.
 
     Checks that parameters have the correct data types as defined in
@@ -585,17 +581,11 @@ def validate_parameter_types(parameters: Dict[str, Any], model_type: str) -> Lis
             # Check type
             expected_type = prop.get("type")
             if expected_type == "float" and not isinstance(value, (int, float)):
-                messages.append(
-                    f"Parameter '{param}' should be numeric, got {type(value).__name__}"
-                )
+                messages.append(f"Parameter '{param}' should be numeric, got " f"{type(value).__name__}")
             elif expected_type == "int" and not isinstance(value, int):
-                messages.append(
-                    f"Parameter '{param}' should be integer, got {type(value).__name__}"
-                )
+                messages.append(f"Parameter '{param}' should be integer, got " f"{type(value).__name__}")
             elif expected_type == "str" and not isinstance(value, str):
-                messages.append(
-                    f"Parameter '{param}' should be string, got {type(value).__name__}"
-                )
+                messages.append(f"Parameter '{param}' should be string, got " f"{type(value).__name__}")
 
     return messages
 
@@ -668,9 +658,7 @@ def validate_parameter_uncertainties(
 
     for param_name, uncertainty in uncertainties.items():
         if param_name not in parameters:
-            messages.append(
-                f"Uncertainty provided for unknown parameter '{param_name}'"
-            )
+            messages.append(f"Uncertainty provided for unknown parameter '{param_name}'")
             continue
 
         param_value = parameters[param_name]
@@ -679,27 +667,17 @@ def validate_parameter_uncertainties(
         if isinstance(uncertainty, (list, tuple)):
             # [lower, upper] format
             if len(uncertainty) != 2:
-                messages.append(
-                    f"Uncertainty for '{param_name}' should be [lower, upper] or single value"
-                )
+                messages.append(f"Uncertainty for '{param_name}' should be [lower, upper] " f"or single value")
                 continue
             lower, upper = uncertainty
-            if not (
-                isinstance(lower, (int, float)) and isinstance(upper, (int, float))
-            ):
-                messages.append(
-                    f"Uncertainty bounds for '{param_name}' must be numeric"
-                )
+            if not (isinstance(lower, (int, float)) and isinstance(upper, (int, float))):
+                messages.append(f"Uncertainty bounds for '{param_name}' must be numeric")
                 continue
             if lower < 0 or upper < 0:
-                messages.append(
-                    f"Uncertainty bounds for '{param_name}' must be positive"
-                )
+                messages.append(f"Uncertainty bounds for '{param_name}' must be positive")
                 continue
             if lower > upper:
-                messages.append(
-                    f"Lower uncertainty for '{param_name}' ({lower}) > upper uncertainty ({upper})"
-                )
+                messages.append(f"Lower uncertainty for '{param_name}' ({lower}) > " f"upper uncertainty ({upper})")
                 continue
         else:
             # Single value format
@@ -716,7 +694,8 @@ def validate_parameter_uncertainties(
             # Calculate relative uncertainty
             if isinstance(uncertainty, (list, tuple)):
                 rel_uncertainty = max(
-                    abs(lower / param_value), abs(upper / param_value)
+                    abs(lower / param_value),
+                    abs(upper / param_value),
                 )
             else:
                 rel_uncertainty = abs(uncertainty / param_value)
@@ -724,11 +703,13 @@ def validate_parameter_uncertainties(
             # Warn if uncertainty is very large (>50%) or very small (<0.1%)
             if rel_uncertainty > 0.5:
                 messages.append(
-                    f"Warning: Uncertainty for '{param_name}' is very large ({rel_uncertainty:.1%} of parameter value)"
+                    f"Warning: Uncertainty for '{param_name}' is very large "
+                    f"({rel_uncertainty:.1%} of parameter value)"
                 )
             elif rel_uncertainty < 0.001:
                 messages.append(
-                    f"Warning: Uncertainty for '{param_name}' is very small ({rel_uncertainty:.1%} of parameter value)"
+                    f"Warning: Uncertainty for '{param_name}' is very small "
+                    f"({rel_uncertainty:.1%} of parameter value)"
                 )
 
     return messages
@@ -812,13 +793,10 @@ def validate_solution_consistency(
     if model_type in ["1S2L", "2S2L"]:
         if "q" in parameters and "s" in parameters:
             # Check for caustic crossing conditions
-            q = parameters["q"]
             s = parameters["s"]
 
             # Simple caustic crossing check
             if s < 0.5 or s > 2.0:
-                messages.append(
-                    "Warning: Separation (s) outside typical caustic crossing range (0.5-2.0)"
-                )
+                messages.append("Warning: " "Separation (s) outside typical caustic crossing range " "(0.5-2.0)")
 
     return messages

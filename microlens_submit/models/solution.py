@@ -10,7 +10,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -138,9 +138,7 @@ class Solution(BaseModel):
     log_likelihood: Optional[float] = None
     relative_probability: Optional[float] = None
     n_data_points: Optional[int] = None
-    creation_timestamp: str = Field(
-        default_factory=lambda: datetime.utcnow().isoformat()
-    )
+    creation_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     saved: bool = Field(default=False, exclude=True)
 
     def set_compute_info(
@@ -192,9 +190,7 @@ class Solution(BaseModel):
                 text=True,
                 check=True,
             )
-            self.compute_info["dependencies"] = (
-                result.stdout.strip().split("\n") if result.stdout else []
-            )
+            self.compute_info["dependencies"] = result.stdout.strip().split("\n") if result.stdout else []
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.warning("Could not capture pip environment: %s", e)
             self.compute_info["dependencies"] = []
@@ -309,8 +305,8 @@ class Solution(BaseModel):
         from ..validate_parameters import (
             check_solution_completeness,
             validate_parameter_types,
-            validate_solution_consistency,
             validate_parameter_uncertainties,
+            validate_solution_consistency,
         )
 
         messages = []
@@ -326,9 +322,7 @@ class Solution(BaseModel):
         messages.extend(completeness_messages)
 
         # Check parameter types
-        type_messages = validate_parameter_types(
-            parameters=self.parameters, model_type=self.model_type
-        )
+        type_messages = validate_parameter_types(parameters=self.parameters, model_type=self.model_type)
         messages.extend(type_messages)
 
         # Check parameter uncertainties
@@ -491,9 +485,7 @@ class Solution(BaseModel):
         """
         return self.get_notes()
 
-    def view_notes(
-        self, render_html: bool = True, project_root: Optional[Path] = None
-    ) -> str:
+    def view_notes(self, render_html: bool = True, project_root: Optional[Path] = None) -> str:
         """Return the notes as Markdown or rendered HTML.
 
         Args:
@@ -530,7 +522,5 @@ class Solution(BaseModel):
         if render_html:
             import markdown
 
-            return markdown.markdown(
-                md or "", extensions=["extra", "tables", "fenced_code", "nl2br"]
-            )
-        return md 
+            return markdown.markdown(md or "", extensions=["extra", "tables", "fenced_code", "nl2br"])
+        return md

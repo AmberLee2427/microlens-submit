@@ -84,7 +84,7 @@ microlens_submit/
 All phases of the refactoring have been successfully completed:
 
 - **Models Package**: Solution, Event, and Submission classes moved to separate modules
-- **Dossier Package**: HTML generation functions split into logical modules  
+- **Dossier Package**: HTML generation functions split into logical modules
 - **CLI Package**: Large CLI file split into command-specific modules
 - **Utils Module**: Shared utilities consolidated
 - **All Tests Passing**: Full test suite verified working

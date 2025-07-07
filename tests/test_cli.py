@@ -64,9 +64,13 @@ Note:
 # Install package in editable mode to ensure assets are available
 import subprocess
 import sys
+
 try:
-    subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."], 
-                  capture_output=True, check=True)
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-e", "."],
+        capture_output=True,
+        check=True,
+    )
 except subprocess.CalledProcessError:
     # If we're not in the right directory or package isn't set up, continue anyway
     # The asset check fixture will catch missing assets
@@ -75,12 +79,12 @@ except subprocess.CalledProcessError:
 import json
 import zipfile
 from pathlib import Path
-from typer.testing import CliRunner
-import pytest
 
-from microlens_submit import Event, Solution, Submission
-from microlens_submit.utils import load
+import pytest
+from typer.testing import CliRunner
+
 from microlens_submit.cli import app
+from microlens_submit.utils import load
 
 runner = CliRunner()
 
@@ -145,9 +149,7 @@ def test_cli_init_and_add():
         functions correctly and data is properly saved.
     """
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            app, ["init", "--team-name", "Test Team", "--tier", "test"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "Test Team", "--tier", "test"])
         assert result.exit_code == 0
         assert Path("submission.json").exists()
 
@@ -169,8 +171,8 @@ def test_cli_init_and_add():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
-        evt = sub.get_event("test-event")
+        # sub = load(".")
+        evt = load(".").get_event("test-event")
         assert len(evt.solutions) == 1
         sol_id = next(iter(evt.solutions))
         assert sol_id in result.stdout
@@ -202,12 +204,7 @@ def test_cli_export():
         and properly handle notes files and solution metadata.
     """
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         assert (
             runner.invoke(
                 app,
@@ -222,8 +219,8 @@ def test_cli_export():
             ).exit_code
             == 0
         )
-        sub = load(".")
-        evt = sub.get_event("evt")
+        # sub = load(".")
+        evt = load(".").get_event("evt")
         sol1, sol2 = list(evt.solutions.keys())
 
         assert runner.invoke(app, ["deactivate", sol2]).exit_code == 0
@@ -260,26 +257,11 @@ def test_cli_list_solutions():
         of all solutions in an event with their basic metadata.
     """
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
-        assert (
-            runner.invoke(
-                app, ["add-solution", "evt", "other", "--param", "a=1"]
-            ).exit_code
-            == 0
-        )
-        assert (
-            runner.invoke(
-                app, ["add-solution", "evt", "other", "--param", "b=2"]
-            ).exit_code
-            == 0
-        )
-        sub = load(".")
-        evt = sub.get_event("evt")
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
+        assert runner.invoke(app, ["add-solution", "evt", "other", "--param", "a=1"]).exit_code == 0
+        assert runner.invoke(app, ["add-solution", "evt", "other", "--param", "b=2"]).exit_code == 0
+        # sub = load(".")
+        evt = load(".").get_event("evt")
         ids = list(evt.solutions.keys())
         result = runner.invoke(app, ["list-solutions", "evt"])
         assert result.exit_code == 0
@@ -307,12 +289,7 @@ def test_cli_compare_solutions():
         calculate relative probabilities for solutions that lack them.
     """
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -370,12 +347,7 @@ def test_cli_compare_solutions_skips_zero_data_points():
         and are therefore excluded from automatic comparison.
     """
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -417,12 +389,7 @@ def test_cli_compare_solutions_skips_zero_data_points():
 
 def test_params_file_option_and_bands():
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         params = {"p1": 1, "p2": 2}
         with open("params.json", "w", encoding="utf-8") as fh:
             json.dump(params, fh)
@@ -443,7 +410,7 @@ def test_params_file_option_and_bands():
             ],
         )
         assert result.exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters == params
         assert sol.bands == ["0", "1"]
@@ -468,12 +435,7 @@ def test_params_file_option_and_bands():
 def test_add_solution_dry_run():
     """--dry-run prints info without saving to disk."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         result = runner.invoke(
             app,
@@ -498,40 +460,25 @@ def test_add_solution_dry_run():
 
 def test_cli_activate():
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
-        assert (
-            runner.invoke(
-                app, ["add-solution", "evt", "other", "--param", "x=1"]
-            ).exit_code
-            == 0
-        )
-        sub = load(".")
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
+        assert runner.invoke(app, ["add-solution", "evt", "other", "--param", "x=1"]).exit_code == 0
+        # sub = load(".")
         sol_id = next(iter(load(".").get_event("evt").solutions))
 
         assert runner.invoke(app, ["deactivate", sol_id]).exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         assert not load(".").get_event("evt").solutions[sol_id].is_active
 
         result = runner.invoke(app, ["activate", sol_id])
         assert result.exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         assert load(".").get_event("evt").solutions[sol_id].is_active
 
 
 def test_cli_validate_solution():
     """Test validate-solution command."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -548,7 +495,7 @@ def test_cli_validate_solution():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test validation of valid solution
@@ -572,7 +519,7 @@ def test_cli_validate_solution():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol_id2 = next(iter(load(".").get_event("evt2").solutions))
 
         result = runner.invoke(app, ["validate-solution", sol_id2])
@@ -583,12 +530,7 @@ def test_cli_validate_solution():
 def test_cli_validate_event():
     """Test validate-event command."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         # Add valid solution
         result = runner.invoke(
             app,
@@ -622,20 +564,13 @@ def test_cli_validate_event():
 
         result = runner.invoke(app, ["validate-event", "evt"])
         assert result.exit_code == 0
-        assert (
-            "validation issue" in result.stdout or "Missing required" in result.stdout
-        )
+        assert "validation issue" in result.stdout or "Missing required" in result.stdout
 
 
 def test_cli_validate_submission():
     """Test validate-submission command."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -665,12 +600,7 @@ def test_cli_validate_submission():
 def test_cli_edit_solution():
     """Test edit-solution command."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -689,20 +619,16 @@ def test_cli_edit_solution():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test updating notes
-        result = runner.invoke(
-            app, ["edit-solution", sol_id, "--notes", "Updated notes"]
-        )
+        result = runner.invoke(app, ["edit-solution", sol_id, "--notes", "Updated notes"])
         assert result.exit_code == 0
         assert "Updated" in result.stdout
 
         # Test appending notes
-        result = runner.invoke(
-            app, ["edit-solution", sol_id, "--append-notes", "Additional info"]
-        )
+        result = runner.invoke(app, ["edit-solution", sol_id, "--append-notes", "Additional info"])
         assert result.exit_code == 0
         assert "Append" in result.stdout or "Appended" in result.stdout
 
@@ -712,9 +638,7 @@ def test_cli_edit_solution():
         assert "Update parameter" in result.stdout
 
         # Test updating uncertainties
-        result = runner.invoke(
-            app, ["edit-solution", sol_id, "--param-uncertainty", "t0=0.1"]
-        )
+        result = runner.invoke(app, ["edit-solution", sol_id, "--param-uncertainty", "t0=0.1"])
         assert result.exit_code == 0
         assert "Update uncertainty" in result.stdout
 
@@ -734,9 +658,7 @@ def test_cli_edit_solution():
         assert "Update cpu_hours" in result.stdout
 
         # Test dry run
-        result = runner.invoke(
-            app, ["edit-solution", sol_id, "--relative-probability", "0.8", "--dry-run"]
-        )
+        result = runner.invoke(app, ["edit-solution", sol_id, "--relative-probability", "0.8", "--dry-run"])
         assert result.exit_code == 0
         assert "Changes for" in result.stdout
         assert "No changes would be made" not in result.stdout
@@ -750,15 +672,8 @@ def test_cli_edit_solution():
 def test_cli_edit_solution_not_found():
     """Test edit-solution with non-existent solution."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
-        result = runner.invoke(
-            app, ["edit-solution", "non-existent-id", "--notes", "test"]
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
+        result = runner.invoke(app, ["edit-solution", "non-existent-id", "--notes", "test"])
         assert result.exit_code == 1
         assert "not found" in result.stdout
 
@@ -766,12 +681,7 @@ def test_cli_edit_solution_not_found():
 def test_cli_yaml_params_file():
     """Test YAML parameter file support."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Create YAML parameter file
         yaml_content = """
@@ -799,7 +709,7 @@ uncertainties:
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
@@ -812,12 +722,7 @@ uncertainties:
 def test_cli_structured_json_params_file():
     """Test structured JSON parameter file with uncertainties."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Create structured JSON parameter file
         params = {
@@ -839,7 +744,7 @@ def test_cli_structured_json_params_file():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
@@ -852,12 +757,7 @@ def test_cli_structured_json_params_file():
 def test_cli_simple_params_file():
     """Test simple parameter file (parameters only, no uncertainties)."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Create simple JSON parameter file
         params = {"t0": 555.5, "u0": 0.1, "tE": 25.0}
@@ -876,7 +776,7 @@ def test_cli_simple_params_file():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.parameters["t0"] == 555.5
         assert sol.parameters["u0"] == 0.1
@@ -888,12 +788,7 @@ def test_cli_simple_params_file():
 def test_cli_params_file_mutually_exclusive():
     """Test that --param and --params-file are mutually exclusive."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Create parameter file
         params = {"t0": 555.5}
@@ -919,12 +814,7 @@ def test_cli_params_file_mutually_exclusive():
 def test_cli_params_file_required():
     """Test that either --param or --params-file is required."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         result = runner.invoke(
             app,
@@ -941,12 +831,7 @@ def test_cli_params_file_required():
 def test_cli_validation_in_dry_run():
     """Test that validation warnings are shown in dry-run mode."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Add solution with missing required parameters
         result = runner.invoke(
@@ -971,12 +856,7 @@ def test_cli_validation_in_dry_run():
 def test_cli_validation_on_add_solution():
     """Test that validation warnings are shown when adding solutions."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         # Add solution with missing required parameters
         result = runner.invoke(
@@ -1002,12 +882,7 @@ def test_cli_validation_on_add_solution():
 def test_cli_higher_order_effects_editing():
     """Test editing higher-order effects."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         result = runner.invoke(
             app,
             [
@@ -1026,7 +901,7 @@ def test_cli_higher_order_effects_editing():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol_id = next(iter(load(".").get_event("evt").solutions))
 
         # Test updating higher-order effects
@@ -1045,9 +920,7 @@ def test_cli_higher_order_effects_editing():
         assert "Update higher_order_effects" in result.stdout
 
         # Test clearing higher-order effects
-        result = runner.invoke(
-            app, ["edit-solution", sol_id, "--clear-higher-order-effects"]
-        )
+        result = runner.invoke(app, ["edit-solution", sol_id, "--clear-higher-order-effects"])
         assert result.exit_code == 0
         assert "Clear higher_order_effects" in result.stdout
 
@@ -1055,12 +928,7 @@ def test_cli_higher_order_effects_editing():
 def test_cli_compute_info_options():
     """Test compute info options in add-solution."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
 
         result = runner.invoke(
             app,
@@ -1082,7 +950,7 @@ def test_cli_compute_info_options():
         )
         assert result.exit_code == 0
 
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.compute_info["cpu_hours"] == 15.5
         assert sol.compute_info["wall_time_hours"] == 3.2
@@ -1091,15 +959,8 @@ def test_cli_compute_info_options():
 def test_markdown_notes_round_trip():
     """Test that a Markdown-rich note is preserved through CLI and API."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
-        md_note = (
-            """# Header\n\n- Bullet\n- **Bold**\n\n[Link](https://example.com)\n"""
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
+        md_note = """# Header\n\n- Bullet\n- **Bold**\n\n[Link](https://example.com)\n"""
         result = runner.invoke(
             app,
             [
@@ -1117,16 +978,14 @@ def test_markdown_notes_round_trip():
             ],
         )
         assert result.exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol.notes == md_note
         # Now update via edit-solution
         new_md = md_note + "\n---\nAppended"
-        result = runner.invoke(
-            app, ["edit-solution", sol.solution_id, "--notes", new_md]
-        )
+        result = runner.invoke(app, ["edit-solution", sol.solution_id, "--notes", new_md])
         assert result.exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         sol2 = next(iter(load(".").get_event("evt").solutions.values()))
         assert sol2.notes == new_md
 
@@ -1134,12 +993,7 @@ def test_markdown_notes_round_trip():
 def test_markdown_notes_in_list_and_compare():
     """Test that Markdown notes appear in list-solutions and compare-solutions output."""
     with runner.isolated_filesystem():
-        assert (
-            runner.invoke(
-                app, ["init", "--team-name", "Team", "--tier", "test"]
-            ).exit_code
-            == 0
-        )
+        assert runner.invoke(app, ["init", "--team-name", "Team", "--tier", "test"]).exit_code == 0
         md_note = "# Header\n- Bullet\n**Bold**"
         result = runner.invoke(
             app,
@@ -1162,16 +1016,12 @@ def test_markdown_notes_in_list_and_compare():
             ],
         )
         assert result.exit_code == 0
-        sub = load(".")
+        # sub = load(".")
         sol = next(iter(load(".").get_event("evt").solutions.values()))
         # Check list-solutions output
         result = runner.invoke(app, ["list-solutions", "evt"])
         assert result.exit_code == 0
-        assert (
-            "# Header" in result.stdout
-            or "Bullet" in result.stdout
-            or "**Bold**" in result.stdout
-        )
+        assert "# Header" in result.stdout or "Bullet" in result.stdout or "**Bold**" in result.stdout
         # Check compare-solutions output
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
@@ -1185,9 +1035,7 @@ def test_cli_generate_dossier():
 
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "DossierTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "DossierTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Set GitHub repository URL
@@ -1227,9 +1075,7 @@ def test_cli_generate_dossier_selective_event():
     """Test generate-dossier --event-id flag generates only specific event page."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "SelectiveTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "SelectiveTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Add solutions to multiple events
@@ -1273,16 +1119,16 @@ def test_cli_generate_dossier_selective_event():
         # Check that only EVENT001 page was generated
         dossier_dir = Path("dossier")
         assert dossier_dir.exists()
-        
+
         # Should NOT have index.html (full dashboard)
         assert not (dossier_dir / "index.html").exists()
-        
+
         # Should NOT have full dossier report
         assert not (dossier_dir / "full_dossier_report.html").exists()
-        
+
         # Should have EVENT001 page
         assert (dossier_dir / "EVENT001.html").exists()
-        
+
         # Should NOT have EVENT002 page
         assert not (dossier_dir / "EVENT002.html").exists()
 
@@ -1298,9 +1144,7 @@ def test_cli_generate_dossier_selective_solution():
     """Test generate-dossier --solution-id flag generates only specific solution page."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "SolutionTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "SolutionTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Add multiple solutions to same event
@@ -1359,16 +1203,16 @@ def test_cli_generate_dossier_selective_solution():
         # Check that only the specific solution page was generated
         dossier_dir = Path("dossier")
         assert dossier_dir.exists()
-        
+
         # Should NOT have index.html (full dashboard)
         assert not (dossier_dir / "index.html").exists()
-        
+
         # Should NOT have full dossier report
         assert not (dossier_dir / "full_dossier_report.html").exists()
-        
+
         # Should NOT have event page
         assert not (dossier_dir / "EVENT001.html").exists()
-        
+
         # Should have solution page
         solution_file = dossier_dir / f"{solution_id}.html"
         assert solution_file.exists()
@@ -1384,9 +1228,7 @@ def test_cli_generate_dossier_invalid_event():
     """Test generate-dossier --event-id with invalid event ID returns error."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Try to generate dossier for non-existent event
@@ -1399,14 +1241,17 @@ def test_cli_generate_dossier_invalid_solution():
     """Test generate-dossier --solution-id with invalid solution ID returns error."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Try to generate dossier for non-existent solution
         result = runner.invoke(
-            app, ["generate-dossier", "--solution-id", "00000000-0000-0000-0000-000000000000"]
+            app,
+            [
+                "generate-dossier",
+                "--solution-id",
+                "00000000-0000-0000-0000-000000000000",
+            ],
         )
         assert result.exit_code == 1
         assert "Solution 00000000-0000-0000-0000-000000000000 not found" in result.stdout
@@ -1416,9 +1261,7 @@ def test_cli_generate_dossier_full_generation():
     """Test generate-dossier without flags generates complete dossier."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "FullTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "FullTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Add solutions to multiple events
@@ -1463,13 +1306,13 @@ def test_cli_generate_dossier_full_generation():
         # Check that complete dossier was generated
         dossier_dir = Path("dossier")
         assert dossier_dir.exists()
-        
+
         # Should have index.html (full dashboard)
         assert (dossier_dir / "index.html").exists()
-        
+
         # Should have full dossier report
         assert (dossier_dir / "full_dossier_report.html").exists()
-        
+
         # Should have both event pages
         assert (dossier_dir / "EVENT001.html").exists()
         assert (dossier_dir / "EVENT002.html").exists()
@@ -1485,9 +1328,7 @@ def test_cli_generate_dossier_priority_flags():
     """Test that --solution-id takes priority over --event-id when both are provided."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(
-            app, ["init", "--team-name", "PriorityTesters", "--tier", "standard"]
-        )
+        result = runner.invoke(app, ["init", "--team-name", "PriorityTesters", "--tier", "standard"])
         assert result.exit_code == 0
 
         # Add a solution
@@ -1514,8 +1355,14 @@ def test_cli_generate_dossier_priority_flags():
 
         # Generate dossier with both flags (solution-id should take priority)
         result = runner.invoke(
-            app, 
-            ["generate-dossier", "--event-id", "EVENT001", "--solution-id", solution_id]
+            app,
+            [
+                "generate-dossier",
+                "--event-id",
+                "EVENT001",
+                "--solution-id",
+                solution_id,
+            ],
         )
         assert result.exit_code == 0
         assert f"Generating dossier for solution {solution_id}" in result.stdout
@@ -1599,17 +1446,13 @@ OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,
         assert "binary_1S2L" in aliases
 
         # Check parameters
-        simple_sol = next(
-            sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L"
-        )
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
         assert simple_sol.model_type == "1S1L"
         assert simple_sol.parameters["t0"] == 2459123.5
         assert simple_sol.parameters["u0"] == 0.1
         assert simple_sol.parameters["tE"] == 20.0
 
-        binary_sol = next(
-            sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L"
-        )
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_1S2L")
         assert binary_sol.model_type == "1S2L"
         assert binary_sol.parameters["s"] == 1.2
         assert binary_sol.parameters["q"] == 0.5
@@ -1858,18 +1701,14 @@ def test_csv_import_from_data_file():
         assert "binary_parallax" in aliases
 
         # Check parameters for simple solution
-        simple_sol = next(
-            sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L"
-        )
+        simple_sol = next(sol for sol in event1.solutions.values() if sol.alias == "simple_1S1L")
         assert simple_sol.model_type == "1S1L"
         assert simple_sol.parameters["t0"] == 2459123.5
         assert simple_sol.parameters["u0"] == 0.1
         assert simple_sol.parameters["tE"] == 20.0
 
         # Check parameters for binary parallax solution
-        binary_sol = next(
-            sol for sol in event1.solutions.values() if sol.alias == "binary_parallax"
-        )
+        binary_sol = next(sol for sol in event1.solutions.values() if sol.alias == "binary_parallax")
         assert binary_sol.model_type == "1S2L"
         assert binary_sol.parameters["s"] == 1.2
         assert binary_sol.parameters["q"] == 0.5
@@ -1879,8 +1718,6 @@ def test_csv_import_from_data_file():
         assert "parallax" in binary_sol.higher_order_effects
 
         # Check finite source solution
-        finite_sol = next(
-            sol for sol in event2.solutions.values() if sol.alias == "finite_source"
-        )
+        finite_sol = next(sol for sol in event2.solutions.values() if sol.alias == "finite_source")
         assert finite_sol.model_type == "1S1L"
         assert "finite-source" in finite_sol.higher_order_effects

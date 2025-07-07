@@ -40,12 +40,12 @@ Note:
 
 from .dashboard import generate_dashboard_html
 from .event_page import generate_event_page
-from .solution_page import generate_solution_page
 from .full_report import generate_full_dossier_report_html
+from .solution_page import generate_solution_page
 
 __all__ = [
     "generate_dashboard_html",
-    "generate_event_page", 
+    "generate_event_page",
     "generate_solution_page",
     "generate_full_dossier_report_html",
-] 
+]

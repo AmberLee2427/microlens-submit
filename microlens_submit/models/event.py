@@ -7,7 +7,7 @@ for a single microlensing event.
 
 import uuid
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -66,9 +66,7 @@ class Event(BaseModel):
     solutions: Dict[str, Solution] = Field(default_factory=dict)
     submission: Optional["Submission"] = Field(default=None, exclude=True)
 
-    def add_solution(
-        self, model_type: str, parameters: dict, alias: Optional[str] = None
-    ) -> Solution:
+    def add_solution(self, model_type: str, parameters: dict, alias: Optional[str] = None) -> Solution:
         """Create and attach a new solution to this event.
 
         Parameters are stored as provided and the new solution is returned for
@@ -124,13 +122,11 @@ class Event(BaseModel):
 
         # Provide feedback about the created solution
         alias_info = f" with alias '{alias}'" if alias else ""
-        print(f"✅ Created solution {solution_id[:8]}...{alias_info}")
+        print(f"✅ Created solution {solution_id}{alias_info}")
         print(f"   Model: {model_type}, Parameters: {len(parameters)}")
         if alias:
-            print(
-                f"   ⚠️  Note: Alias '{alias}' will be validated for uniqueness when saved"
-            )
-        print(f"   💾 Remember to call submission.save() to persist to disk")
+            print(f"   ⚠️  Note: Alias '{alias}' will be validated for uniqueness when saved")
+        print("   💾 Remember to call submission.save() to persist to disk")
 
         return sol
 
@@ -240,9 +236,7 @@ class Event(BaseModel):
             # Multiple active solutions - check if probabilities sum to 1.0
             total_prob = sum(sol.relative_probability or 0.0 for sol in active)
 
-            if (
-                total_prob > 0.0 and abs(total_prob - 1.0) > 1e-6
-            ):  # Allow small floating point errors
+            if total_prob > 0.0 and abs(total_prob - 1.0) > 1e-6:  # Allow small floating point errors
                 warnings.append(
                     f"Relative probabilities for active solutions sum to {total_prob:.3f}, "
                     f"should sum to 1.0. Solutions: {[sol.solution_id[:8] + '...' for sol in active]}"
@@ -250,10 +244,7 @@ class Event(BaseModel):
         elif len(active) == 1:
             # Single active solution - probability should be 1.0 or None
             sol = active[0]
-            if (
-                sol.relative_probability is not None
-                and abs(sol.relative_probability - 1.0) > 1e-6
-            ):
+            if sol.relative_probability is not None and abs(sol.relative_probability - 1.0) > 1e-6:
                 warnings.append(
                     f"Single active solution has relative_probability {sol.relative_probability:.3f}, "
                     f"should be 1.0 or None"
@@ -270,22 +261,16 @@ class Event(BaseModel):
             if sol.log_likelihood is None:
                 warnings.append(f"Solution {sol.solution_id} is missing log_likelihood")
             if sol.lightcurve_plot_path is None:
-                warnings.append(
-                    f"Solution {sol.solution_id} is missing lightcurve_plot_path"
-                )
+                warnings.append(f"Solution {sol.solution_id} is missing lightcurve_plot_path")
             if sol.lens_plane_plot_path is None:
-                warnings.append(
-                    f"Solution {sol.solution_id} is missing lens_plane_plot_path"
-                )
+                warnings.append(f"Solution {sol.solution_id} is missing lens_plane_plot_path")
 
             # Check for missing compute info
             compute_info = sol.compute_info or {}
             if "cpu_hours" not in compute_info:
                 warnings.append(f"Solution {sol.solution_id} is missing cpu_hours")
             if "wall_time_hours" not in compute_info:
-                warnings.append(
-                    f"Solution {sol.solution_id} is missing wall_time_hours"
-                )
+                warnings.append(f"Solution {sol.solution_id} is missing wall_time_hours")
 
         return warnings
 
@@ -347,19 +332,13 @@ class Event(BaseModel):
             notes_path = Path(solution.notes_path)
             if notes_path.parts and notes_path.parts[0] == "tmp":
                 # Remove temporary notes file
-                full_path = (
-                    Path(self.submission.project_path) / notes_path
-                    if self.submission
-                    else notes_path
-                )
+                full_path = Path(self.submission.project_path) / notes_path if self.submission else notes_path
                 try:
                     if full_path.exists():
                         full_path.unlink()
                         print(f"🗑️  Removed temporary notes file: {notes_path}")
-                except OSError as e:
-                    print(
-                        f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}"
-                    )
+                except OSError:
+                    print(f"⚠️  Warning: Could not remove temporary file {notes_path}")
 
         # Remove from solutions dict
         del self.solutions[solution_id]
@@ -399,11 +378,9 @@ class Event(BaseModel):
             try:
                 if self.remove_solution(solution_id, force=force):
                     removed_count += 1
-            except ValueError as e:
+            except ValueError:
                 if not force:
-                    print(
-                        f"⚠️  Skipped saved solution {solution_id[:8]}... (use force=True to remove)"
-                    )
+                    print(f"⚠️  Skipped saved solution {solution_id[:8]}... (use force=True to remove)")
                 else:
                     # Force=True should override the saved check
                     if self.remove_solution(solution_id, force=True):
@@ -438,8 +415,6 @@ class Event(BaseModel):
         base = Path(self.submission.project_path) / "events" / self.event_id
         base.mkdir(parents=True, exist_ok=True)
         with (base / "event.json").open("w", encoding="utf-8") as fh:
-            fh.write(
-                self.model_dump_json(exclude={"solutions", "submission"}, indent=2)
-            )
+            fh.write(self.model_dump_json(exclude={"solutions", "submission"}, indent=2))
         for sol in self.solutions.values():
-            sol._save(base) 
+            sol._save(base)

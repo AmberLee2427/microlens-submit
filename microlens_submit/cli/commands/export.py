@@ -34,9 +34,7 @@ def export(
 
 def remove_event(
     event_id: str,
-    force: bool = typer.Option(
-        False, "--force", help="Force removal even if event has saved solutions"
-    ),
+    force: bool = typer.Option(False, "--force", help="Force removal even if event has saved solutions"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Remove an entire event and all its solutions from the submission."""
@@ -50,9 +48,7 @@ def remove_event(
     solution_count = len(event.solutions)
 
     if not force:
-        typer.echo(
-            f"⚠️  This will permanently remove event '{event_id}' and all {solution_count} solutions."
-        )
+        typer.echo(f"⚠️  This will permanently remove event '{event_id}' " f"and all {solution_count} solutions.")
         typer.echo("   This action cannot be undone.")
         confirm = typer.confirm("Are you sure you want to continue?")
         if not confirm:
@@ -62,9 +58,7 @@ def remove_event(
     try:
         removed = submission.remove_event(event_id, force=force)
         if removed:
-            typer.echo(
-                f"✅ Removed event '{event_id}' and all {solution_count} solutions"
-            )
+            typer.echo(f"✅ Removed event '{event_id}' and all {solution_count} solutions")
             submission.save()
         else:
             typer.echo(f"❌ Failed to remove event '{event_id}'")
@@ -75,9 +69,7 @@ def remove_event(
 
 
 def set_repo_url(
-    repo_url: str = typer.Argument(
-        ..., help="GitHub repository URL (e.g. https://github.com/owner/repo)"
-    ),
+    repo_url: str = typer.Argument(..., help="GitHub repository URL (e.g. https://github.com/owner/repo)"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Set or update the GitHub repository URL in the submission metadata."""
@@ -94,27 +86,17 @@ def set_repo_url(
 
 def set_hardware_info(
     cpu: Optional[str] = typer.Option(None, "--cpu", help="CPU model/description"),
-    cpu_details: Optional[str] = typer.Option(
-        None, "--cpu-details", help="Detailed CPU information"
-    ),
+    cpu_details: Optional[str] = typer.Option(None, "--cpu-details", help="Detailed CPU information"),
     memory_gb: Optional[float] = typer.Option(None, "--memory-gb", help="Memory in GB"),
-    ram_gb: Optional[float] = typer.Option(
-        None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"
-    ),
+    ram_gb: Optional[float] = typer.Option(None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"),
     platform: Optional[str] = typer.Option(
         None,
         "--platform",
         help="Platform description (e.g., 'Local Analysis', 'Roman Nexus')",
     ),
-    nexus_image: Optional[str] = typer.Option(
-        None, "--nexus-image", help="Roman Nexus image identifier"
-    ),
-    clear: bool = typer.Option(
-        False, "--clear", help="Clear all existing hardware info"
-    ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Show what would be changed without saving"
-    ),
+    nexus_image: Optional[str] = typer.Option(None, "--nexus-image", help="Roman Nexus image identifier"),
+    clear: bool = typer.Option(False, "--clear", help="Clear all existing hardware info"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be changed without saving"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
     """Set or update hardware information in the submission metadata."""
@@ -125,7 +107,6 @@ def set_hardware_info(
         sub.hardware_info = {}
 
     changes = []
-    old_hardware_info = sub.hardware_info.copy()
 
     # Clear existing info if requested
     if clear:
@@ -186,4 +167,4 @@ def set_hardware_info(
             console.print(f"  • {change}")
         console.print(f"\nCurrent hardware_info: {sub.hardware_info}")
     else:
-        console.print(Panel("No changes made", style="yellow")) 
+        console.print(Panel("No changes made", style="yellow"))

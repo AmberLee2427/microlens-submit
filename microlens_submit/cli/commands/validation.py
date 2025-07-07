@@ -1,16 +1,16 @@
-"""Validation and analysis commands for microlens-submit CLI."""
+"""Validation commands for microlens-submit CLI."""
 
 import math
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from microlens_submit.utils import load
 from microlens_submit.error_messages import enhance_validation_messages
+from microlens_submit.utils import load
 
 console = Console()
 
@@ -65,13 +65,13 @@ def validate_submission(
     warnings = sub.run_validation()
 
     # Check for missing repo_url
-    repo_url_warning = next(
-        (w for w in warnings if "repo_url" in w.lower() or "github" in w.lower()), None
-    )
+    repo_url_warning = next((w for w in warnings if "repo_url" in w.lower() or "github" in w.lower()), None)
     if repo_url_warning:
         console.print(
             Panel(
-                f"[red]Error: {repo_url_warning}\nPlease add your GitHub repository URL using 'microlens-submit set-repo-url <url> <project_dir>'.[/red]",
+                f"[red]Error: {repo_url_warning}\n"
+                f"Please add your GitHub repository URL using "
+                f"'microlens-submit set-repo-url <url> <project_dir>'.[/red]",
                 style="bold red",
             )
         )
@@ -178,37 +178,24 @@ def compare_solutions(
     rel_prob_map: Dict[str, float] = {}
     note = None
     if solutions:
-        provided_sum = sum(
-            s.relative_probability or 0.0
-            for s in solutions
-            if s.relative_probability is not None
-        )
+        provided_sum = sum(s.relative_probability or 0.0 for s in solutions if s.relative_probability is not None)
         need_calc = [s for s in solutions if s.relative_probability is None]
         if need_calc:
             can_calc = all(
-                s.log_likelihood is not None
-                and s.n_data_points
-                and s.n_data_points > 0
-                and len(s.parameters) > 0
+                s.log_likelihood is not None and s.n_data_points and s.n_data_points > 0 and len(s.parameters) > 0
                 for s in need_calc
             )
             remaining = max(1.0 - provided_sum, 0.0)
             if can_calc:
                 bic_vals = {
-                    s.solution_id: len(s.parameters) * math.log(s.n_data_points)
-                    - 2 * s.log_likelihood
+                    s.solution_id: len(s.parameters) * math.log(s.n_data_points) - 2 * s.log_likelihood
                     for s in need_calc
                 }
                 bic_min = min(bic_vals.values())
-                weights = {
-                    sid: math.exp(-0.5 * (bic - bic_min))
-                    for sid, bic in bic_vals.items()
-                }
+                weights = {sid: math.exp(-0.5 * (bic - bic_min)) for sid, bic in bic_vals.items()}
                 wsum = sum(weights.values())
                 for sid, w in weights.items():
-                    rel_prob_map[sid] = (
-                        remaining * w / wsum if wsum > 0 else remaining / len(weights)
-                    )
+                    rel_prob_map[sid] = remaining * w / wsum if wsum > 0 else remaining / len(weights)
                 note = "Relative probabilities calculated using BIC"
             else:
                 eq = remaining / len(need_calc) if need_calc else 0.0
@@ -220,22 +207,14 @@ def compare_solutions(
     for sol in solutions:
         k = len(sol.parameters)
         bic = k * math.log(sol.n_data_points) - 2 * sol.log_likelihood
-        rp = (
-            sol.relative_probability
-            if sol.relative_probability is not None
-            else rel_prob_map.get(sol.solution_id)
-        )
+        rp = sol.relative_probability if sol.relative_probability is not None else rel_prob_map.get(sol.solution_id)
         rows.append(
             (
                 bic,
                 [
                     sol.solution_id,
                     sol.model_type,
-                    (
-                        ",".join(sol.higher_order_effects)
-                        if sol.higher_order_effects
-                        else "-"
-                    ),
+                    (",".join(sol.higher_order_effects) if sol.higher_order_effects else "-"),
                     str(k),
                     f"{sol.log_likelihood:.2f}",
                     f"{bic:.2f}",
@@ -249,4 +228,4 @@ def compare_solutions(
 
     console.print(table)
     if note:
-        console.print(note, style="yellow") 
+        console.print(note, style="yellow")

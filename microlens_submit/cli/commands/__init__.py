@@ -1,1 +1,1 @@
-"""CLI commands package for microlens-submit.""" 
+"""CLI commands package for microlens-submit."""

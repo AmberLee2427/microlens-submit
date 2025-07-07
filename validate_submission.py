@@ -27,10 +27,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+
+from pydantic import ValidationError
 
 from microlens_submit.models import Event, Solution, Submission
-from microlens_submit.utils import load
 
 
 def load_submission(path: str) -> Submission:

@@ -26,4 +26,4 @@ This file tests:
 - Notes handling (both file paths and content)
 
 ### Usage
-The file is used by both CLI and API tests to verify the CSV import functionality works correctly with real data. 
+The file is used by both CLI and API tests to verify the CSV import functionality works correctly with real data.

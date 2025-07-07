@@ -6,17 +6,17 @@ microlensing solutions, including solution overview, parameter tables,
 notes rendering, and evaluator-only sections.
 """
 
-import json
-import markdown
 from datetime import datetime
 from pathlib import Path
 
-from ..models import Solution, Event, Submission
+import markdown
+
+from ..models.event import Event
+from ..models.solution import Solution
+from ..models.submission import Submission
 
 
-def generate_solution_page(
-    solution: Solution, event: Event, submission: Submission, output_dir: Path
-) -> None:
+def generate_solution_page(solution: Solution, event: Event, submission: Submission, output_dir: Path) -> None:
     """Generate an HTML dossier page for a single solution.
 
     Creates a detailed HTML page for a specific microlensing solution, following
@@ -59,9 +59,7 @@ def generate_solution_page(
         f.write(html)
 
 
-def _generate_solution_page_content(
-    solution: Solution, event: Event, submission: Submission
-) -> str:
+def _generate_solution_page_content(solution: Solution, event: Event, submission: Submission) -> str:
     """Generate the HTML content for a solution dossier page.
 
     Creates the complete HTML content for a single solution page, including
@@ -95,11 +93,15 @@ def _generate_solution_page_content(
         with syntax highlighting for code blocks. GitHub commit links are
         included if git information is available in compute_info.
     """
+    # Placeholder image URLs
+    PARAM_COMPARISON_URL = "https://placehold.co/800x300/dfc5fa/361d49?text=Parameter+Comparison"
+    PARAM_DIFFERENCE_URL = "https://placehold.co/800x400/dfc5fa/361d49?text=Parameter+Difference"
+    PHYSICAL_PARAM_URL = "https://placehold.co/600x400/dfc5fa/361d49?text=Physical+Parameter"
+    CMD_WITH_SOURCE_URL = "https://placehold.co/600x400/dfc5fa/361d49?text=CMD+with+Source"
+    DATA_UTILIZATION_URL = "https://placehold.co/600x100/dfc5fa/361d49?text=Data+Utilization+Infographic"
     # Render notes as HTML from file
     notes_md = solution.get_notes(project_root=Path(submission.project_path))
-    notes_html = markdown.markdown(
-        notes_md or "", extensions=["extra", "tables", "fenced_code", "nl2br"]
-    )
+    notes_html = markdown.markdown(notes_md or "", extensions=["extra", "tables", "fenced_code", "nl2br"])
     # Parameters table
     param_rows = []
     params = solution.parameters or {}
@@ -125,15 +127,15 @@ def _generate_solution_page_content(
         "\n".join(param_rows)
         if param_rows
         else """
-        <tr class='border-b border-gray-200'><td colspan='3' class='py-3 px-4 text-center text-gray-500'>No parameters found</td></tr>
+        <tr class='border-b border-gray-200'>
+            <td colspan='3' class='py-3 px-4 text-center text-gray-500'>
+                No parameters found
+            </td>
+        </tr>
     """
     )
     # Higher-order effects
-    hoe_str = (
-        ", ".join(solution.higher_order_effects)
-        if solution.higher_order_effects
-        else "None"
-    )
+    hoe_str = ", ".join(solution.higher_order_effects) if solution.higher_order_effects else "None"
     # Plot paths (relative to solution page)
     lc_plot = solution.lightcurve_plot_path or ""
     lens_plot = solution.lens_plane_plot_path or ""
@@ -154,7 +156,11 @@ def _generate_solution_page_content(
         "\n".join(phys_rows)
         if phys_rows
         else """
-        <tr class='border-b border-gray-200'><td colspan='2' class='py-3 px-4 text-center text-gray-500'>No physical parameters found</td></tr>
+        <tr class='border-b border-gray-200'>
+            <td colspan='2' class='py-3 px-4 text-center text-gray-500'>
+                No physical parameters found
+            </td>
+        </tr>
     """
     )
     # GitHub commit link (if present)
@@ -170,10 +176,14 @@ def _generate_solution_page_content(
     if repo_url and commit:
         commit_short = commit[:8]
         commit_url = f"{repo_url.rstrip('/')}/commit/{commit}"
-        commit_html = f"""<a href="{commit_url}" target="_blank" rel="noopener" title="View this commit on GitHub" class="inline-flex items-center space-x-1 ml-2 align-middle">
-            <img src="assets/github-desktop_logo.png" alt="GitHub Commit" class="w-4 h-4 inline-block align-middle" style="display:inline;vertical-align:middle;">
-            <span class="text-xs text-rtd-accent font-mono">{commit_short}</span>
-        </a>"""
+        commit_html = f"""<a href="{commit_url}" target="_blank" rel="noopener"
+               title="View this commit on GitHub"
+               class="inline-flex items-center space-x-1 ml-2 align-middle">
+                <img src="assets/github-desktop_logo.png" alt="GitHub Commit"
+                     class="w-4 h-4 inline-block align-middle"
+                     style="display:inline;vertical-align:middle;">
+                <span class="text-xs text-rtd-accent font-mono">{commit_short}</span>
+            </a>"""
     # HTML content
     html = f"""<!DOCTYPE html>
 <html lang='en'>
@@ -205,69 +215,69 @@ def _generate_solution_page_content(
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <style> 
-        .prose {{ 
-            color: #000; 
-            line-height: 1.6; 
+    <style>
+        .prose {{
+            color: #000;
+            line-height: 1.6;
         }}
-        .prose h1 {{ 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: #361d49; 
-            margin-top: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose h1 {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #361d49;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
-        .prose h2 {{ 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #361d49; 
-            margin-top: 1.25rem; 
-            margin-bottom: 0.5rem; 
+        .prose h2 {{
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #361d49;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose h3 {{ 
-            font-size: 1.125rem; 
-            font-weight: 600; 
-            color: #a859e4; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem; 
+        .prose h3 {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #a859e4;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose p {{ 
-            margin-bottom: 0.75rem; 
+        .prose p {{
+            margin-bottom: 0.75rem;
         }}
-        .prose ul, .prose ol {{ 
-            margin-left: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose ul, .prose ol {{
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
         .prose ul {{ list-style-type: disc; }}
         .prose ol {{ list-style-type: decimal; }}
-        .prose li {{ 
-            margin-bottom: 0.25rem; 
+        .prose li {{
+            margin-bottom: 0.25rem;
         }}
-        .prose code {{ 
-            background: #f3f3f3; 
-            padding: 2px 4px; 
-            border-radius: 4px; 
+        .prose code {{
+            background: #f3f3f3;
+            padding: 2px 4px;
+            border-radius: 4px;
             font-family: 'Courier New', monospace;
             font-size: 0.875rem;
         }}
-        .prose pre {{ 
-            background: #f8f8f8; 
-            padding: 1rem; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            margin: 1rem 0; 
+        .prose pre {{
+            background: #f8f8f8;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
             border: 1px solid #e5e5e5;
         }}
-        .prose pre code {{ 
-            background: none; 
-            padding: 0; 
+        .prose pre code {{
+            background: none;
+            padding: 0;
         }}
-        .prose blockquote {{ 
-            border-left: 4px solid #a859e4; 
-            padding-left: 1rem; 
-            margin: 1rem 0; 
-            font-style: italic; 
-            color: #666; 
+        .prose blockquote {{
+            border-left: 4px solid #a859e4;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #666;
         }}
     </style>
 </head>
@@ -277,12 +287,27 @@ def _generate_solution_page_content(
             <!-- Header & Navigation -->
             <div class='text-center py-8'>
                 <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
-                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Solution Dossier: {solution.alias or solution.solution_id[:8] + '...'}</h1>
-                <p class='text-lg text-gray-600 text-center mb-2'>Model Type: <span class='font-mono bg-gray-100 px-2 py-1 rounded'>{solution.model_type}</span></p>
-                <p class='text-xl text-rtd-accent text-center mb-4'>Event: {event.event_id} | Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'} {commit_html}</p>
+                <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>
+                    Solution Dossier:
+                    {solution.alias or solution.solution_id[:8] + '...'}
+                </h1>
+                <p class='text-lg text-gray-600 text-center mb-2'>
+                    Model Type:
+                    <span class='font-mono bg-gray-100 px-2 py-1 rounded'>{solution.model_type}</span>
+                </p>
+                <p class='text-xl text-rtd-accent text-center mb-4'>Event: {event.event_id} | Team: (
+                    {submission.team_name or 'Not specified'} |
+                    Tier: {submission.tier or 'Not specified'}
+                    {commit_html}
+                )</p>
                 {f"<p class='text-lg text-gray-600 text-center mb-2'>UUID: {solution.solution_id}</p>" if solution.alias else ""}
                 <nav class='flex justify-center space-x-4 mb-8'>
-                    <a href='{event.event_id}.html' class='text-rtd-accent hover:underline'>&larr; Back to Event {event.event_id}</a>
+                    <a
+                        href='{event.event_id}.html'
+                        class='text-rtd-accent hover:underline'
+                    >
+                        &larr; Back to Event {event.event_id}
+                    </a>
                     <a href='index.html' class='text-rtd-accent hover:underline'>&larr; Back to Dashboard</a>
                 </nav>
             </div>
@@ -311,33 +336,62 @@ def _generate_solution_page_content(
                 <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Lightcurve & Lens Plane Visuals</h2>
                 <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
-                        <img src='{lc_plot}' alt='Lightcurve Plot' class='w-full h-auto rounded-md mb-2'>
-                        <p class="text-sm text-rtd-secondary">Caption: Lightcurve fit for Solution {solution.alias or solution.solution_id[:8] + '...'}</p>
+                        <img
+                            src='{lc_plot}'
+                            alt='Lightcurve Plot'
+                            class='w-full h-auto rounded-md mb-2'
+                        >
+                        <p class="text-sm text-rtd-secondary">
+                            Caption: Lightcurve fit for Solution
+                            {solution.alias or solution.solution_id[:8] + '...'}
+                        </p>
                     </div>
                     <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
                         <img src='{lens_plot}' alt='Lens Plane Plot' class='w-full h-auto rounded-md mb-2'>
-                        <p class='text-sm text-rtd-secondary'>Caption: Lens plane geometry for Solution {solution.alias or solution.solution_id[:8] + '...'}</p>
+                        <p class='text-sm text-rtd-secondary'>
+                            Caption: Lens plane geometry for Solution
+                            {solution.alias or solution.solution_id[:8] + '...'}
+                        </p>
                     </div>
                 </div>
-                {f"<p class='text-rtd-text mt-4 text-center'>Posterior Samples: <a href='{posterior}' class='text-rtd-accent hover:underline'>Download Posterior Data</a></p>" if posterior else ''}
+                <p class='text-rtd-text mt-4 text-center'>
+                    Posterior Samples:
+                    {f"<a href='{posterior}' class='text-rtd-accent hover:underline'>"
+                     f"Download Posterior Data</a>"
+                     if posterior else ''}
+                </p>
             </section>
             <!-- Fit Statistics & Data Utilization -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Fit Statistics & Data Utilization</h2>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Fit Statistics & Data Utilization
+                </h2>
                 <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
                     <div class='bg-rtd-primary p-6 rounded-lg shadow-md text-center'>
                         <p class='text-sm font-medium text-rtd-secondary'>Log-Likelihood</p>
-                        <p class='text-4xl font-bold text-rtd-accent mt-2'>{solution.log_likelihood if solution.log_likelihood is not None else 'N/A'}</p>
+                        <p class='text-4xl font-bold text-rtd-accent mt-2'>
+                            {solution.log_likelihood if solution.log_likelihood is not None else 'N/A'}
+                        </p>
                     </div>
                     <div class='bg-rtd-primary p-6 rounded-lg shadow-md text-center'>
                         <p class='text-sm font-medium text-rtd-secondary'>N Data Points Used</p>
-                        <p class='text-4xl font-bold text-rtd-accent mt-2'>{solution.n_data_points if solution.n_data_points is not None else 'N/A'}</p>
+                        <p class='text-4xl font-bold text-rtd-accent mt-2'>
+                            {solution.n_data_points if solution.n_data_points is not None else 'N/A'}
+                        </p>
                     </div>
                 </div>
-                <h3 class='text-xl font-semibold text-rtd-secondary mt-6 mb-2'>Data Utilization Ratio</h3>
+                <h3 class='text-xl font-semibold text-rtd-secondary mt-6 mb-2'>
+                    Data Utilization Ratio
+                </h3>
                 <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
-                    <img src='https://placehold.co/600x100/dfc5fa/361d49?text=Data+Utilization+Infographic' alt='Data Utilization' class='w-full h-auto rounded-md mb-2'>
-                    <p class='text-sm text-rtd-secondary'>Caption: Percentage of total event data points utilized in this solution's fit.</p>
+                    <img
+                        src='{DATA_UTILIZATION_URL}'
+                        alt='Data Utilization'
+                        class='w-full h-auto rounded-md mb-2'
+                    >
+                    <p class='text-sm text-rtd-secondary'>
+                        Caption: Percentage of total event data points utilized in this solution's fit.
+                    </p>
                 </div>
             </section>
             <!-- Compute Performance -->
@@ -345,32 +399,79 @@ def _generate_solution_page_content(
                 <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Compute Performance</h2>
                 <table class='w-full text-left table-auto border-collapse'>
                     <thead class='bg-rtd-primary text-rtd-secondary uppercase text-sm'>
-                        <tr><th>Metric</th><th>Your Solution</th><th>Same-Team Average</th><th>All-Submission Average</th></tr>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Your Solution</th>
+                            <th>Same-Team Average</th>
+                            <th>All-Submission Average</th>
+                        </tr>
                     </thead>
                     <tbody class='text-rtd-text'>
-                        <tr><td>CPU Hours</td><td>{solution.compute_info.get('cpu_hours', 'N/A') if solution.compute_info else 'N/A'}</td><td>N/A for Participants</td><td>N/A for Participants</td></tr>
-                        <tr><td>Wall Time (Hrs)</td><td>{solution.compute_info.get('wall_time_hours', 'N/A') if solution.compute_info else 'N/A'}</td><td>N/A for Participants</td><td>N/A for Participants</td></tr>
+                        <tr>
+                            <td>CPU Hours</td>
+                            <td>
+                                {solution.compute_info.get('cpu_hours', 'N/A') if solution.compute_info else 'N/A'}
+                            </td>
+                            <td>N/A for Participants</td><td>N/A for Participants</td>
+                        </tr>
+                        <tr>
+                            <td>Wall Time (Hrs)</td>
+                            <td>
+                                {solution.compute_info.get('wall_time_hours', 'N/A')
+                                 if solution.compute_info else 'N/A'}
+                            </td>
+                            <td>N/A for Participants</td><td>N/A for Participants</td>
+                        </tr>
                     </tbody>
                 </table>
-                <p class='text-sm text-gray-500 italic mt-4'>Note: Comparison to other teams' compute times is available in the Evaluator Dossier.</p>
+                <p class='text-sm text-gray-500 italic mt-4'>
+                    Note: Comparison to other teams' compute times is available in the Evaluator Dossier.
+                </p>
             </section>
             <!-- Parameter Accuracy vs. Truths (Evaluator-Only) -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Parameter Accuracy vs. Truths (Evaluator-Only)</h2>
-                <p class='text-sm text-gray-500 italic mb-4'>You haven't fucked up. This just isn't for you. Detailed comparisons of your fitted parameters against simulation truths are available in the Evaluator Dossier.</p>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Parameter Accuracy vs. Truths (Evaluator-Only)
+                </h2>
+                <p class='text-sm text-gray-500 italic mb-4'>
+                    You haven't made a mistake. This just isn't for you.
+                    Detailed comparisons of your fitted parameters against simulation truths
+                    are available in the Evaluator Dossier.
+                </p>
                 <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md'>
-                    <img src='https://placehold.co/800x300/dfc5fa/361d49?text=Parameter+Comparison+Table+(Evaluator+Only)' alt='Parameter Comparison Table' class='w-full h-auto rounded-md mb-2'>
-                    <p class='text-sm text-rtd-secondary'>Caption: A table comparing fitted parameters to true values (Evaluator View).</p>
+                    <img
+                        src='{PARAM_COMPARISON_URL}'
+                        alt='Parameter Comparison Table'
+                        class='w-full h-auto rounded-md mb-2'
+                    >
+                    <p class='text-sm text-rtd-secondary'>
+                        Caption: A table comparing fitted parameters to true values
+                        (Evaluator View).
+                    </p>
                 </div>
                 <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md mt-6'>
-                    <img src='https://placehold.co/800x400/dfc5fa/361d49?text=Parameter+Difference+Distributions+(Evaluator+Only)' alt='Parameter Difference Distributions' class='w-full h-auto rounded-md mb-2'>
-                    <p class='text-sm text-rtd-secondary'>Caption: Distributions of (True - Fit) for key parameters across all challenge submissions (Evaluator View).</p>
+                    <img
+                        src='{PARAM_DIFFERENCE_URL}'
+                        alt='Parameter Difference Distributions'
+                        class='w-full h-auto rounded-md mb-2'
+                    >
+                    <p class='text-sm text-rtd-secondary'>
+                        Caption: Distributions of (True - Fit) for key parameters across all
+                        challenge submissions
+                        (Evaluator View).
+                    </p>
                 </div>
             </section>
             <!-- Physical Parameter Context (Evaluator-Only) -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Physical Parameter Context (Evaluator-Only)</h2>
-                <p class='text-sm text-gray-500 italic mb-4'>You haven't fucked up. This just isn't for you. Contextual plots of derived physical parameters against population models are available in the Evaluator Dossier.</p>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Physical Parameter Context (Evaluator-Only)
+                </h2>
+                <p class='text-sm text-gray-500 italic mb-4'>
+                    You haven't made a mistake. This just isn't for you.
+                    Contextual plots of derived physical parameters against population models
+                    are available in the Evaluator Dossier.
+                </p>
                 <table class='w-full text-left table-auto border-collapse'>
                     <thead class='bg-rtd-primary text-rtd-secondary uppercase text-sm'>
                         <tr><th>Parameter</th><th>Value</th></tr>
@@ -380,20 +481,40 @@ def _generate_solution_page_content(
                     </tbody>
                 </table>
                 <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md mt-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Physical+Parameter+Distribution+(Evaluator+Only)' alt='Physical Parameter Distribution' class='w-full h-auto rounded-md mb-2'>
-                    <p class='text-sm text-rtd-secondary'>Caption: Your solution's derived physical parameters plotted against a simulated test set (Evaluator View).</p>
+                    <img
+                        src='{PHYSICAL_PARAM_URL}'
+                        alt='Physical Parameter Distribution'
+                        class='w-full h-auto rounded-md mb-2'
+                    >
+                    <p class='text-sm text-rtd-secondary'>
+                        Caption: Your solution's derived physical parameters plotted against a simulated
+                        test set
+                        (Evaluator View).
+                    </p>
                 </div>
             </section>
             <!-- Source Properties & CMD (Evaluator-Only) -->
             <section class='mb-10 px-8'>
-                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>Source Properties & CMD (Evaluator-Only)</h2>
-                <p class='text-sm text-gray-500 italic mb-4'>You haven't fucked up. This just isn't for you. Source color and magnitude diagrams are available in the Evaluator Dossier.</p>
+                <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
+                    Source Properties & CMD (Evaluator-Only)
+                </h2>
+                <p class='text-sm text-gray-500 italic mb-4'>
+                    You haven't made a mistake. This just isn't for you.
+                    Source color and magnitude diagrams are available in the Evaluator Dossier.
+                </p>
                 <div class='text-rtd-text'>
                     <!-- Placeholder for source color/mag details -->
                 </div>
                 <div class='text-center bg-rtd-primary p-4 rounded-lg shadow-md mt-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Color-Magnitude+Diagram+with+Source+(Evaluator+Only)' alt='Color-Magnitude Diagram' class='w-full h-auto rounded-md mb-2'>
-                    <p class='text-sm text-rtd-secondary'>Caption: Color-Magnitude Diagram for the event's field with source marked (Evaluator View).</p>
+                    <img
+                        src='{CMD_WITH_SOURCE_URL}'
+                        alt='Color-Magnitude Diagram'
+                        class='w-full h-auto rounded-md mb-2'
+                    >
+                    <p class='text-sm text-rtd-secondary'>
+                        Caption: Color-Magnitude Diagram for the event's field with source marked
+                        (Evaluator View).
+                    </p>
                 </div>
             </section>
 
@@ -403,9 +524,9 @@ def _generate_solution_page_content(
             </div>
 
             <!-- Regex Finish -->
-            
+
         </div>
     </div>
 </body>
 </html>"""
-    return html 
+    return html

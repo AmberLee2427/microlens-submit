@@ -38,30 +38,30 @@ print_error() {
 # Function to cleanup on exit
 cleanup() {
     print_status "Cleaning up..."
-    
+
     # Deactivate virtual environment if active
     if [[ "$VIRTUAL_ENV" != "" ]]; then
         print_status "Deactivating virtual environment..."
         deactivate
     fi
-    
+
     # Remove virtual environment
     if [[ -d "$VENV_NAME" ]]; then
         print_status "Removing virtual environment: $VENV_NAME"
         rm -rf "$VENV_NAME"
     fi
-    
+
     # Remove test artifacts
     if [[ -d "test_submission_project" ]]; then
         print_status "Removing test submission project..."
         rm -rf "test_submission_project"
     fi
-    
+
     if [[ -d "test_dossier_output" ]]; then
         print_status "Removing test dossier output..."
         rm -rf "test_dossier_output"
     fi
-    
+
     print_success "Cleanup completed"
 }
 
@@ -163,4 +163,4 @@ fi
 read -p $'\nPress enter to clean up and remove the test environment and output files...'
 
 # Don't cleanup here - let the trap handle it
-print_status "Script completed successfully" 
+print_status "Script completed successfully"

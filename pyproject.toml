@@ -69,3 +69,12 @@ exclude = ["tests*", "docs*"]
 
 [tool.setuptools.package-data]
 microlens_submit = ["assets/*"]
+
+# Code formatting configuration
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 120

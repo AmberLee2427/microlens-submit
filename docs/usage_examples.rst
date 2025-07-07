@@ -265,13 +265,13 @@ The generated dossier includes:
 
     # Generate complete dossier
     microlens-submit generate-dossier ./my_project
-    
+
     # Generate dossier for specific event only
     microlens-submit generate-dossier ./my_project --event-id EVENT001
-    
+
     # Generate dossier for specific solution only
     microlens-submit generate-dossier ./my_project --solution-id solution_uuid_here
-    
+
     # Generate with priority flags (for advanced users)
     microlens-submit generate-dossier ./my_project --priority-flags
 
@@ -279,4 +279,3 @@ The generated dossier includes:
    This package stores data in JSON and performs extensive validation to
    ensure correctness. Dossier generation produces printable HTML reports
    with Tailwind CSS styling and syntax highlighted notes.
-

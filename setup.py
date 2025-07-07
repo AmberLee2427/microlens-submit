@@ -3,7 +3,7 @@
 Setup script for microlens-submit package.
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 if __name__ == "__main__":
     setup(
@@ -20,7 +20,7 @@ if __name__ == "__main__":
             "rich>=13.0.0",
             "pyyaml>=6.0",
             "markdown>=3.4.0",
-            "importlib_resources>=1.0.0; python_version<\"3.9\"",
+            'importlib_resources>=1.0.0; python_version<"3.9"',
         ],
         extras_require={
             "dev": [
@@ -62,4 +62,4 @@ if __name__ == "__main__":
             "Topic :: Scientific/Engineering :: Physics",
         ],
         keywords=["astronomy", "microlensing", "data-challenge", "submission", "roman"],
-    ) 
+    )

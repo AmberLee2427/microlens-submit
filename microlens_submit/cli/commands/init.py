@@ -2,7 +2,6 @@
 
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -74,7 +73,9 @@ def init(
         console.print(f"[green]Auto-detected GitHub repo URL:[/green] {repo_url}")
     else:
         console.print(
-            "[yellow]Could not auto-detect a GitHub repository URL. Please add it using 'microlens-submit set-repo-url <url> <project_dir>'.[/yellow]"
+            "[yellow]Could not auto-detect a GitHub repository URL. "
+            "Please add it using 'microlens-submit set-repo-url <url> "
+            "<project_dir>'.[/yellow]"
         )
     sub.save()
     console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
@@ -116,4 +117,4 @@ def nexus_init(
     sub = load(str(project_path))
     sub.autofill_nexus_info()
     sub.save()
-    console.print("Nexus platform info captured.", style="bold green") 
+    console.print("Nexus platform info captured.", style="bold green")

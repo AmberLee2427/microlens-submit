@@ -18,16 +18,16 @@ and scripted usage patterns.
 **Example Workflow:**
     # Initialize a new project
     microlens-submit init --team-name "Team Alpha" --tier "advanced" ./my_project
-    
+
     # Add a solution
     microlens-submit add-solution EVENT001 1S1L ./my_project \
         --param t0=2459123.5 --param u0=0.1 --param tE=20.0 \
         --log-likelihood -1234.56 --cpu-hours 2.5
-    
+
     # Validate and generate dossier
     microlens-submit validate-submission ./my_project
     microlens-submit generate-dossier ./my_project
-    
+
     # Export for submission
     microlens-submit export submission.zip ./my_project
 
@@ -44,7 +44,7 @@ from rich.console import Console
 from .. import __version__
 
 # Import command modules
-from .commands import init, solutions, validation, dossier, export
+from .commands import dossier, export, init, solutions, validation
 
 console = Console()
 app = typer.Typer()

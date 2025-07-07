@@ -59,20 +59,14 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
     dash_html = _generate_dashboard_content(submission, full_dossier_exists=True)
     dash_body = extract_main_content_body(dash_html)
     all_html_sections.append(dash_body)
-    all_html_sections.append(
-        '<hr class="my-8 border-t-2 border-rtd-accent">'
-    )  # Divider after dashboard
+    all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after dashboard
 
     # Events and solutions
     for event in submission.events.values():
         event_html = _generate_event_page_content(event, submission)
-        event_body = extract_main_content_body(
-            event_html, section_type="event", section_id=event.event_id
-        )
+        event_body = extract_main_content_body(event_html, section_type="event", section_id=event.event_id)
         all_html_sections.append(event_body)
-        all_html_sections.append(
-            '<hr class="my-8 border-t-2 border-rtd-accent">'
-        )  # Divider after event
+        all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after event
 
         for sol in event.get_active_solutions():
             sol_html = _generate_solution_page_content(sol, event, submission)
@@ -83,9 +77,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
                 project_root=Path(submission.project_path),
             )
             all_html_sections.append(sol_body)
-            all_html_sections.append(
-                '<hr class="my-8 border-t-2 border-rtd-accent">'
-            )  # Divider after solution
+            all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after solution
 
     # Compose the full HTML
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -94,7 +86,9 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
         <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
         <h1 class="text-3xl font-bold mb-2">Comprehensive Submission Dossier</h1>
         <p class="text-lg">Generated on: {now}</p>
-        <p class="text-md">Team: {submission.team_name} | Tier: {submission.tier}</p>
+        <p class="text-md">
+            Team: {submission.team_name} | Tier: {submission.tier}
+        </p>
     </div>
     <hr class="border-t-4 border-rtd-accent my-8">
     """
@@ -123,74 +117,81 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
         }},
       }};
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    >
     <!-- Highlight.js for code syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+    >
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js">
+    </script>
     <script>hljs.highlightAll();</script>
-    <style> 
-        .prose {{ 
-            color: #000; 
-            line-height: 1.6; 
+    <style>
+        .prose {{
+            color: #000;
+            line-height: 1.6;
         }}
-        .prose h1 {{ 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: #361d49; 
-            margin-top: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose h1 {{
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #361d49;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
-        .prose h2 {{ 
-            font-size: 1.25rem; 
-            font-weight: 600; 
-            color: #361d49; 
-            margin-top: 1.25rem; 
-            margin-bottom: 0.5rem; 
+        .prose h2 {{
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #361d49;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose h3 {{ 
-            font-size: 1.125rem; 
-            font-weight: 600; 
-            color: #a859e4; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem; 
+        .prose h3 {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #a859e4;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }}
-        .prose p {{ 
-            margin-bottom: 0.75rem; 
+        .prose p {{
+            margin-bottom: 0.75rem;
         }}
-        .prose ul, .prose ol {{ 
-            margin-left: 1.5rem; 
-            margin-bottom: 0.75rem; 
+        .prose ul, .prose ol {{
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
         }}
         .prose ul {{ list-style-type: disc; }}
         .prose ol {{ list-style-type: decimal; }}
-        .prose li {{ 
-            margin-bottom: 0.25rem; 
+        .prose li {{
+            margin-bottom: 0.25rem;
         }}
-        .prose code {{ 
-            background: #f3f3f3; 
-            padding: 2px 4px; 
-            border-radius: 4px; 
+        .prose code {{
+            background: #f3f3f3;
+            padding: 2px 4px;
+            border-radius: 4px;
             font-family: 'Courier New', monospace;
             font-size: 0.875rem;
         }}
-        .prose pre {{ 
-            background: #f8f8f8; 
-            padding: 1rem; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            margin: 1rem 0; 
+        .prose pre {{
+            background: #f8f8f8;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
             border: 1px solid #e5e5e5;
         }}
-        .prose pre code {{ 
-            background: none; 
-            padding: 0; 
+        .prose pre code {{
+            background: none;
+            padding: 0;
         }}
-        .prose blockquote {{ 
-            border-left: 4px solid #a859e4; 
-            padding-left: 1rem; 
-            margin: 1rem 0; 
-            font-style: italic; 
-            color: #666; 
+        .prose blockquote {{
+            border-left: 4px solid #a859e4;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #666;
         }}
     </style>
 </head>
@@ -317,4 +318,4 @@ def extract_main_content_body(
             section_class = "dossier-solution-section"
 
         # Wrap in a section for clarity
-        return f'<section class="{section_class}">\n{heading}\n{content.strip()}\n</section>' 
+        return f'<section class="{section_class}">\n{heading}\n{content.strip()}\n</section>'

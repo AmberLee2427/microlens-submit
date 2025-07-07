@@ -6,8 +6,7 @@ generation package, including hardware formatting, GitHub URL parsing,
 and other helper functions.
 """
 
-import re
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
@@ -20,7 +19,7 @@ def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
     Args:
         hardware_info: Dictionary containing hardware information. Can include
             keys like 'cpu_details', 'cpu', 'memory_gb', 'ram_gb', 'nexus_image'.
-            If None or empty, returns "Not specified".
+            If None or empty, returns "No hardware information available".
 
     Returns:
         str: Formatted hardware information string for display.
@@ -35,7 +34,7 @@ def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
         'CPU: Intel Xeon E5-2680 v4, RAM: 64GB, Platform: Roman Nexus'
 
         >>> format_hardware_info(None)
-        'Not specified'
+        'No hardware information available'
 
         >>> format_hardware_info({'custom_field': 'custom_value'})
         'custom_field: custom_value'
@@ -46,29 +45,18 @@ def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
         over basic CPU info and provides fallbacks for missing data.
     """
     if not hardware_info:
-        return "Not specified"
+        return "No hardware information available"
 
-    parts = []
+    lines = []
+    for key, value in hardware_info.items():
+        if isinstance(value, dict):
+            lines.append(f"{key}:")
+            for sub_key, sub_value in value.items():
+                lines.append(f"  {sub_key}: {sub_value}")
+        else:
+            lines.append(f"{key}: {value}")
 
-    # Common hardware fields
-    if "cpu_details" in hardware_info:
-        parts.append(f"CPU: {hardware_info['cpu_details']}")
-    elif "cpu" in hardware_info:
-        parts.append(f"CPU: {hardware_info['cpu']}")
-
-    if "memory_gb" in hardware_info:
-        parts.append(f"RAM: {hardware_info['memory_gb']}GB")
-    elif "ram_gb" in hardware_info:
-        parts.append(f"RAM: {hardware_info['ram_gb']}GB")
-
-    if "nexus_image" in hardware_info:
-        parts.append(f"Platform: Roman Nexus")
-
-    if parts:
-        return ", ".join(parts)
-    else:
-        # Fallback: show any available info
-        return ", ".join(f"{k}: {v}" for k, v in hardware_info.items() if v is not None)
+    return "\n".join(lines)
 
 
 def extract_github_repo_name(repo_url: str) -> str:
@@ -104,7 +92,20 @@ def extract_github_repo_name(repo_url: str) -> str:
         variations. If the URL doesn't match expected patterns, it returns
         the original URL unchanged.
     """
-    match = re.search(r"github\.com[:/]+([\w.-]+)/([\w.-]+)", repo_url)
-    if match:
-        return f"{match.group(1)}/{match.group(2).replace('.git','')}"
-    return repo_url 
+    # Extract the repository name from the URL
+    if not repo_url:
+        return None
+
+    # Handle different URL formats
+    if "github.com" in repo_url:
+        # Extract username/repo from GitHub URL
+        parts = repo_url.rstrip("/").split("/")
+        if len(parts) >= 2:
+            return f"{parts[-2]}/{parts[-1]}"
+    elif "gitlab.com" in repo_url:
+        # Extract username/repo from GitLab URL
+        parts = repo_url.rstrip("/").split("/")
+        if len(parts) >= 2:
+            return f"{parts[-2]}/{parts[-1]}"
+
+    return None
