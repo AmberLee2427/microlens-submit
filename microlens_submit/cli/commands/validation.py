@@ -2,7 +2,7 @@
 
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, List
 
 import typer
 from rich.console import Console
@@ -175,7 +175,7 @@ def compare_solutions(
     table.add_column("BIC")
     table.add_column("Relative Prob")
 
-    rel_prob_map: dict[str, float] = {}
+    rel_prob_map: Dict[str, float] = {}
     note = None
     if solutions:
         provided_sum = sum(

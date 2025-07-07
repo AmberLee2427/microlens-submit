@@ -353,7 +353,7 @@ class Submission(BaseModel):
                 if event_json.exists():
                     zf.write(event_json, arcname=f"events/{event.event_id}/event.json")
                 active_sols = [s for s in event.solutions.values() if s.is_active]
-                rel_prob_map: dict[str, float] = {}
+                rel_prob_map: Dict[str, float] = {}
                 if active_sols:
                     provided_sum = sum(
                         s.relative_probability or 0.0

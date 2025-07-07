@@ -3,7 +3,7 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 
 import typer
 from rich.console import Console
@@ -17,11 +17,11 @@ from microlens_submit.error_messages import enhance_validation_messages, format_
 console = Console()
 
 
-def _parse_pairs(pairs: Optional[List[str]]) -> Optional[dict]:
+def _parse_pairs(pairs: Optional[List[str]]) -> Optional[Dict]:
     """Convert CLI key=value options into a dictionary."""
     if not pairs:
         return None
-    out: dict = {}
+    out: Dict = {}
     for item in pairs:
         if "=" not in item:
             raise typer.BadParameter(f"Invalid format: {item}")
@@ -43,7 +43,7 @@ def _params_file_callback(ctx: typer.Context, value: Optional[Path]) -> Optional
     return value
 
 
-def _parse_structured_params_file(params_file: Path) -> tuple[dict, dict]:
+def _parse_structured_params_file(params_file: Path) -> Tuple[Dict, Dict]:
     """Parse a structured parameter file that can contain both parameters and uncertainties."""
     import yaml
 
@@ -174,8 +174,8 @@ def add_solution(
     """
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
-    params: dict = {}
-    uncertainties: dict = {}
+    params: Dict = {}
+    uncertainties: Dict = {}
     if params_file is not None:
         params, uncertainties = _parse_structured_params_file(params_file)
     else:
