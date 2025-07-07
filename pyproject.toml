@@ -61,10 +61,9 @@ dev = [
     "sphinx_rtd_theme",
 ]
 
-# Explicitly specify packages to include
-[tool.setuptools.packages.find]
-include = ["microlens_submit*"]
-exclude = ["assets*", "docs*", "tests*"]
-
-[tool.setuptools.package-data]
-microlens_submit = ["assets/rges-pit_logo.png", "assets/github-desktop_logo.png"]
+# Hatchling package configuration
+[tool.hatch.build.targets.wheel]
+packages = ["microlens_submit"]
+include = [
+    "microlens_submit/assets/*"
+]
