@@ -10,7 +10,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -145,8 +145,8 @@ class Solution(BaseModel):
 
     def set_compute_info(
         self,
-        cpu_hours: float | None = None,
-        wall_time_hours: float | None = None,
+        cpu_hours: Optional[float] = None,
+        wall_time_hours: Optional[float] = None,
     ) -> None:
         """Record compute metadata and capture environment details.
 
