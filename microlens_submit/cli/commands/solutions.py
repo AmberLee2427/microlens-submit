@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from ...utils import load, import_solutions_from_csv
+from ...error_messages import enhance_validation_messages, format_cli_error_with_suggestions
 
 console = Console()
 
@@ -70,99 +71,105 @@ def add_solution(
         help="Type of model used for the solution (e.g., 1S1L, 1S2L)",
     ),
     param: Optional[List[str]] = typer.Option(
-        None, help="Model parameters as key=value"
+        None, help="Model parameters as key=value [BASIC]"
     ),
+    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood [BASIC]"),
+    n_data_points: Optional[int] = typer.Option(
+        None,
+        "--n-data-points",
+        help="Number of data points used in this solution [BASIC]",
+    ),
+    project_path: Path = typer.Argument(Path("."), help="Project directory [BASIC]"),
+    # ADVANCED OPTIONS
     params_file: Optional[Path] = typer.Option(
         None,
         "--params-file",
-        help="Path to JSON or YAML file with model parameters and uncertainties",
+        help="Path to JSON or YAML file with model parameters and uncertainties [ADVANCED]",
         callback=_params_file_callback,
     ),
     bands: Optional[List[str]] = typer.Option(
         None,
         "--bands",
-        help="Comma-separated list of photometric bands used (e.g., 0,1,2)",
+        help="Photometric bands used (e.g., 0,1,2). Required if using band-specific flux parameters [ADVANCED]",
     ),
     higher_order_effect: Optional[List[str]] = typer.Option(
         None,
         "--higher-order-effect",
-        help="List of higher-order effects (e.g., parallax, finite-source)",
+        help="Higher-order effects: parallax, finite-source, lens-orbital-motion, xallarap, gaussian-process, stellar-rotation, fitted-limb-darkening [ADVANCED]",
     ),
     t_ref: Optional[float] = typer.Option(
         None,
         "--t-ref",
-        help="Reference time for the model",
+        help="Reference time for time-dependent effects (Julian Date). Required for parallax, xallarap, etc. [ADVANCED]",
     ),
-    used_astrometry: bool = typer.Option(False, help="Set if astrometry was used"),
+    used_astrometry: bool = typer.Option(False, help="Set if astrometry data was used in the fit [ADVANCED]"),
     used_postage_stamps: bool = typer.Option(
-        False, help="Set if postage stamps were used"
+        False, help="Set if postage stamp images were used in the analysis [ADVANCED]"
     ),
     limb_darkening_model: Optional[str] = typer.Option(
-        None, help="Limb darkening model name"
+        None, help="Fixed limb darkening model name (e.g., 'claret'). Use --higher-order-effect fitted-limb-darkening for fitted coefficients [ADVANCED]"
     ),
     limb_darkening_coeff: Optional[List[str]] = typer.Option(
         None,
         "--limb-darkening-coeff",
-        help="Limb darkening coefficients as key=value",
+        help="Limb darkening coefficients as key=value. Use with fitted-limb-darkening higher-order effect [ADVANCED]",
     ),
     parameter_uncertainty: Optional[List[str]] = typer.Option(
         None,
         "--param-uncertainty",
-        help="Parameter uncertainties as key=value",
+        help="Parameter uncertainties as key=value. Can be single value (symmetric) or [lower,upper] (asymmetric) [ADVANCED]",
     ),
     physical_param: Optional[List[str]] = typer.Option(
         None,
         "--physical-param",
-        help="Physical parameters as key=value",
+        help="Physical parameters (M_L, D_L, M_planet, a, etc.) derived from model parameters [ADVANCED]",
     ),
     relative_probability: Optional[float] = typer.Option(
         None,
         "--relative-probability",
-        help="Relative probability of this solution",
-    ),
-    log_likelihood: Optional[float] = typer.Option(None, help="Log likelihood"),
-    n_data_points: Optional[int] = typer.Option(
-        None,
-        "--n-data-points",
-        help="Number of data points used in this solution",
+        help="Relative probability of this solution (0-1). Used for model comparison [ADVANCED]",
     ),
     cpu_hours: Optional[float] = typer.Option(
         None,
         "--cpu-hours",
-        help="CPU hours used for this solution",
+        help="CPU hours used for this solution. Automatically captured if not specified [ADVANCED]",
     ),
     wall_time_hours: Optional[float] = typer.Option(
         None,
         "--wall-time-hours",
-        help="Wall time hours used for this solution",
+        help="Wall time hours used for this solution. Automatically captured if not specified [ADVANCED]",
     ),
     lightcurve_plot_path: Optional[Path] = typer.Option(
-        None, "--lightcurve-plot-path", help="Path to lightcurve plot file"
+        None, "--lightcurve-plot-path", help="Path to lightcurve plot file (relative to project directory) [ADVANCED]"
     ),
     lens_plane_plot_path: Optional[Path] = typer.Option(
-        None, "--lens-plane-plot-path", help="Path to lens plane plot file"
+        None, "--lens-plane-plot-path", help="Path to lens plane plot file (relative to project directory) [ADVANCED]"
     ),
     alias: Optional[str] = typer.Option(
         None,
         "--alias",
-        help="Optional human-readable alias for the solution (must be unique within the event)",
+        help="Human-readable alias for the solution (e.g., 'best_fit', 'parallax_model'). Must be unique within the event [ADVANCED]",
     ),
     notes: Optional[str] = typer.Option(
-        None, help="Notes for the solution (supports Markdown formatting)"
+        None, help="Solution notes in Markdown format. Supports headers, lists, code blocks, etc. [ADVANCED]"
     ),
     notes_file: Optional[Path] = typer.Option(
         None,
         "--notes-file",
-        help="Path to a Markdown file for solution notes (mutually exclusive with --notes)",
+        help="Path to a Markdown file for solution notes (mutually exclusive with --notes) [ADVANCED]",
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Parse inputs and display the resulting Solution without saving",
+        help="Show what would be created without saving. Useful for testing parameter parsing [ADVANCED]",
     ),
-    project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Add a new solution entry for a microlensing event."""
+    """Add a new solution entry for a microlensing event.
+
+    Basic usage: microlens-submit add-solution EVENT123 1S1L --param t0=2459123.5 --param u0=0.1 --param tE=20.0 --log-likelihood -1234.56 --n-data-points 1250
+
+    Use --help to see all options including higher-order effects, uncertainties, and metadata.
+    """
     sub = load(str(project_path))
     evt = sub.get_event(event_id)
     params: dict = {}
@@ -188,7 +195,9 @@ def add_solution(
         "other",
     ]
     if model_type not in allowed_model_types:
-        raise typer.BadParameter(f"model_type must be one of {allowed_model_types}")
+        error_msg = f"model_type must be one of {allowed_model_types}"
+        enhanced_error = format_cli_error_with_suggestions(error_msg, {"model_type": model_type})
+        raise typer.BadParameter(enhanced_error)
     if bands and len(bands) == 1 and "," in bands[0]:
         bands = bands[0].split(",")
     if (
@@ -260,8 +269,9 @@ def add_solution(
         console.print(sol.model_dump_json(indent=2))
         validation_messages = sol.run_validation()
         if validation_messages:
+            enhanced_messages = enhance_validation_messages(validation_messages, model_type, params)
             console.print(Panel("Validation Warnings", style="yellow"))
-            for msg in validation_messages:
+            for msg in enhanced_messages:
                 console.print(f"  • {msg}")
         else:
             console.print(Panel("Solution validated successfully!", style="green"))
@@ -280,8 +290,9 @@ def add_solution(
     sub.save()
     validation_messages = sol.run_validation()
     if validation_messages:
+        enhanced_messages = enhance_validation_messages(validation_messages, model_type, params)
         console.print(Panel("Validation Warnings", style="yellow"))
-        for msg in validation_messages:
+        for msg in enhanced_messages:
             console.print(f"  • {msg}")
     else:
         console.print(Panel("Solution validated successfully!", style="green"))

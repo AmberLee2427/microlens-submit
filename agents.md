@@ -84,6 +84,16 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 Release after comprehensive testing and PyPI publication.
 
+- **Task 8: Interactive Mode**
+  - *Goal:* Provide a guided, interactive experience for new users to reduce complexity and improve onboarding.
+  - *Action:* Add an interactive CLI mode that guides users through:
+    - Project initialization with prompts for team name and tier
+    - Step-by-step solution creation with parameter entry
+    - Validation feedback with suggestions for fixing issues
+    - Progressive disclosure of advanced options
+  - *Why:* Reduces cognitive load for new users and provides better error recovery.
+  - *Implementation:* Use Python's `input()` or a library like `prompt_toolkit` for rich interactive prompts.
+
 ---
 
 ## 4. Python Class Structure (Target API)

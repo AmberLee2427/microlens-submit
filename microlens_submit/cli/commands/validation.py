@@ -9,6 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ...utils import load
+from ...error_messages import enhance_validation_messages
 
 console = Console()
 
@@ -35,8 +36,9 @@ def validate_solution(
 
     # Run validation
     messages = target_solution.run_validation()
+    enhanced_messages = enhance_validation_messages(messages, target_solution.model_type, target_solution.parameters)
 
-    if not messages:
+    if not enhanced_messages:
         console.print(
             Panel(
                 f"✅ All validations passed for {solution_id} (event {target_event_id})",
@@ -50,7 +52,7 @@ def validate_solution(
                 style="yellow",
             )
         )
-        for msg in messages:
+        for msg in enhanced_messages:
             console.print(f"  • {msg}")
 
 
@@ -101,9 +103,10 @@ def validate_event(
 
     for solution in event.solutions.values():
         messages = solution.run_validation()
-        if messages:
+        enhanced_messages = enhance_validation_messages(messages, solution.model_type, solution.parameters)
+        if enhanced_messages:
             console.print(f"\n[bold]Solution {solution.solution_id}:[/bold]")
-            for msg in messages:
+            for msg in enhanced_messages:
                 console.print(f"  • {msg}")
                 all_messages.append(f"{solution.solution_id}: {msg}")
         else:
