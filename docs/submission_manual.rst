@@ -376,7 +376,7 @@ Inside the exported ``.zip``, the same entry becomes:
 Validation
 ----------
 
-Before submitting, you **must** validate your manually created package using the provided ``validate_submission.py`` script. This is your only safety net.
+Before submitting, you **must** validate your manually created package using the provided `validate_submission.py <https://github.com/AmberLee2427/microlens-submit/blob/main/validate_submission.py>`_ script. This is your only safety net.
 
 Run the script from your terminal, passing the path to your submission directory:
 

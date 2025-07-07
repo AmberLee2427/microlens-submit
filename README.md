@@ -18,7 +18,7 @@
 
 `microlens-submit` provides a robust, version-controlled workflow for managing, validating, and packaging your challenge submission over a long period. It supports both a programmatic Python API and a full-featured Command Line Interface (CLI) for language-agnostic use.
 
-Full documentation is hosted on [Read the Docs](https://microlens-submit.readthedocs.io/en/latest/). A comprehensive tutorial notebook is available at `docs/Submission_Tool_Tutorial.ipynb`. Challenge participants who prefer not to use this tool can consult [SUBMISSION_MANUAL.md](SUBMISSION_MANUAL.md) for the manual submission format.
+Full documentation is hosted on [Read the Docs](https://microlens-submit.readthedocs.io/en/latest/). A comprehensive tutorial notebook is available at `docs/Submission_Tool_Tutorial.ipynb`. Challenge participants who prefer not to use this tool can consult the [Submission Manual](https://microlens-submit.readthedocs.io/en/latest/submission_manual.html) for the manual submission format.
 
 ## Key Features
 
