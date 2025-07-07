@@ -118,6 +118,10 @@ class Submission(BaseModel):
             messages.append("tier is required")
         if not self.repo_url:
             messages.append("repo_url is required (GitHub repository URL)")
+        
+        # Check hardware info
+        if not self.hardware_info:
+            messages.append("Hardware info is missing")
 
         # Validate all events
         for event_id, event in self.events.items():
