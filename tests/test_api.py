@@ -26,7 +26,7 @@ Example:
     >>> import pytest
     >>> from pathlib import Path
     >>> from microlens_submit.utils import load
-    >>>
+    >>> 
     >>> # Run a specific test
     >>> def test_basic_functionality(tmp_path):
     ...     project = tmp_path / "test_project"
@@ -34,7 +34,7 @@ Example:
     ...     sub.team_name = "Test Team"
     ...     sub.tier = "test"
     ...     sub.save()
-    ...
+    ...     
     ...     # Verify persistence
     ...     new_sub = load(str(project))
     ...     assert new_sub.team_name == "Test Team"
@@ -60,14 +60,14 @@ from microlens_submit.utils import load, import_solutions_from_csv
 
 def test_full_lifecycle(tmp_path):
     """Test complete submission lifecycle from creation to persistence.
-
+    
     Verifies that a complete submission can be created, saved, and reloaded
     with all data intact. This includes events, solutions, compute information,
     and metadata persistence.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies the complete workflow:
         >>> # 1. Create submission with team info
@@ -75,7 +75,7 @@ def test_full_lifecycle(tmp_path):
         >>> # 3. Set compute information
         >>> # 4. Save to disk
         >>> # 5. Reload and verify all data
-
+    
     Note:
         This is a fundamental test that ensures the core persistence
         mechanism works correctly for all submission components.
@@ -105,19 +105,19 @@ def test_full_lifecycle(tmp_path):
 
 def test_compute_info_hours(tmp_path):
     """Test that CPU and wall time are correctly persisted.
-
+    
     Verifies that compute information including CPU hours and wall time
     are properly saved and restored when loading a submission.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Setting compute info with specific hours
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking values match
-
+    
     Note:
         Compute information is critical for submission evaluation
         and must be accurately preserved across save/load cycles.
@@ -137,19 +137,19 @@ def test_compute_info_hours(tmp_path):
 
 def test_deactivate_and_export(tmp_path):
     """Test that deactivated solutions are excluded from exports.
-
+    
     Verifies that when solutions are deactivated, they are properly
     excluded from submission exports while remaining in the project.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating active and inactive solutions
         >>> # 2. Exporting the submission
         >>> # 3. Checking only active solutions are included
-
+    
     Note:
         Deactivated solutions remain in the project for potential
         reactivation but are excluded from final submissions.
@@ -179,20 +179,20 @@ def test_deactivate_and_export(tmp_path):
 
 def test_export_includes_external_files(tmp_path):
     """Test that external files are properly included in exports.
-
+    
     Verifies that referenced files (posterior data, plots) are correctly
     included in submission exports with proper path handling.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solution with external file references
         >>> # 2. Creating the referenced files
         >>> # 3. Exporting and checking file inclusion
         >>> # 4. Verifying path updates in solution JSON
-
+    
     Note:
         External files are copied into the export archive and their
         paths in the solution JSON are updated to reflect the new locations.
@@ -227,19 +227,19 @@ def test_export_includes_external_files(tmp_path):
 
 def test_get_active_solutions(tmp_path):
     """Test filtering of active solutions from events.
-
+    
     Verifies that the get_active_solutions() method correctly returns
     only solutions that have not been deactivated.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating multiple solutions
         >>> # 2. Deactivating one solution
         >>> # 3. Checking only active solutions are returned
-
+    
     Note:
         This method is used extensively for submission validation
         and export operations to ensure only active solutions are processed.
@@ -259,20 +259,20 @@ def test_get_active_solutions(tmp_path):
 
 def test_clear_solutions(tmp_path):
     """Test that clear_solutions() deactivates all solutions.
-
+    
     Verifies that the clear_solutions() method deactivates all solutions
     in an event without removing them from the project.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating multiple solutions
         >>> # 2. Calling clear_solutions()
         >>> # 3. Checking all solutions are deactivated
         >>> # 4. Verifying solutions still exist in project
-
+    
     Note:
         clear_solutions() is a convenience method that deactivates
         all solutions rather than deleting them, allowing for easy
@@ -297,19 +297,19 @@ def test_clear_solutions(tmp_path):
 
 def test_posterior_path_persists(tmp_path):
     """Test that posterior file paths are correctly persisted.
-
+    
     Verifies that posterior file paths are properly saved and restored
     when loading a submission.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Setting a posterior file path
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking path matches
-
+    
     Note:
         Posterior file paths are important for submission evaluation
         and must be accurately preserved across save/load cycles.
@@ -328,19 +328,19 @@ def test_posterior_path_persists(tmp_path):
 
 def test_new_fields_persist(tmp_path):
     """Test that new solution fields are correctly persisted.
-
+    
     Verifies that newer solution fields (bands, higher-order effects,
     reference times) are properly saved and restored.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Setting various new fields on a solution
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking all fields match
-
+    
     Note:
         This test ensures backward compatibility when new fields
         are added to the solution schema.
@@ -363,19 +363,19 @@ def test_new_fields_persist(tmp_path):
 
 def test_plot_paths_persist(tmp_path):
     """Test that plot file paths are correctly persisted.
-
+    
     Verifies that lightcurve and lens plane plot paths are properly
     saved and restored when loading a submission.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Setting plot file paths
         >>> # 2. Saving the submission
         >>> # 3. Reloading and checking paths match
-
+    
     Note:
         Plot paths are important for submission documentation
         and must be accurately preserved across save/load cycles.
@@ -396,19 +396,19 @@ def test_plot_paths_persist(tmp_path):
 
 def test_relative_probability_export(tmp_path):
     """Test that relative probabilities are correctly handled in exports.
-
+    
     Verifies that relative probabilities are properly exported and that
     automatic calculation works for solutions without explicit values.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Setting explicit relative probability on one solution
         >>> # 2. Leaving another solution without relative probability
         >>> # 3. Exporting and checking automatic calculation
-
+    
     Note:
         When solutions lack explicit relative probabilities, they are
         automatically calculated based on BIC values if sufficient
@@ -438,19 +438,19 @@ def test_relative_probability_export(tmp_path):
 
 def test_validate_warnings(tmp_path):
     """Test that validation generates appropriate warnings.
-
+    
     Verifies that the validation system correctly identifies and reports
     various issues with submissions.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating submission with known issues
         >>> # 2. Running validation
         >>> # 3. Checking that expected warnings are generated
-
+    
     Note:
         Validation warnings help users identify issues before submission
         and ensure data completeness and correctness.
@@ -474,21 +474,21 @@ def test_validate_warnings(tmp_path):
 
 def test_relative_probability_range(tmp_path):
     """Test that relative probabilities are properly calculated and validated.
-
+    
     Verifies that relative probabilities are calculated correctly for solutions
     that don't have them set, and that validation catches issues with probability
     ranges and sums.
-
+    
     Args:
         tmp_path: Pytest fixture providing a temporary directory path.
-
+    
     Example:
         >>> # This test verifies:
         >>> # 1. Creating solutions with and without relative probabilities
         >>> # 2. Checking automatic calculation using BIC
         >>> # 3. Validating probability ranges and sums
         >>> # 4. Testing validation warnings for invalid probabilities
-
+    
     Note:
         Relative probabilities must sum to 1.0 for active solutions within
         each event. The system automatically calculates missing probabilities
