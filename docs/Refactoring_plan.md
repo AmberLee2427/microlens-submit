@@ -43,6 +43,7 @@ microlens_submit/
 │   ├── dashboard.py     # Dashboard generation
 │   ├── event_page.py    # Event page generation
 │   ├── solution_page.py # Solution page generation
+│   ├── full_report.py   # Full appended report for printing
 │   └── utils.py         # Shared HTML utilities
 ├── validation.py        # Parameter validation (already separate)
 └── utils.py            # Shared utilities (CSV import, etc.)
@@ -51,9 +52,10 @@ microlens_submit/
 
 1. Create the new package structure
   * `microlens_submit/models/` (done, Solution moved)
-  * `microlens_submit/dossier/`
+  * `microlens_submit/utils.py` (for shared helpers. api content added)
+  * `microlens_submit/dossier/` (done)
   * `microlens_submit/cli/`
-  * `microlens_submit/utils.py` (for shared helpers)
+
 
 2. Move classes and functions
   * Move `Event` and `Submission` to `models/event.py` and `models/submission.py`
@@ -75,4 +77,4 @@ microlens_submit/
   * Run the full test suite after each major move
 
 7. Git
-  * status. add. commit
+  * status. add. commit. :)

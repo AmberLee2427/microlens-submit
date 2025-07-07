@@ -1757,7 +1757,7 @@ def test_cli_import_calls_api(monkeypatch, tmp_path):
             "errors": [],
         }
 
-    monkeypatch.setattr("microlens_submit.cli.import_solutions_from_csv", fake_import)
+    monkeypatch.setattr("microlens_submit.cli.commands.solutions.import_solutions_from_csv", fake_import)
 
     result = CliRunner().invoke(
         app,
