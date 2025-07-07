@@ -36,7 +36,16 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ".[dev]"
+        pip install -e ".[dev]"
+
+    - name: Debug package installation
+      run: |
+        echo "=== Python path ==="
+        python -c "import sys; print('\\n'.join(sys.path))"
+        echo "=== Installed packages ==="
+        pip list | grep microlens
+        echo "=== Package location ==="
+        python -c "import microlens_submit; print(microlens_submit.__file__)"
 
     - name: Verify package installation
       run: |
