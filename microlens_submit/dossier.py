@@ -34,6 +34,10 @@ import markdown  # Add this import at the top
 import re
 import os
 import sys
+try:
+    import importlib.resources as importlib_resources
+except ImportError:
+    import importlib_resources
 
 from .api import Submission, Event, Solution
 
@@ -99,21 +103,28 @@ def generate_dashboard_html(submission: Submission, output_dir: Path) -> None:
     with (output_dir / "index.html").open("w", encoding="utf-8") as f:
         f.write(html_content)
 
-    # Copy logos if they exist in the project
-    logo_source = Path(__file__).parent / "assets" / "rges-pit_logo.png"
-    if logo_source.exists():
-        import shutil
-
-        shutil.copy2(logo_source, output_dir / "assets" / "rges-pit_logo.png")
-
-    # Copy GitHub logo if it exists in the project
-    github_logo_source = Path(__file__).parent / "assets" / "github-desktop_logo.png"
-    if github_logo_source.exists():
-        import shutil
-
-        shutil.copy2(
-            github_logo_source, output_dir / "assets" / "github-desktop_logo.png"
-        )
+    # Copy logos using importlib_resources for robust package data access
+    import shutil
+    try:
+        logo_path = importlib_resources.files('microlens_submit.assets').joinpath('rges-pit_logo.png')
+        shutil.copy2(logo_path, output_dir / "assets" / "rges-pit_logo.png")
+    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+        # Fallback for older Python versions
+        try:
+            logo_path = importlib_resources.path('microlens_submit.assets', 'rges-pit_logo.png')
+            shutil.copy2(logo_path, output_dir / "assets" / "rges-pit_logo.png")
+        except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+            pass
+    try:
+        github_logo_path = importlib_resources.files('microlens_submit.assets').joinpath('github-desktop_logo.png')
+        shutil.copy2(github_logo_path, output_dir / "assets" / "github-desktop_logo.png")
+    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+        # Fallback for older Python versions
+        try:
+            github_logo_path = importlib_resources.path('microlens_submit.assets', 'github-desktop_logo.png')
+            shutil.copy2(github_logo_path, output_dir / "assets" / "github-desktop_logo.png")
+        except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+            pass
 
     # After generating index.html, generate event pages
     for event in submission.events.values():
@@ -1101,6 +1112,7 @@ def _generate_solution_page_content(
             <div class='text-center py-8'>
                 <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
                 <h1 class='text-4xl font-bold text-rtd-secondary text-center mb-2'>Solution Dossier: {solution.alias or solution.solution_id[:8] + '...'}</h1>
+                <p class='text-lg text-gray-600 text-center mb-2'>Model Type: <span class='font-mono bg-gray-100 px-2 py-1 rounded'>{solution.model_type}</span></p>
                 <p class='text-xl text-rtd-accent text-center mb-4'>Event: {event.event_id} | Team: {submission.team_name or 'Not specified'} | Tier: {submission.tier or 'Not specified'} {commit_html}</p>
                 {f"<p class='text-lg text-gray-600 text-center mb-2'>UUID: {solution.solution_id}</p>" if solution.alias else ""}
                 <nav class='flex justify-center space-x-4 mb-8'>

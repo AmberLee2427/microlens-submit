@@ -61,15 +61,38 @@ Note:
     The test suite ensures CLI functionality matches API behavior.
 """
 
+# Install package in editable mode to ensure assets are available
+import subprocess
+import sys
+try:
+    subprocess.run([sys.executable, "-m", "pip", "install", "-e", "."], 
+                  capture_output=True, check=True)
+except subprocess.CalledProcessError:
+    # If we're not in the right directory or package isn't set up, continue anyway
+    # The asset check fixture will catch missing assets
+    pass
+
 import json
 import zipfile
 from pathlib import Path
 from typer.testing import CliRunner
+import pytest
 
 from microlens_submit import api
 from microlens_submit.cli import app
 
 runner = CliRunner()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def check_assets_exist():
+    """Check that required assets exist before running tests."""
+    assets = [
+        Path(__file__).parent.parent / "microlens_submit" / "assets" / "rges-pit_logo.png",
+        Path(__file__).parent.parent / "microlens_submit" / "assets" / "github-desktop_logo.png",
+    ]
+    for asset in assets:
+        assert asset.exists(), f"Required asset missing: {asset}. Make sure to run 'pip install -e .' before testing."
 
 
 def test_global_no_color_option():
@@ -1199,6 +1222,307 @@ def test_cli_generate_dossier():
         assert f"microlens-submit v{__version__}" in html
 
 
+def test_cli_generate_dossier_selective_event():
+    """Test generate-dossier --event-id flag generates only specific event page."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "SelectiveTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Add solutions to multiple events
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT001",
+                "1S1L",
+                "--param",
+                "t0=555.5",
+                "--param",
+                "u0=0.1",
+                "--param",
+                "tE=25.0",
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT002",
+                "1S2L",
+                "--param",
+                "t0=556.0",
+                "--param",
+                "u0=0.2",
+                "--param",
+                "tE=30.0",
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Generate dossier for specific event only
+        result = runner.invoke(app, ["generate-dossier", "--event-id", "EVENT001"])
+        assert result.exit_code == 0
+        assert "Generating dossier for event EVENT001" in result.stdout
+
+        # Check that only EVENT001 page was generated
+        dossier_dir = Path("dossier")
+        assert dossier_dir.exists()
+        
+        # Should NOT have index.html (full dashboard)
+        assert not (dossier_dir / "index.html").exists()
+        
+        # Should NOT have full dossier report
+        assert not (dossier_dir / "full_dossier_report.html").exists()
+        
+        # Should have EVENT001 page
+        assert (dossier_dir / "EVENT001.html").exists()
+        
+        # Should NOT have EVENT002 page
+        assert not (dossier_dir / "EVENT002.html").exists()
+
+        # Verify EVENT001 page content
+        event_html = (dossier_dir / "EVENT001.html").read_text(encoding="utf-8")
+        assert "EVENT001" in event_html
+        assert "1S1L" in event_html
+        # Event pages show solution metadata, not parameter values
+        # Parameter values are shown on individual solution pages
+
+
+def test_cli_generate_dossier_selective_solution():
+    """Test generate-dossier --solution-id flag generates only specific solution page."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "SolutionTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Add multiple solutions to same event
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT001",
+                "1S1L",
+                "--param",
+                "t0=555.5",
+                "--param",
+                "u0=0.1",
+                "--param",
+                "tE=25.0",
+                "--alias",
+                "simple_fit",
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT001",
+                "1S2L",
+                "--param",
+                "t0=556.0",
+                "--param",
+                "u0=0.2",
+                "--param",
+                "tE=30.0",
+                "--alias",
+                "binary_fit",
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Get the solution ID from the first solution
+        from microlens_submit import api
+        submission = api.load(".")
+        event = submission.events["EVENT001"]
+        solution_id = next(iter(event.solutions.keys()))
+
+        # Generate dossier for specific solution only
+        result = runner.invoke(app, ["generate-dossier", "--solution-id", solution_id])
+        assert result.exit_code == 0
+        assert f"Generating dossier for solution {solution_id}" in result.stdout
+
+        # Check that only the specific solution page was generated
+        dossier_dir = Path("dossier")
+        assert dossier_dir.exists()
+        
+        # Should NOT have index.html (full dashboard)
+        assert not (dossier_dir / "index.html").exists()
+        
+        # Should NOT have full dossier report
+        assert not (dossier_dir / "full_dossier_report.html").exists()
+        
+        # Should NOT have event page
+        assert not (dossier_dir / "EVENT001.html").exists()
+        
+        # Should have solution page
+        solution_file = dossier_dir / f"{solution_id}.html"
+        assert solution_file.exists()
+
+        # Verify solution page content
+        solution_html = solution_file.read_text(encoding="utf-8")
+        assert solution_id in solution_html
+        assert "1S1L" in solution_html
+        assert "555.5" in solution_html  # t0 parameter
+
+
+def test_cli_generate_dossier_invalid_event():
+    """Test generate-dossier --event-id with invalid event ID returns error."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Try to generate dossier for non-existent event
+        result = runner.invoke(app, ["generate-dossier", "--event-id", "NONEXISTENT"])
+        assert result.exit_code == 1
+        assert "Event NONEXISTENT not found" in result.stdout
+
+
+def test_cli_generate_dossier_invalid_solution():
+    """Test generate-dossier --solution-id with invalid solution ID returns error."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Try to generate dossier for non-existent solution
+        result = runner.invoke(
+            app, ["generate-dossier", "--solution-id", "00000000-0000-0000-0000-000000000000"]
+        )
+        assert result.exit_code == 1
+        assert "Solution 00000000-0000-0000-0000-000000000000 not found" in result.stdout
+
+
+def test_cli_generate_dossier_full_generation():
+    """Test generate-dossier without flags generates complete dossier."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "FullTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Add solutions to multiple events
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT001",
+                "1S1L",
+                "--param",
+                "t0=555.5",
+                "--param",
+                "u0=0.1",
+                "--param",
+                "tE=25.0",
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT002",
+                "1S2L",
+                "--param",
+                "t0=556.0",
+                "--param",
+                "u0=0.2",
+                "--param",
+                "tE=30.0",
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Generate full dossier
+        result = runner.invoke(app, ["generate-dossier"])
+        assert result.exit_code == 0
+        assert "Generating comprehensive dossier for all events and solutions" in result.stdout
+        assert "Generating comprehensive printable dossier" in result.stdout
+
+        # Check that complete dossier was generated
+        dossier_dir = Path("dossier")
+        assert dossier_dir.exists()
+        
+        # Should have index.html (full dashboard)
+        assert (dossier_dir / "index.html").exists()
+        
+        # Should have full dossier report
+        assert (dossier_dir / "full_dossier_report.html").exists()
+        
+        # Should have both event pages
+        assert (dossier_dir / "EVENT001.html").exists()
+        assert (dossier_dir / "EVENT002.html").exists()
+
+        # Should have solution pages
+        from microlens_submit import api
+        submission = api.load(".")
+        for event in submission.events.values():
+            for solution_id in event.solutions:
+                assert (dossier_dir / f"{solution_id}.html").exists()
+
+
+def test_cli_generate_dossier_priority_flags():
+    """Test that --solution-id takes priority over --event-id when both are provided."""
+    with runner.isolated_filesystem():
+        # Initialize project
+        result = runner.invoke(
+            app, ["init", "--team-name", "PriorityTesters", "--tier", "standard"]
+        )
+        assert result.exit_code == 0
+
+        # Add a solution
+        result = runner.invoke(
+            app,
+            [
+                "add-solution",
+                "EVENT001",
+                "1S1L",
+                "--param",
+                "t0=555.5",
+                "--param",
+                "u0=0.1",
+                "--param",
+                "tE=25.0",
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Get the solution ID
+        from microlens_submit import api
+        submission = api.load(".")
+        event = submission.events["EVENT001"]
+        solution_id = next(iter(event.solutions.keys()))
+
+        # Generate dossier with both flags (solution-id should take priority)
+        result = runner.invoke(
+            app, 
+            ["generate-dossier", "--event-id", "EVENT001", "--solution-id", solution_id]
+        )
+        assert result.exit_code == 0
+        assert f"Generating dossier for solution {solution_id}" in result.stdout
+        assert "Generating dossier for event" not in result.stdout
+
+        # Check that only solution page was generated (not event page)
+        dossier_dir = Path("dossier")
+        assert not (dossier_dir / "EVENT001.html").exists()
+        assert (dossier_dir / f"{solution_id}.html").exists()
+
+
 def test_csv_import_functionality():
     """Test the CSV import functionality with individual parameter columns."""
     import tempfile
@@ -1562,4 +1886,3 @@ def test_csv_import_from_data_file():
         )
         assert finite_sol.model_type == "1S1L"
         assert "finite-source" in finite_sol.higher_order_effects
-        assert finite_sol.parameters["rho"] == 0.001

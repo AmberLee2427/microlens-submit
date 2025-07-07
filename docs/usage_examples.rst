@@ -148,6 +148,133 @@ Extended Example
     >>> from microlens_submit.dossier import generate_dashboard_html
     >>> generate_dashboard_html(submission, Path("./my_submission/dossier"))
 
+Dossier Generation Examples
+---------------------------
+
+The dossier generation system creates comprehensive HTML reports for reviewing your submission. Here are examples of the different types of pages you can generate:
+
+**Complete Dossier Generation:**
+
+.. code-block:: python
+
+    >>> from microlens_submit import load
+    >>> from microlens_submit.dossier import generate_dashboard_html
+    >>> from pathlib import Path
+    >>>
+    >>> # Load your submission
+    >>> submission = load("./my_project")
+    >>>
+    >>> # Generate the complete dossier (dashboard + all event pages + all solution pages)
+    >>> generate_dashboard_html(submission, Path("./dossier_output"))
+    >>>
+    >>> # This creates:
+    >>> # - dossier_output/index.html (main dashboard)
+    >>> # - dossier_output/EVENT001.html (event page)
+    >>> # - dossier_output/solution_uuid.html (solution pages)
+    >>> # - dossier_output/full_dossier_report.html (printable version)
+    >>> # - dossier_output/assets/ (logos and icons)
+
+**Individual Event Page Generation:**
+
+.. code-block:: python
+
+    >>> from microlens_submit.dossier import generate_event_page
+    >>>
+    >>> # Generate a single event page
+    >>> event = submission.get_event("EVENT001")
+    >>> generate_event_page(event, submission, Path("./dossier_output"))
+    >>>
+    >>> # Creates: dossier_output/EVENT001.html
+    >>> # This page shows:
+    >>> # - Event overview and metadata
+    >>> # - Solutions table with model types, status, and statistics
+    >>> # - Navigation links to individual solution pages
+    >>> # - Evaluator-only visualization placeholders
+
+**Individual Solution Page Generation:**
+
+.. code-block:: python
+
+    >>> from microlens_submit.dossier import generate_solution_page
+    >>>
+    >>> # Generate a single solution page
+    >>> solution = event.get_solution("solution_uuid_here")
+    >>> generate_solution_page(solution, event, submission, Path("./dossier_output"))
+    >>>
+    >>> # Creates: dossier_output/solution_uuid_here.html
+    >>> # This page shows:
+    >>> # - Solution header with model type and metadata
+    >>> # - Parameter tables with uncertainties
+    >>> # - Markdown-rendered notes with syntax highlighting
+    >>> # - Plot placeholders and compute statistics
+    >>> # - Evaluator-only comparison sections
+
+**Custom Dossier Content Generation:**
+
+.. code-block:: python
+
+    >>> from microlens_submit.dossier import (
+    ...     _generate_dashboard_content,
+    ...     _generate_event_page_content,
+    ...     _generate_solution_page_content
+    ... )
+    >>>
+    >>> # Generate HTML content without saving files
+    >>> dashboard_html = _generate_dashboard_content(submission)
+    >>> event_html = _generate_event_page_content(event, submission)
+    >>> solution_html = _generate_solution_page_content(solution, event, submission)
+    >>>
+    >>> # Custom processing or integration
+    >>> with open("custom_dashboard.html", "w") as f:
+    ...     f.write(dashboard_html)
+
+**Full Dossier Report Generation:**
+
+.. code-block:: python
+
+    >>> from microlens_submit.dossier import _generate_full_dossier_report_html
+    >>>
+    >>> # Generate a comprehensive single-file report
+    >>> _generate_full_dossier_report_html(submission, Path("./dossier_output"))
+    >>>
+    >>> # Creates: dossier_output/full_dossier_report.html
+    >>> # This single file contains:
+    >>> # - Complete dashboard content
+    >>> # - All event pages
+    >>> # - All active solution pages
+    >>> # - Section dividers and navigation
+    >>> # - Print-friendly formatting
+
+**Dossier Features:**
+
+The generated dossier includes:
+
+- **Dashboard**: Overview with submission statistics, progress tracking, and event summaries
+- **Event Pages**: Detailed views of each event with solution tables and metadata
+- **Solution Pages**: Individual solution details with parameters, notes, and visualizations
+- **Navigation**: Links between pages and back to dashboard
+- **Styling**: Professional Tailwind CSS design with RGES-PIT branding
+- **Notes Rendering**: Markdown support with syntax highlighting for code blocks
+- **GitHub Integration**: Commit links when repository information is available
+- **Responsive Design**: Works on desktop and mobile devices
+- **Print Support**: Optimized for printing and PDF generation
+
+**CLI Dossier Generation:**
+
+.. code-block:: bash
+
+    # Generate complete dossier
+    microlens-submit generate-dossier ./my_project
+    
+    # Generate dossier for specific event only
+    microlens-submit generate-dossier ./my_project --event-id EVENT001
+    
+    # Generate dossier for specific solution only
+    microlens-submit generate-dossier ./my_project --solution-id solution_uuid_here
+    
+    # Generate with priority flags (for advanced users)
+    microlens-submit generate-dossier ./my_project --priority-flags
+
 .. note::
    This package stores data in JSON and performs extensive validation to
    ensure correctness. Dossier generation produces printable HTML reports

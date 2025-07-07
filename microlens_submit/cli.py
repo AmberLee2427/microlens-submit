@@ -956,6 +956,10 @@ def generate_dossier(
             console.print(f"Solution {solution_id} not found", style="bold red")
             raise typer.Exit(1)
         
+        # Create output directory and assets subdirectory
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "assets").mkdir(exist_ok=True)
+        
         # Generate only the specific solution page
         event = sub.events[containing_event_id]
         console.print(
@@ -968,6 +972,10 @@ def generate_dossier(
         if event_id not in sub.events:
             console.print(f"Event {event_id} not found", style="bold red")
             raise typer.Exit(1)
+        
+        # Create output directory and assets subdirectory
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "assets").mkdir(exist_ok=True)
         
         event = sub.events[event_id]
         console.print(
