@@ -267,7 +267,7 @@ class Solution(BaseModel):
         """
         self.is_active = True
 
-    def run_validation(self) -> list[str]:
+    def run_validation(self) -> List[str]:
         """Validate this solution's parameters and configuration.
 
         This method performs comprehensive validation using centralized validation logic

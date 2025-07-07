@@ -11,7 +11,7 @@ import math
 import os
 import zipfile
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Dict, Optional, TYPE_CHECKING, List
 
 from pydantic import BaseModel, Field
 
@@ -84,81 +84,52 @@ class Submission(BaseModel):
     events: Dict[str, Event] = Field(default_factory=dict)
     repo_url: Optional[str] = None
 
-    def run_validation(self) -> list[str]:
-        warnings: list[str] = []
-        if not self.hardware_info:
-            warnings.append("Hardware info is missing")
+    def run_validation(self) -> List[str]:
+        """Validate the entire submission for missing or incomplete information.
 
-        if (
-            not self.repo_url
-            or not isinstance(self.repo_url, str)
-            or not self.repo_url.strip()
-        ):
-            warnings.append(
-                "repo_url (GitHub repository URL) is missing from submission.json"
-            )
-        elif not ("github.com" in self.repo_url):
-            warnings.append(
-                f"repo_url does not appear to be a valid GitHub URL: {self.repo_url}"
-            )
+        This method performs comprehensive validation of the submission structure,
+        including metadata completeness, event configuration, and solution validation.
+        It returns a list of human-readable validation messages.
 
-        alias_errors = self._validate_alias_uniqueness()
-        warnings.extend(alias_errors)
+        Returns:
+            List[str]: Human-readable validation messages. Empty list indicates
+                      all validations passed.
 
-        for event in self.events.values():
-            active = [sol for sol in event.solutions.values() if sol.is_active]
-            if not active:
-                warnings.append(f"Event {event.event_id} has no active solutions")
-            else:
-                if len(active) > 1:
-                    total_prob = sum(sol.relative_probability or 0.0 for sol in active)
-                    if (
-                        total_prob > 0.0 and abs(total_prob - 1.0) > 1e-6
-                    ):
-                        warnings.append(
-                            f"Event {event.event_id}: Relative probabilities for active solutions sum to {total_prob:.3f}, "
-                            f"should sum to 1.0. Solutions: {[sol.solution_id[:8] + '...' for sol in active]}"
-                        )
-                elif len(active) == 1:
-                    sol = active[0]
-                    if (
-                        sol.relative_probability is not None
-                        and abs(sol.relative_probability - 1.0) > 1e-6
-                    ):
-                        warnings.append(
-                            f"Event {event.event_id}: Single active solution has relative_probability {sol.relative_probability:.3f}, "
-                            f"should be 1.0 or None"
-                        )
+        Example:
+            >>> submission = load("./my_project")
+            >>> messages = submission.run_validation()
+            >>> if messages:
+            ...     print("Validation issues found:")
+            ...     for msg in messages:
+            ...         print(f"  - {msg}")
+            ... else:
+            ...     print("Submission is valid!")
 
-            for sol in active:
-                solution_messages = sol.run_validation()
-                for msg in solution_messages:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id}: {msg}"
-                    )
-                if sol.log_likelihood is None:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} is missing log_likelihood"
-                    )
-                if sol.lightcurve_plot_path is None:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} is missing lightcurve_plot_path"
-                    )
-                if sol.lens_plane_plot_path is None:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} is missing lens_plane_plot_path"
-                    )
-                compute_info = sol.compute_info or {}
-                if "cpu_hours" not in compute_info:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} is missing cpu_hours"
-                    )
-                if "wall_time_hours" not in compute_info:
-                    warnings.append(
-                        f"Solution {sol.solution_id} in event {event.event_id} is missing wall_time_hours"
-                    )
+        Note:
+            This method calls run_validation() on all events and solutions,
+            providing a comprehensive validation report for the entire submission.
+        """
+        messages = []
 
-        return warnings
+        # Check metadata completeness
+        if not self.team_name:
+            messages.append("team_name is required")
+        if not self.tier:
+            messages.append("tier is required")
+        if not self.repo_url:
+            messages.append("repo_url is required (GitHub repository URL)")
+
+        # Validate all events
+        for event_id, event in self.events.items():
+            event_messages = event.run_validation()
+            for msg in event_messages:
+                messages.append(f"Event {event_id}: {msg}")
+
+        # Check for duplicate aliases across events
+        alias_messages = self._validate_alias_uniqueness()
+        messages.extend(alias_messages)
+
+        return messages
 
     def get_event(self, event_id: str) -> Event:
         if event_id not in self.events:
@@ -224,7 +195,7 @@ class Submission(BaseModel):
                     alias_lookup[alias_key] = solution.solution_id
         return alias_lookup
 
-    def _validate_alias_uniqueness(self) -> list[str]:
+    def _validate_alias_uniqueness(self) -> List[str]:
         errors = []
         for event_id, event in self.events.items():
             seen_aliases = set()

@@ -7,7 +7,7 @@ for a single microlensing event.
 
 import uuid
 from pathlib import Path
-from typing import Dict, Optional, TYPE_CHECKING, Annotated
+from typing import Dict, Optional, TYPE_CHECKING, Annotated, List
 
 from pydantic import BaseModel, Field
 
@@ -160,27 +160,16 @@ class Event(BaseModel):
         """
         return self.solutions[solution_id]
 
-    def get_active_solutions(self) -> list[Solution]:
-        """Return all solutions currently marked as active.
+    def get_active_solutions(self) -> List[Solution]:
+        """Return a list of active solutions for this event.
 
         Returns:
-            list[Solution]: List of all active solutions in this event.
+            List[Solution]: List of solutions where is_active is True.
 
         Example:
             >>> event = submission.get_event("EVENT001")
-            >>>
-            >>> # Get only active solutions
             >>> active_solutions = event.get_active_solutions()
-            >>> print(f"Event has {len(active_solutions)} active solutions")
-            >>>
-            >>> # Only active solutions are included in exports
-            >>> for solution in active_solutions:
-            ...     print(f"- {solution.solution_id}: {solution.model_type}")
-
-        Note:
-            Only active solutions are included in submission exports and
-            dossier generation. Use deactivate() to exclude solutions from
-            the final submission.
+            >>> print(f"Found {len(active_solutions)} active solutions")
         """
         return [sol for sol in self.solutions.values() if sol.is_active]
 
@@ -207,7 +196,7 @@ class Event(BaseModel):
         for sol in self.solutions.values():
             sol.is_active = False
 
-    def run_validation(self) -> list[str]:
+    def run_validation(self) -> List[str]:
         """Validate all active solutions in this event.
 
         This method performs validation on all active solutions in the event,
@@ -215,7 +204,7 @@ class Event(BaseModel):
         event-specific validation like relative probability sums.
 
         Returns:
-            list[str]: Human-readable validation messages. Empty list indicates
+            List[str]: Human-readable validation messages. Empty list indicates
                       all validations passed. Messages may include warnings
                       (non-critical) and errors (critical issues).
 
