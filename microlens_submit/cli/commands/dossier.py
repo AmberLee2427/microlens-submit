@@ -7,10 +7,10 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from ...utils import load
-from ...dossier import generate_dashboard_html
-from ...dossier import generate_event_page, generate_solution_page
-from ...dossier.full_report import generate_full_dossier_report_html
+from microlens_submit.utils import load
+from microlens_submit.dossier import generate_dashboard_html
+from microlens_submit.dossier import generate_event_page, generate_solution_page
+from microlens_submit.dossier.full_report import generate_full_dossier_report_html
 
 console = Console()
 

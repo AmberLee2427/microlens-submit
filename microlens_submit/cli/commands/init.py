@@ -1,13 +1,14 @@
-"""Project initialization commands for microlens-submit CLI."""
+"""Initialization commands for microlens-submit CLI."""
 
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from ...utils import load
+from microlens_submit.utils import load
 
 console = Console()
 

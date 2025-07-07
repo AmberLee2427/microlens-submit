@@ -1,4 +1,4 @@
-"""Export and metadata management commands for microlens-submit CLI."""
+"""Export commands for microlens-submit CLI."""
 
 from pathlib import Path
 from typing import Optional
@@ -7,7 +7,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from ...utils import load
+from microlens_submit.utils import load
 
 console = Console()
 
