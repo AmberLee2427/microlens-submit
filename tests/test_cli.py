@@ -1343,7 +1343,13 @@ def test_cli_generate_dossier_selective_solution():
         from microlens_submit import api
         submission = api.load(".")
         event = submission.events["EVENT001"]
-        solution_id = next(iter(event.solutions.keys()))
+        # Find the 1S1L solution specifically (not using next(iter()) which is non-deterministic)
+        solution_id = None
+        for sol_id, solution in event.solutions.items():
+            if solution.model_type == "1S1L":
+                solution_id = sol_id
+                break
+        assert solution_id is not None, "Could not find 1S1L solution"
 
         # Generate dossier for specific solution only
         result = runner.invoke(app, ["generate-dossier", "--solution-id", solution_id])
