@@ -61,14 +61,15 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    tutorial
    usage_examples
    api
+   submission_manual
 
 **Additional Resources**
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - **Tutorial**: Complete step-by-step guide to using microlens-submit
 - **API Reference**: Detailed documentation of the Python API
+- **Submission Manual**: Complete specification for manual submission format and CSV import
 - **Jupyter Notebooks**: Interactive tutorials in the docs directory
-- **Manual Submission**: For those who prefer to build packages by hand, see `SUBMISSION_MANUAL.md <https://github.com/AmberLee2427/microlens-submit/blob/main/SUBMISSION_MANUAL.md>`_
 
 **Getting Help**
 ~~~~~~~~~~~~~~~
