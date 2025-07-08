@@ -59,6 +59,7 @@ dev = [
     "isort",
     "sphinx",
     "sphinx_rtd_theme",
+    "importlib_resources",
 ]
 
 # Setuptools package configuration
