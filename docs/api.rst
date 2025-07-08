@@ -45,6 +45,8 @@ The main container class that represents an entire microlensing challenge submis
       >>> # Set team information
       >>> submission.team_name = "Team Alpha"
       >>> submission.tier = "advanced"
+      >>> submission.repo_url = "https://github.com/team-alpha/microlens-analysis"
+      >>> submission.hardware_info = {"cpu": "Intel i9", "ram_gb": 64}
       >>>
       >>> # Save changes
       >>> submission.save()

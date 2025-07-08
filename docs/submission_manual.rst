@@ -17,6 +17,9 @@ For users who want minimal interaction with the submission tool, here's the simp
 
       microlens-submit init --team-name "Your Team Name" --tier "advanced"
 
+   .. note::
+      You can re-run ``microlens-submit init`` in the same project directory to quickly update the team name, tier, or other top-level metadata. This will overwrite the ``submission.json`` file with the new values you provide, but will not affect your events or solutions. It's a simple way to fix typos or update your info without manually editing the JSON file.
+
 2. **Import Solutions from CSV**
 
    .. code-block:: bash
@@ -196,11 +199,14 @@ Global metadata for the entire submission.
 +----------------+--------+----------+--------------------------------+
 | Field          | Type   | Required | Description                    |
 +================+========+==========+================================+
-| ``team_name``  | string | No       | Name of the participant team.  |
+| ``team_name``  | string | Yes      | Name of the participant team.  |
 +----------------+--------+----------+--------------------------------+
-| ``tier``       | string | No       | Challenge tier.                |
+| ``tier``       | string | Yes      | Challenge tier.                |
 +----------------+--------+----------+--------------------------------+
-| ``hardware_info``| dict | No       | Details about the compute      |
+| ``repo_url``   | string | Yes      | GitHub repository URL for the  |
+|                |        |          | team codebase.                 |
++----------------+--------+----------+--------------------------------+
+| ``hardware_info``| dict | Yes      | Details about the compute      |
 |                |        |          | environment.                   |
 +----------------+--------+----------+--------------------------------+
 
@@ -211,6 +217,7 @@ Global metadata for the entire submission.
    {
      "team_name": "Planet Pounders",
      "tier": "advanced",
+     "repo_url": "https://github.com/planet-pounders/microlens-analysis",
      "hardware_info": {
        "cpu": "Intel i9",
        "ram_gb": 64

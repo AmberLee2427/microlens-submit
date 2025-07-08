@@ -62,20 +62,7 @@ def validate_submission(
 ) -> None:
     """Validate the entire submission for missing or incomplete information."""
     sub = load(str(project_path))
-    warnings = sub.run_validation()
-
-    # Check for missing repo_url
-    repo_url_warning = next((w for w in warnings if "repo_url" in w.lower() or "github" in w.lower()), None)
-    if repo_url_warning:
-        console.print(
-            Panel(
-                f"[red]Error: {repo_url_warning}\n"
-                f"Please add your GitHub repository URL using "
-                f"'microlens-submit set-repo-url <url> <project_dir>'.[/red]",
-                style="bold red",
-            )
-        )
-        raise typer.Exit(code=1)
+    warnings = sub.run_validation_warnings()
 
     if not warnings:
         console.print(Panel("\u2705 All validations passed!", style="bold green"))
@@ -84,6 +71,29 @@ def validate_submission(
         for warning in warnings:
             console.print(f"  \u2022 {warning}")
         console.print(f"\nFound {len(warnings)} validation issue(s)", style="yellow")
+
+        # Provide helpful guidance for common issues
+        has_repo_issue = any("repo_url" in w.lower() or "github" in w.lower() for w in warnings)
+        has_hardware_issue = any("hardware" in w.lower() for w in warnings)
+
+        if has_repo_issue:
+            console.print(
+                "\n[blue]💡 To fix repository URL issues:[/blue]\n"
+                "   microlens-submit set-repo-url <url> <project_dir>",
+                style="blue",
+            )
+
+        if has_hardware_issue:
+            console.print(
+                "\n[blue]💡 To fix hardware info issues:[/blue]\n"
+                "   microlens-submit nexus-init --team-name <name> --tier <tier> <project_dir>\n"
+                "   (or manually set hardware_info in submission.json)",
+                style="blue",
+            )
+
+        console.print(
+            "\n[yellow]⚠️  Note: These warnings will become errors when saving or exporting.[/yellow]", style="yellow"
+        )
 
 
 def validate_event(

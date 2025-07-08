@@ -29,11 +29,11 @@ class Submission(BaseModel):
 
     Attributes:
         project_path: Root directory where submission files are stored.
-        team_name: Name of the participating team.
-        tier: Challenge tier for the submission (e.g., "basic", "advanced").
-        hardware_info: Optional dictionary describing the compute platform.
+        team_name: Name of the participating team (required for validation).
+        tier: Challenge tier for the submission (e.g., "basic", "advanced") (required for validation).
+        hardware_info: Dictionary describing the compute platform (required for validation).
         events: Mapping of event IDs to :class:`Event` instances.
-        repo_url: GitHub repository URL for the team codebase.
+        repo_url: GitHub repository URL for the team codebase (required for validation).
 
     Example:
         >>> from microlens_submit import load
@@ -82,6 +82,69 @@ class Submission(BaseModel):
     events: Dict[str, Event] = Field(default_factory=dict)
     repo_url: Optional[str] = None
 
+    def run_validation_warnings(self) -> List[str]:
+        """Validate the submission and return warnings only (non-blocking issues).
+
+        This method performs validation but only returns warnings for missing
+        optional fields. It does not fail for missing required fields like
+        repo_url or hardware_info.
+
+        Returns:
+            List[str]: Human-readable warning messages. Empty list indicates
+                      no warnings.
+        """
+        messages = []
+
+        # Check metadata completeness (warnings only)
+        if not self.team_name:
+            messages.append("team_name is required")
+        if not self.tier:
+            messages.append("tier is required")
+        if not self.repo_url:
+            messages.append("repo_url is required (GitHub repository URL)")
+        if not self.hardware_info:
+            messages.append("Hardware info is missing")
+
+        # Validate tier and event IDs
+        if self.tier:
+            try:
+                from ..tier_validation import get_available_tiers, get_event_validation_error, validate_event_id
+
+                # Check if tier is valid first
+                available_tiers = get_available_tiers()
+                if self.tier not in available_tiers:
+                    messages.append(
+                        f"Invalid tier '{self.tier}' changed to 'None'. Available tiers: {available_tiers}."
+                    )
+                    # Automatically change to None tier
+                    self.tier = "None"
+
+                # Only validate events if tier is not "None"
+                if self.tier != "None":
+                    for event_id in self.events.keys():
+                        if not validate_event_id(event_id, self.tier):
+                            error_msg = get_event_validation_error(event_id, self.tier)
+                            if error_msg:
+                                messages.append(error_msg)
+            except ImportError:
+                # Tier validation module not available, skip validation
+                pass
+            except ValueError as e:
+                # Invalid tier (fallback for other validation errors)
+                messages.append(f"Invalid tier '{self.tier}': {e}")
+
+        # Validate all events
+        for event_id, event in self.events.items():
+            event_messages = event.run_validation()
+            for msg in event_messages:
+                messages.append(f"Event {event_id}: {msg}")
+
+        # Check for duplicate aliases across events
+        alias_messages = self._validate_alias_uniqueness()
+        messages.extend(alias_messages)
+
+        return messages
+
     def run_validation(self) -> List[str]:
         """Validate the entire submission for missing or incomplete information.
 
@@ -109,7 +172,7 @@ class Submission(BaseModel):
         """
         messages = []
 
-        # Check metadata completeness
+        # Check metadata completeness (strict validation for save/export)
         if not self.team_name:
             messages.append("team_name is required")
         if not self.tier:
@@ -120,6 +183,34 @@ class Submission(BaseModel):
         # Check hardware info
         if not self.hardware_info:
             messages.append("Hardware info is missing")
+
+        # Validate tier and event IDs
+        if self.tier:
+            try:
+                from ..tier_validation import get_available_tiers, get_event_validation_error, validate_event_id
+
+                # Check if tier is valid first
+                available_tiers = get_available_tiers()
+                if self.tier not in available_tiers:
+                    messages.append(
+                        f"Invalid tier '{self.tier}' changed to 'None'. Available tiers: {available_tiers}."
+                    )
+                    # Automatically change to None tier
+                    self.tier = "None"
+
+                # Only validate events if tier is not "None"
+                if self.tier != "None":
+                    for event_id in self.events.keys():
+                        if not validate_event_id(event_id, self.tier):
+                            error_msg = get_event_validation_error(event_id, self.tier)
+                            if error_msg:
+                                messages.append(error_msg)
+            except ImportError:
+                # Tier validation module not available, skip validation
+                pass
+            except ValueError as e:
+                # Invalid tier (fallback for other validation errors)
+                messages.append(f"Invalid tier '{self.tier}': {e}")
 
         # Validate all events
         for event_id, event in self.events.items():
@@ -277,7 +368,23 @@ class Submission(BaseModel):
                 active_info = "" if sol_status["is_active"] else " [inactive]"
                 print(f"   {status_icon} {sol_id} - {sol_status['model_type']}{alias_info}{active_info}")
 
-    def save(self) -> None:
+    def save(self, force: bool = False) -> None:
+        # Run comprehensive validation first
+        validation_errors = self.run_validation()
+        if validation_errors:
+            print("⚠️  Save completed with validation warnings:")
+            for error in validation_errors:
+                print(f"   {error}")
+            print("💡 Fix validation errors before exporting for submission")
+
+            if not force:
+                print("💾 Submission saved locally (incomplete - not ready for submission)")
+            else:
+                print("💾 Submission saved locally (forced save with validation errors)")
+        else:
+            print("✅ Submission saved successfully (ready for export)")
+
+        # Check for alias conflicts (existing behavior)
         alias_errors = self._validate_alias_uniqueness()
         if alias_errors:
             print("❌ Save failed due to alias validation errors:")
@@ -286,6 +393,7 @@ class Submission(BaseModel):
             print("💡 Solutions with duplicate aliases remain in memory but are not saved")
             print("   Use different aliases or remove aliases to resolve conflicts")
             raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
+
         unsaved_count = sum(1 for event in self.events.values() for sol in event.solutions.values() if not sol.saved)
         project = Path(self.project_path)
         events_dir = project / "events"
@@ -325,6 +433,16 @@ class Submission(BaseModel):
             print(f"📋 Saved aliases: {', '.join(saved_aliases)}")
 
     def export(self, output_path: str) -> None:
+        # Run comprehensive validation first - export is strict
+        validation_errors = self.run_validation()
+        if validation_errors:
+            print("❌ Export failed due to validation errors:")
+            for error in validation_errors:
+                print(f"   {error}")
+            print("💡 Fix validation errors before exporting for submission")
+            print("💡 Use submission.save() to save incomplete work locally")
+            raise ValueError("Validation failed:\n" + "\n".join(validation_errors))
+
         project = Path(self.project_path)
         with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             submission_json = project / "submission.json"

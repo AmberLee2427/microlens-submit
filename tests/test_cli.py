@@ -224,7 +224,14 @@ def test_cli_export():
         sol1, sol2 = list(evt.solutions.keys())
 
         assert runner.invoke(app, ["deactivate", sol2]).exit_code == 0
-        result = runner.invoke(app, ["export", "submission.zip", "--force"])
+
+        # Set required fields for export
+        sub = load(".")
+        sub.repo_url = "https://github.com/test/team"
+        sub.hardware_info = {"cpu": "test"}
+        sub.save()
+
+        result = runner.invoke(app, ["export", "submission.zip"])
         assert result.exit_code == 0
         assert Path("submission.zip").exists()
         with zipfile.ZipFile("submission.zip") as zf:

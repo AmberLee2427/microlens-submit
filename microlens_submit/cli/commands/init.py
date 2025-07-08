@@ -53,6 +53,26 @@ def init(
         set. Otherwise, a warning is shown and you can set it later with
         set-repo-url command.
     """
+    # Validate tier
+    try:
+        from microlens_submit.tier_validation import get_available_tiers, get_tier_description
+
+        available_tiers = get_available_tiers()
+        if tier not in available_tiers:
+            console.print(f"[yellow]Warning: Invalid tier '{tier}'[/yellow]")
+            console.print(f"Available tiers: {', '.join(available_tiers)}")
+            console.print("[yellow]Setting tier to 'None' (no validation)[/yellow]")
+            tier = "None"
+        tier_desc = get_tier_description(tier)
+        console.print(f"[green]Using tier:[/green] {tier} - {tier_desc}")
+    except ImportError:
+        # Tier validation module not available, skip validation
+        console.print(f"[yellow]Warning: Tier validation not available, using tier '{tier}'[/yellow]")
+    except ValueError as e:
+        console.print(f"[yellow]Warning: {e}[/yellow]")
+        console.print("[yellow]Setting tier to 'None' (no validation)[/yellow]")
+        tier = "None"
+
     sub = load(str(project_path))
     sub.team_name = team_name
     sub.tier = tier
@@ -77,8 +97,24 @@ def init(
             "Please add it using 'microlens-submit set-repo-url <url> "
             "<project_dir>'.[/yellow]"
         )
-    sub.save()
-    console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
+
+    # Run warnings-only validation
+    warnings = sub.run_validation_warnings()
+    if warnings:
+        console.print("[yellow]⚠️  Project initialized with warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"   [yellow]• {warning}[/yellow]")
+        console.print("[yellow]💡 These warnings will become errors when saving or exporting.[/yellow]")
+
+    # Try to save, but don't fail if there are validation errors
+    try:
+        sub.save()
+        console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
+    except ValueError as e:
+        console.print("[yellow]⚠️  Project initialized but could not save due to validation errors:[/yellow]")
+        console.print(f"[yellow]{str(e)}[/yellow]")
+        console.print("[yellow]💡 Fix validation errors before saving or exporting.[/yellow]")
+        console.print(Panel(f"Initialized project at {project_path} (unsaved)", style="bold yellow"))
 
 
 def nexus_init(
@@ -116,5 +152,21 @@ def nexus_init(
     init(team_name=team_name, tier=tier, project_path=project_path)
     sub = load(str(project_path))
     sub.autofill_nexus_info()
-    sub.save()
-    console.print("Nexus platform info captured.", style="bold green")
+
+    # Run warnings-only validation after adding hardware info
+    warnings = sub.run_validation_warnings()
+    if warnings:
+        console.print("[yellow]⚠️  Project updated with warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"   [yellow]• {warning}[/yellow]")
+        console.print("[yellow]💡 These warnings will become errors when saving or exporting.[/yellow]")
+
+    # Try to save, but don't fail if there are validation errors
+    try:
+        sub.save()
+        console.print("Nexus platform info captured.", style="bold green")
+    except ValueError as e:
+        console.print("[yellow]⚠️  Project updated but could not save due to validation errors:[/yellow]")
+        console.print(f"[yellow]{str(e)}[/yellow]")
+        console.print("[yellow]💡 Fix validation errors before saving or exporting.[/yellow]")
+        console.print("Nexus platform info captured (unsaved).", style="bold yellow")

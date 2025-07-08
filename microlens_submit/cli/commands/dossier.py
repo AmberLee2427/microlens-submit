@@ -19,15 +19,23 @@ def generate_dossier(
     event_id: Optional[str] = typer.Option(
         None,
         "--event-id",
-        help="Generate dossier for a specific event only " "(omit for full dossier)",
+        help="Generate dossier for a specific event only (omit for full dossier)",
     ),
     solution_id: Optional[str] = typer.Option(
         None,
         "--solution-id",
-        help="Generate dossier for a specific solution only " "(omit for full dossier)",
+        help="Generate dossier for a specific solution only (omit for full dossier)",
+    ),
+    open: bool = typer.Option(
+        False,
+        "--open",
+        help="Open the generated dossier in your web browser after generation.",
     ),
 ) -> None:
-    """Generate an HTML dossier for the submission."""
+    """Generate an HTML dossier for the submission.
+
+    Use --open to automatically open the main dossier page in your browser after generation.
+    """
     sub = load(str(project_path))
     output_dir = Path(project_path) / "dossier"
 
@@ -53,11 +61,17 @@ def generate_dossier(
         event = sub.events[containing_event_id]
         console.print(
             Panel(
-                f"Generating dossier for solution {solution_id} " f"in event {containing_event_id}...",
+                f"Generating dossier for solution {solution_id} in event {containing_event_id}...",
                 style="cyan",
             )
         )
         generate_solution_page(solution, event, sub, output_dir)
+        if open:
+            import webbrowser
+
+            solution_path = output_dir / f"{solution_id}.html"
+            if solution_path.exists():
+                webbrowser.open(solution_path.resolve().as_uri())
 
     elif event_id:
         # Generate only the specific event page
@@ -72,12 +86,18 @@ def generate_dossier(
         event = sub.events[event_id]
         console.print(Panel(f"Generating dossier for event {event_id}...", style="cyan"))
         generate_event_page(event, sub, output_dir)
+        if open:
+            import webbrowser
+
+            event_path = output_dir / f"{event_id}.html"
+            if event_path.exists():
+                webbrowser.open(event_path.resolve().as_uri())
 
     else:
         # Generate full dossier (all events and solutions)
         console.print(
             Panel(
-                "Generating comprehensive dossier for all events " "and solutions...",
+                "Generating comprehensive dossier for all events and solutions...",
                 style="cyan",
             )
         )
@@ -104,6 +124,12 @@ def generate_dossier(
             with dashboard_path.open("w", encoding="utf-8") as f:
                 f.write(dashboard_html)
         console.print(Panel("Comprehensive dossier generated!", style="bold green"))
+
+        # Open the main dashboard if requested
+        if open:
+            import webbrowser
+
+            webbrowser.open(dashboard_path.resolve().as_uri())
 
     console.print(
         Panel(

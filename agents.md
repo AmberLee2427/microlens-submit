@@ -23,7 +23,35 @@ The `microlens-submit` library is a Python-based toolkit designed to help partic
 
 ---
 
-## 2. Core Concepts & Workflow
+## 2. Development Environment & Testing
+
+### Testing Conda Environments
+
+The project uses two conda environments for testing across Python versions:
+
+- **`test_py38`**: Python 3.8 environment for testing compatibility with older Python versions
+- **`test_py311`**: Python 3.11 environment for testing with current Python versions
+
+**To run tests in both environments:**
+```bash
+# Test in Python 3.8
+conda activate test_py38
+python -m pytest -v
+
+# Test in Python 3.11
+conda activate test_py311
+python -m pytest -v
+```
+
+**Note:** The `test_py311` environment may require installing `importlib_resources`:
+```bash
+conda activate test_py311
+pip install importlib_resources
+```
+
+---
+
+## 3. Core Concepts & Workflow
 
 The library is built around a stateful, object-oriented model that mirrors the structure of the challenge. The user's submission is treated as a persistent project on their local disk. The primary workflow is through the Python API, with a parallel CLI providing access to the same functionality.
 
@@ -40,9 +68,9 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ## 3. Development Roadmap & Feature Plan
 
-`microlens-submit` is currently at version 0.14.0. Below is the prioritized roadmap for developing version 1.0.0.
+`microlens-submit` is currently at version 0.16.0. Below is the prioritized roadmap for developing version 1.0.0.
 
-### v0.14.0 — Modular Architecture & Enhanced UX (Current Release)
+### v0.15.0 — Tier Validation & Enhanced Naming (Current Release)
 
 - **Task 1: Modular Architecture** ✅ **COMPLETED**
   - *Goal:* Improve code maintainability and organization.
@@ -74,9 +102,62 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Added usage examples in command docstrings for better user guidance
   - *Why:* Makes the CLI more accessible to users of all experience levels.
 
-### v0.15.0 - Physical Parameter Support (Next Release)
+### v0.16.0 — Comprehensive Validation & Dossier Enhancement (Current Release)
 
-- **Task 4: Enhanced Physical Parameter Validation**
+- **Task 1: Tier Validation System** ✅ **COMPLETED**
+  - *Goal:* Implement comprehensive tier-based validation for challenge submissions.
+  - *Action:* Created complete tier validation system:
+    - New `tier_validation.py` module with support for "standard", "advanced", "test", "2018-test", and "None" tiers
+    - Event ID validation against tier-specific event lists
+    - CLI tier validation with fallback to "None" for invalid tiers
+    - Comprehensive tier validation tests in `tests/test_tier_validation.py`
+    - Integration with CLI init command for automatic tier validation
+  - *Why:* Ensures submissions are validated against the correct event lists and tier requirements.
+
+- **Task 2: Enhanced Validation Logic** ✅ **COMPLETED**
+  - *Goal:* Improve parameter validation and solution completeness checking.
+  - *Action:* Enhanced validation system:
+    - Enhanced `validate_parameters.py` with better error messages and validation rules
+    - Improved validation for higher-order effects and parameter consistency
+    - Better handling of parameter uncertainties and type validation
+    - Enhanced solution completeness checking with more detailed feedback
+    - Improved CLI validation commands with better error reporting
+  - *Why:* Provides better user feedback and catches validation issues earlier.
+
+- **Task 3: Dossier Generation Enhancements** ✅ **COMPLETED**
+  - *Goal:* Improve HTML dossier generation and user experience.
+  - *Action:* Enhanced dossier functionality:
+    - Added model_type display at the top of each solution section in full dossier reports
+    - Added `--open` flag to `microlens-submit generate-dossier` CLI command for automatic browser opening
+    - Added `open: bool = False` parameter to `generate_dashboard_html()` API function
+    - Enhanced dossier navigation and metadata display
+    - Improved full dossier report generation with better solution identification
+  - *Why:* Streamlines workflow and improves dossier readability for evaluators.
+
+- **Task 4: Submission Manual Integration** ✅ **COMPLETED**
+  - *Goal:* Improve documentation accessibility and integration with Sphinx documentation.
+  - *Action:* Converted and integrated submission manual:
+    - Converted SUBMISSION_MANUAL.md to reStructuredText format (`docs/submission_manual.rst`)
+    - Integrated submission manual into main Sphinx documentation site
+    - Updated all internal links and references to point to new documentation location
+    - Added GitHub link to validate_submission.py script in submission manual
+    - Removed old markdown file and logo references for cleaner structure
+  - *Why:* Better documentation integration, improved accessibility, and cleaner project structure.
+
+- **Task 5: Comprehensive Code Quality & Pre-commit Integration** ✅ **COMPLETED**
+  - *Goal:* Ensure consistent code quality and formatting across the project.
+  - *Action:* Implemented comprehensive pre-commit hooks and code cleanup:
+    - Fixed all pre-commit hook violations including line length, unused imports, and style issues
+    - Resolved f-string formatting issues in CLI commands
+    - Fixed line length violations in dossier generation code
+    - Removed unused imports across the codebase
+    - Ensured all tests pass in both Python 3.8 and 3.11 environments
+    - Added pre-commit configuration with black, isort, flake8, and other quality checks
+  - *Why:* Maintains high code quality standards and prevents common formatting issues.
+
+### v0.17.0 - Physical Parameter Support (Next Release)
+
+- **Task 7: Enhanced Physical Parameter Validation**
   - *Goal:* Validate physical parameters for reasonableness and consistency.
   - *Action:* Extend validation logic to check:
     - Lens mass ranges (typically 0.1-1.0 M☉)
@@ -85,7 +166,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Consistency between derived and fitted parameters
   - *Why:* Catches physically impossible or unlikely parameter combinations.
 
-- **Task 5: Physical Parameter Uncertainties**
+- **Task 8: Physical Parameter Uncertainties**
   - *Goal:* Support uncertainties for physical parameters (not just model parameters).
   - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
   - *Why:* Physical parameters often have significant uncertainties that should be captured.
@@ -129,195 +210,4 @@ Manages the overall submission.
 - `__init__(self, project_path)` — use `microlens_submit.load()` instead
 - `get_event(event_id)` — fetches or creates an `Event`
 - `save()` — writes submission state to disk
-- `export(filename)` — generates `.zip` of active solutions
-- `validate()` — checks submission completeness and consistency
-
-#### `Event` Class
-
-Represents a single microlensing event.
-
-**Attributes:**
-- `event_id`: Unique identifier
-- `solutions`: Maps solution ID to `Solution`
-
-**Methods:**
-- `add_solution(model_type, parameters)` — creates and returns new `Solution`
-- `get_solution(solution_id)` — fetches a specific `Solution`
-- `get_active_solutions()` — returns active solutions
-- `clear_solutions()` — deactivates all solutions
-
-#### `Solution` Class
-
-Represents a specific model fit.
-
-**Attributes:**
-- `solution_id`, `model_type`, `parameters`, `is_active`
-- `bands`: List of photometric bands used
-- `higher_order_effects`: List of physical effects modeled
-- `t_ref`: Reference time for time-dependent effects
-- `compute_info`: Includes timing, dependencies, Git info
-- `posterior_path`, `lightcurve_plot_path`, `lens_plane_plot_path`, `notes`, `creation_timestamp`
-- Optional metadata: `used_astrometry`, `used_postage_stamps`, `limb_darkening_model`, `limb_darkening_coeffs`, `parameter_uncertainties`, `physical_parameters`, `log_likelihood`, `relative_probability`, `n_data_points`
-
-**Methods:**
-- `set_compute_info(cpu_hours=None, wall_time_hours=None)` — captures timing, environment, and Git state
-- `deactivate()` / `activate()` — toggles inclusion in export
-- `validate()` — validates solution completeness and consistency
-
----
-
-## 5. Command Line Interface (CLI)
-
-Built with **Typer**, the CLI supports all core functionality.
-
-### Example Commands
-
-```bash
-microlens-submit init --team-name "Planet Pounders" --tier "advanced"
-microlens-submit add-solution <event_id> 1S1L --param t0=555.5 --param u0=0.1 --log-likelihood -1234.5
-microlens-submit add-solution <event_id> 1S2L --params-file params.yaml --notes "# My Analysis\n\n## Results\n..."
-microlens-submit import-solutions tests/data/test_import.csv --dry-run
-microlens-submit edit-solution <solution_id> --relative-probability 0.7 --append-notes "Updated after review"
-microlens-submit validate-solution <solution_id>
-microlens-submit validate-event <event_id>
-microlens-submit validate-submission
-microlens-submit list-solutions <event_id>
-microlens-submit compare-solutions <event_id>
-microlens-submit deactivate <solution_id>
-microlens-submit export --output "final_submission.zip"
-```
-
-> **Note:** All CLI-provided fields must conform to the Python types defined in the Pydantic models. Invalid types will raise validation errors. The `export` command includes a validation step and will fail on invalid or incomplete entries unless explicitly overridden.
-
-> **Note:** The file `tests/data/test_import.csv` is used in the test suite and can be used as a template for your own bulk imports or for development/testing purposes.
-
----
-
-## 6. On-Disk File Structure
-
-```plaintext
-<project_path>/
-├── submission.json
-├── aliases.json
-├── events/
-│   ├── <event_id>/
-│   │   ├── event.json
-│   │   └── solutions/
-│   │       ├── <solution_id>.json
-│   │       └── <solution_id>.md
-│   └── <event_id>/
-│       ├── event.json
-│       └── solutions/
-│           ├── <solution_id>.json
-│           └── <solution_id>.md
-└── tmp/
-    └── <solution_id>.md
-```
-
----
-
-## 7. Development Environment Notes
-
-### Test Conda Environments
-
-For local testing across different Python versions, we use the following conda environments:
-
-- **`test_py38`**: Python 3.8 environment for testing compatibility with older Python versions
-- **`test_py311`**: Python 3.11 environment for testing with newer Python features
-
-These environments are used to verify that the codebase works correctly across the supported Python version range (3.8+).
-
-### Environment Setup Commands
-
-```bash
-# Create Python 3.8 test environment
-conda create -y -n test_py38 python=3.8
-conda activate test_py38
-pip install -e ".[dev]"
-
-# Create Python 3.11 test environment
-conda create -y -n test_py311 python=3.11
-conda activate test_py311
-pip install -e ".[dev]"
-```
-
-### Key Compatibility Notes
-
-- The project uses `importlib_resources` compatibility shims for asset loading to support both Python 3.8 and 3.9+
-- Type annotations use `typing` module imports for Python 3.8 compatibility (e.g., `List`, `Optional` instead of `list`, `|`)
-- All tests should pass in both environments before merging changes
-
----
-
-## 8. Pre-Release Checklist
-
-Before releasing any version, ensure the following:
-
-### Code Quality
-- [ ] All tests pass locally (`pytest --cov=microlens_submit --cov-report=xml`)
-- [ ] All tests pass in CI (GitHub Actions)
-- [ ] Code coverage is maintained or improved
-- [ ] No linting errors (`flake8`, `black`, `isort`)
-- [ ] Type hints are complete and accurate
-- [ ] Documentation is up to date
-
-### Compatibility
-- [ ] Tests pass on Python 3.8 (`conda activate test_py38`)
-- [ ] Tests pass on Python 3.11 (`conda activate test_py311`)
-- [ ] No breaking changes to public API
-- [ ] Backward compatibility maintained where possible
-
-### Documentation
-- [ ] README.md is current and accurate
-- [ ] CHANGELOG.md is updated with new features/fixes
-- [ ] API documentation is complete
-- [ ] CLI help text is comprehensive
-- [ ] Examples in documentation work correctly
-
-### Release Process
-- [ ] Version number updated in `pyproject.toml`
-- [ ] Version number updated in `microlens_submit/__init__.py`
-- [ ] CHANGELOG.md updated with release notes
-- [ ] Git tag created for the release
-- [ ] Release notes prepared for GitHub release
-
-### Testing
-- [ ] Manual testing of CLI commands
-- [ ] Manual testing of Python API
-- [ ] Export functionality tested with real data
-- [ ] Dossier generation tested
-- [ ] Validation warnings tested
-
-### Deployment
-- [ ] Package builds successfully (`python -m build`)
-- [ ] Package installs correctly in clean environment
-- [ ] All dependencies are correctly specified
-- [ ] No sensitive data in package
-- [ ] License and metadata are correct
-
----
-
-## 9. Release Notes Template
-
-### Version X.Y.Z - [Date]
-
-#### Added
-- New feature 1
-- New feature 2
-
-#### Changed
-- Changed behavior 1
-- Changed behavior 2
-
-#### Fixed
-- Bug fix 1
-- Bug fix 2
-
-#### Removed
-- Removed feature 1 (if any)
-
-#### Breaking Changes
-- Breaking change 1 (if any)
-
-#### Migration Guide
-- How to migrate from previous version (if needed)
+- `export(filename)`

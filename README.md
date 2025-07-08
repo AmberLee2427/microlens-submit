@@ -8,7 +8,7 @@
 
 *A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
-[![PyPI - v0.14.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
+[![PyPI - v0.16.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![PyPI - License](https://img.shields.io/pypi/l/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
 [![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)

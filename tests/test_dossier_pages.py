@@ -13,8 +13,11 @@ def _basic_submission(tmp_path: Path):
     """Create a minimal submission with one event and solution."""
     sub = load(str(tmp_path))
     sub.team_name = "UnitTesters"
+    sub.tier = "standard"
+    sub.repo_url = "https://github.com/test/team"
+    sub.hardware_info = {"cpu": "test"}
     evt = sub.get_event("E001")
-    evt.add_solution("1S1L", {"t0": 0})
+    evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
     return sub, evt
 
 

@@ -75,6 +75,11 @@ MODEL_DEFINITIONS = {
         "description": "Binary Source, Single Point Lens",
         "required_params_core": ["t0", "u0", "tE"],  # Core lens params
     },
+    # Other/Unknown model type (allows any parameters)
+    "other": {
+        "description": "Other or unknown model type",
+        "required_params_core": [],  # No required parameters for unknown models
+    },
     # Add other model types as needed:
     # "2S2L": {
     #     "description": "Binary Source, Binary Point Lens",
@@ -129,16 +134,20 @@ HIGHER_ORDER_EFFECT_DEFINITIONS = {
     "stellar-rotation": {
         "description": "Effect of stellar rotation on the light curve (e.g., spots)",
         "requires_t_ref": False,  # Usually not time-referenced directly in this context
-        "required_higher_order_params": [],  # Specific parameters (e.g., rotation period, inclination) to be added here
+        "required_higher_order_params": [],  # Specific parameters
+        # (e.g., rotation period, inclination)
+        # to be added here
         "optional_higher_order_params": [
             "v_rot_sin_i",
             "epsilon",
-        ],  # Guessing common params: rotational velocity times sin(inclination), spot coverage
+        ],  # Guessing common params: rotational velocity times sin(inclination),
+        # spot coverage
     },
     "fitted-limb-darkening": {
         "description": "Limb darkening coefficients fitted as parameters",
         "requires_t_ref": False,
-        "required_higher_order_params": [],  # Parameters are usually u1, u2, etc. (linear, quadratic)
+        "required_higher_order_params": [],  # Parameters are usually u1, u2, etc.
+        # (linear, quadratic)
         "optional_higher_order_params": [
             "u1",
             "u2",
@@ -146,11 +155,13 @@ HIGHER_ORDER_EFFECT_DEFINITIONS = {
             "u4",
         ],  # Common limb darkening coefficients (linear, quadratic, cubic, quartic)
     },
-    # The "other" effect type is handled by allowing any other string in `higher_order_effects` list itself.
+    # The "other" effect type is handled by allowing any other string in
+    # `higher_order_effects` list itself.
 }
 
 # This dictionary defines properties/constraints for each known parameter
-# (e.g., expected type, units, a more detailed description, corresponding uncertainty field name)
+# (e.g., expected type, units, a more detailed description, corresponding
+# uncertainty field name)
 PARAMETER_PROPERTIES = {
     # Core Microlensing Parameters
     "t0": {"type": "float", "units": "HJD", "description": "Time of closest approach"},
@@ -798,5 +809,129 @@ def validate_solution_consistency(
             # Simple caustic crossing check
             if s < 0.5 or s > 2.0:
                 messages.append("Warning: " "Separation (s) outside typical caustic crossing range " "(0.5-2.0)")
+
+    return messages
+
+
+def validate_solution_rigorously(
+    model_type: str,
+    parameters: Dict[str, Any],
+    higher_order_effects: Optional[List[str]] = None,
+    bands: Optional[List[str]] = None,
+    t_ref: Optional[float] = None,
+) -> List[str]:
+    """Extremely rigorous validation of solution parameters.
+
+    This function performs comprehensive validation that catches ALL parameter errors:
+    - Parameter types must be correct (t_ref must be float, etc.)
+    - No invalid parameters for model type (e.g., 's' parameter for 1S1L)
+    - t_ref only allowed when required by higher-order effects
+    - bands must be a list of strings
+    - All required flux parameters must be present for each band
+    - Only "other" model types or effects can have unknown parameters
+
+    Args:
+        model_type: The type of microlensing model
+        parameters: Dictionary of model parameters
+        higher_order_effects: List of higher-order effects
+        bands: List of photometric bands
+        t_ref: Reference time for time-dependent effects
+
+    Returns:
+        List of validation error messages. Empty list if all validations pass.
+    """
+    messages = []
+    higher_order_effects = higher_order_effects or []
+    bands = bands or []
+
+    # 1. Validate t_ref type
+    if t_ref is not None and not isinstance(t_ref, (int, float)):
+        messages.append(f"t_ref must be numeric, got {type(t_ref).__name__}")
+
+    # 2. Validate bands format
+    if not isinstance(bands, list):
+        messages.append(f"bands must be a list, got {type(bands).__name__}")
+    else:
+        for i, band in enumerate(bands):
+            if not isinstance(band, str):
+                messages.append(f"band {i} must be a string, got {type(band).__name__}")
+
+    # 3. Check if t_ref is provided when not needed
+    t_ref_required = False
+    for effect in higher_order_effects:
+        if effect in HIGHER_ORDER_EFFECT_DEFINITIONS:
+            if HIGHER_ORDER_EFFECT_DEFINITIONS[effect].get("requires_t_ref", False):
+                t_ref_required = True
+                break
+
+    if not t_ref_required and t_ref is not None:
+        messages.append("t_ref provided but not required by any higher-order effects")
+
+    # 4. Get all valid parameters for this model and effects
+    valid_params = set()
+
+    # Add core model parameters
+    if model_type in MODEL_DEFINITIONS:
+        valid_params.update(MODEL_DEFINITIONS[model_type]["required_params_core"])
+    elif model_type != "other":
+        messages.append(f"Unknown model type: '{model_type}'")
+
+    # Add higher-order effect parameters
+    for effect in higher_order_effects:
+        if effect in HIGHER_ORDER_EFFECT_DEFINITIONS:
+            effect_def = HIGHER_ORDER_EFFECT_DEFINITIONS[effect]
+            valid_params.update(effect_def.get("required_higher_order_params", []))
+            valid_params.update(effect_def.get("optional_higher_order_params", []))
+        elif effect != "other":
+            messages.append(f"Unknown higher-order effect: '{effect}'")
+
+    # Add band-specific parameters
+    if bands:
+        valid_params.update(get_required_flux_params(model_type, bands))
+
+    # 5. Check for invalid parameters (unless model_type or effects are "other")
+    if model_type != "other" and "other" not in higher_order_effects:
+        invalid_params = set(parameters.keys()) - valid_params
+        for param in invalid_params:
+            messages.append(f"Invalid parameter '{param}' for model type '{model_type}'")
+
+    # 6. Validate parameter types for all parameters
+    for param, value in parameters.items():
+        if param in PARAMETER_PROPERTIES:
+            prop = PARAMETER_PROPERTIES[param]
+            expected_type = prop.get("type")
+
+            if expected_type == "float" and not isinstance(value, (int, float)):
+                messages.append(f"Parameter '{param}' must be numeric, got {type(value).__name__}")
+            elif expected_type == "int" and not isinstance(value, int):
+                messages.append(f"Parameter '{param}' must be integer, got {type(value).__name__}")
+            elif expected_type == "str" and not isinstance(value, str):
+                messages.append(f"Parameter '{param}' must be string, got {type(value).__name__}")
+
+    # 7. Check for missing required parameters
+    missing_core = []
+    if model_type in MODEL_DEFINITIONS:
+        for param in MODEL_DEFINITIONS[model_type]["required_params_core"]:
+            if param not in parameters:
+                missing_core.append(param)
+
+    if missing_core:
+        messages.append(f"Missing required parameters for {model_type}: {missing_core}")
+
+    # 8. Check for missing higher-order effect parameters
+    for effect in higher_order_effects:
+        if effect in HIGHER_ORDER_EFFECT_DEFINITIONS:
+            effect_def = HIGHER_ORDER_EFFECT_DEFINITIONS[effect]
+            required_params = effect_def.get("required_higher_order_params", [])
+            missing_params = [param for param in required_params if param not in parameters]
+            if missing_params:
+                messages.append(f"Missing required parameters for effect '{effect}': {missing_params}")
+
+    # 9. Check for missing flux parameters
+    if bands:
+        required_flux = get_required_flux_params(model_type, bands)
+        missing_flux = [param for param in required_flux if param not in parameters]
+        if missing_flux:
+            messages.append(f"Missing required flux parameters for bands {bands}: {missing_flux}")
 
     return messages

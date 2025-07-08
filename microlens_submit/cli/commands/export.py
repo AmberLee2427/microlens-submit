@@ -14,20 +14,27 @@ console = Console()
 
 def export(
     output_path: Path,
-    force: bool = typer.Option(False, "--force", help="Skip validation prompts"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Generate a zip archive containing all active solutions."""
+    """Generate a zip archive containing all active solutions.
+
+    This command creates a submission-ready archive. Unlike save operations,
+    export requires all validation checks to pass (complete team info,
+    hardware info, valid parameters, etc.) since this is for actual submission.
+
+    Args:
+        output_path: Path for the output zip file
+        project_path: Directory containing the submission project
+
+    Example:
+        # Export for submission (requires complete submission)
+        microlens-submit export submission.zip ./my_project
+
+    Note:
+        Export is strict and requires complete submissions. Use save operations
+        for saving incomplete work during development.
+    """
     sub = load(str(project_path))
-    warnings = sub.run_validation()
-    if warnings:
-        console.print(Panel("Validation Warnings", style="yellow"))
-        for w in warnings:
-            console.print(f"- {w}")
-        if not force:
-            if not typer.confirm("Continue with export?"):
-                console.print("Export cancelled", style="bold red")
-                raise typer.Exit()
     sub.export(str(output_path))
     console.print(Panel(f"Exported submission to {output_path}", style="bold green"))
 

@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Solution(BaseModel):
@@ -140,6 +140,49 @@ class Solution(BaseModel):
     n_data_points: Optional[int] = None
     creation_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     saved: bool = Field(default=False, exclude=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_solution_at_creation(cls, values):
+        """Perform only basic type/structure checks at creation. Warn if issues, but allow creation."""
+        try:
+            import warnings
+
+            from ..validate_parameters import validate_solution_rigorously
+
+            model_type = values.get("model_type")
+            parameters = values.get("parameters", {})
+            higher_order_effects = values.get("higher_order_effects", [])
+            bands = values.get("bands", [])
+            t_ref = values.get("t_ref")
+
+            # Only check for totally broken objects (e.g., wrong types)
+            basic_errors = []
+            if not isinstance(parameters, dict):
+                basic_errors.append("parameters must be a dict")
+            if bands is not None and not isinstance(bands, list):
+                basic_errors.append("bands must be a list")
+            if higher_order_effects is not None and not isinstance(higher_order_effects, list):
+                basic_errors.append("higher_order_effects must be a list")
+            if t_ref is not None and not isinstance(t_ref, (int, float)):
+                basic_errors.append("t_ref must be numeric if provided")
+            if basic_errors:
+                raise ValueError("; ".join(basic_errors))
+
+            # Run full validation, but only warn if there are issues
+            validation_warnings = validate_solution_rigorously(
+                model_type=model_type,
+                parameters=parameters,
+                higher_order_effects=higher_order_effects,
+                bands=bands,
+                t_ref=t_ref,
+            )
+            if validation_warnings:
+                warnings.warn(f"Solution created with potential issues: {'; '.join(validation_warnings)}", UserWarning)
+        except ImportError:
+            # If validate_parameters module is not available, skip validation
+            pass
+        return values
 
     def set_compute_info(
         self,

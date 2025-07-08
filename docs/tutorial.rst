@@ -36,6 +36,9 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit init --team-name "Your Team" --tier "standard" /path/to/project
 
+   .. note::
+      If you need to update your team name, tier, or other top-level submission info later, you can simply re-run ``microlens-submit init`` in the same project directory. This will overwrite the ``submission.json`` metadata with your new values, but will not affect your events or solutions. It's a quick way to fix mistakes without editing the JSON file directly.
+
    This creates the project directory structure and initializes the submission metadata.
 
    **Options:**

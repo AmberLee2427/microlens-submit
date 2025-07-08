@@ -255,22 +255,9 @@ class Event(BaseModel):
             # Use the centralized validation
             solution_messages = sol.run_validation()
             for msg in solution_messages:
-                warnings.append(f"Solution {sol.solution_id}: {msg}")
-
-            # Additional checks for missing metadata
-            if sol.log_likelihood is None:
-                warnings.append(f"Solution {sol.solution_id} is missing log_likelihood")
-            if sol.lightcurve_plot_path is None:
-                warnings.append(f"Solution {sol.solution_id} is missing lightcurve_plot_path")
-            if sol.lens_plane_plot_path is None:
-                warnings.append(f"Solution {sol.solution_id} is missing lens_plane_plot_path")
-
-            # Check for missing compute info
-            compute_info = sol.compute_info or {}
-            if "cpu_hours" not in compute_info:
-                warnings.append(f"Solution {sol.solution_id} is missing cpu_hours")
-            if "wall_time_hours" not in compute_info:
-                warnings.append(f"Solution {sol.solution_id} is missing wall_time_hours")
+                # Only include critical errors (not warnings) that should prevent saving
+                if not msg.startswith("Warning:"):
+                    warnings.append(f"Solution {sol.solution_id}: {msg}")
 
         return warnings
 
@@ -303,7 +290,6 @@ class Event(BaseModel):
             >>>
             >>> # Remove a saved solution (requires force=True)
             >>> saved_solution = event.get_solution("existing_uuid")
-            >>> if saved_solution.saved:
             ...     removed = event.remove_solution(saved_solution.solution_id, force=True)
             ...     print(f"Force removed saved solution: {removed}")
 

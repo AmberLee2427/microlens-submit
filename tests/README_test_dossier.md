@@ -1,6 +1,11 @@
-# Testing the Dossier Generation Feature
+This document describes how to test the dossier generation functionality in `microlens-submit` v0.16.0.
 
-This directory contains a test script to demonstrate the new dossier generation feature and batch CSV import functionality in `microlens-submit` v0.14.0.
+# Testing Dossier Generation
+
+## Prerequisites
+
+# Make sure you have microlens-submit installed (version>=0.16.0)
+pip install microlens-submit
 
 ## Quick Test
 

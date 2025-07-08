@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ..models import Submission
+from ..models.solution import Solution
 from .dashboard import _generate_dashboard_content
 from .event_page import _generate_event_page_content
 from .solution_page import _generate_solution_page_content
@@ -75,6 +76,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
                 section_type="solution",
                 section_id=sol.solution_id,
                 project_root=Path(submission.project_path),
+                solution=sol,
             )
             all_html_sections.append(sol_body)
             all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after solution
@@ -211,6 +213,7 @@ def extract_main_content_body(
     section_type: str = None,
     section_id: str = None,
     project_root: Path = None,
+    solution: Solution = None,
 ) -> str:
     """Extract main content for the full dossier using explicit markers.
 
@@ -226,6 +229,8 @@ def extract_main_content_body(
             to create section headings in the full dossier.
         project_root: Path to the project root directory. Used to access aliases.json
             for solution alias lookups.
+        solution: Solution object (required when section_type is 'solution'). Used
+            to get model_type and other solution metadata for the heading.
 
     Returns:
         str: Extracted and formatted HTML content ready for inclusion in
@@ -245,7 +250,7 @@ def extract_main_content_body(
         >>>
         >>> # Extract solution content
         >>> solution_html = _generate_solution_page_content(solution, event, submission)
-        >>> solution_body = extract_main_content_body(solution_html, 'solution', 'sol_uuid', project_root)
+        >>> solution_body = extract_main_content_body(solution_html, 'solution', 'sol_uuid', project_root, solution)
 
     Note:
         This function relies on HTML comments <!-- Regex Start --> and
@@ -310,11 +315,15 @@ def extract_main_content_body(
                     except (json.JSONDecodeError, KeyError):
                         pass
 
+            # Get model type from solution object
+            model_type = solution.model_type if solution else "Unknown"
+
             if alias_key:
                 heading = f"""<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {alias_key}</h2>
-                <h3 class="text-lg text-gray-600 mb-4">UUID: {section_id}</h3>"""
+                <h3 class="text-lg text-gray-600 mb-4">Model Type: {model_type} | UUID: {section_id}</h3>"""
             else:
-                heading = f'<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {section_id}</h2>'
+                heading = f"""<h2 class="text-3xl font-bold text-rtd-accent my-6">Solution: {section_id}</h2>
+                <h3 class="text-lg text-gray-600 mb-4">Model Type: {model_type}</h3>"""
             section_class = "dossier-solution-section"
 
         # Wrap in a section for clarity

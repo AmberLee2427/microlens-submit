@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2024-12-19
+
+### Added
+- **Tier Validation System**: Comprehensive tier-based validation for challenge submissions
+  - New `tier_validation.py` module with support for "standard", "advanced", "test", "2018-test", and "None" tiers
+  - Event ID validation against tier-specific event lists
+  - CLI tier validation with fallback to "None" for invalid tiers
+  - Comprehensive tier validation tests in `tests/test_tier_validation.py`
+- **Enhanced Validation Logic**: Improved parameter validation and solution completeness checking
+  - Enhanced `validate_parameters.py` with better error messages and validation rules
+  - Improved validation for higher-order effects and parameter consistency
+  - Better handling of parameter uncertainties and type validation
+  - Enhanced solution completeness checking with more detailed feedback
+- **Dossier Generation Enhancements**: Improved HTML dossier generation and browser integration
+  - Added model_type display at the top of each solution section in full dossier reports
+  - Added `--open` flag to `microlens-submit generate-dossier` CLI command for automatic browser opening
+  - Added `open: bool = False` parameter to `generate_dashboard_html()` API function
+  - Enhanced dossier navigation and metadata display
+- **Submission Manual Integration**: Converted SUBMISSION_MANUAL.md to reStructuredText format and integrated into Sphinx documentation
+  - Moved submission manual to `docs/submission_manual.rst` for better documentation integration
+  - Updated all internal links and references to point to the new documentation location
+  - Added GitHub link to validate_submission.py script in the submission manual
+  - Removed old markdown file and logo references for cleaner documentation structure
+
+### Changed
+- **Validation System Architecture**: Improved validation workflow and error handling
+  - Enhanced CLI validation commands with better error reporting
+  - Improved validation integration across all CLI commands
+  - Better handling of validation warnings vs errors
+  - Enhanced parameter validation with more detailed feedback
+- **Code Quality & Pre-commit Integration**: Comprehensive code cleanup and formatting improvements
+  - Fixed all pre-commit hook violations including line length, unused imports, and style issues
+  - Resolved f-string formatting issues in CLI commands
+  - Fixed line length violations in dossier generation code
+  - Removed unused imports across the codebase
+  - Ensured all tests pass in both Python 3.8 and 3.11 environments
+- **Documentation Structure**: Improved documentation organization and accessibility
+  - Integrated submission manual into main documentation site
+  - Updated internal documentation links and references
+  - Enhanced documentation consistency and maintainability
+  - Updated API documentation and tutorial examples
+
+### Fixed
+- **Code Quality**: Resolved all pre-commit hook violations
+  - Fixed f-string formatting issues in CLI commands
+  - Resolved line length violations in dossier generation code
+  - Removed unused imports across the codebase
+  - Improved code consistency and maintainability
+- **Validation Logic**: Enhanced parameter validation and error handling
+  - Improved validation for higher-order effects
+  - Better handling of parameter uncertainties
+  - Enhanced solution completeness checking
+  - More detailed validation feedback and error messages
+
+## [0.15.0] - 2024-12-19
+
+### Added
+- New tier validation system with support for "standard", "advanced", "test", "2018-test", and "None" tiers
+- Event ID validation against tier-specific event lists
+- CLI tier validation with fallback to "None" for invalid tiers
+- Comprehensive tier validation tests
+
+### Changed
+- Renamed "basic" tier to "standard" for better naming
+- Updated tier hierarchy: standard < advanced (removed "expert" tier)
+- Simplified to two challenge tiers: "standard" and "advanced"
+
 ## [0.14.0] - 2024-12-19
 
 ### Added
