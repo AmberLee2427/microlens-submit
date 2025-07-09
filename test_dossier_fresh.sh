@@ -109,7 +109,7 @@ pip install --upgrade pip
 # Install the package in editable mode
 print_status "Installing microlens-submit in editable mode..."
 pip install markdown
-pip install -e .
+pip install -e ".[dev]"
 
 # Verify installation
 print_status "Verifying installation..."
