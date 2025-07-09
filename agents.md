@@ -157,6 +157,17 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ### v0.17.0 - Physical Parameter Support (Next Release)
 
+- **Task 6: Fix BIC Calculation Bug** 🔴 **CRITICAL BUG**
+  - *Goal:* Fix incorrect parameter counting in BIC calculation for relative probability computation.
+  - *Action:* Update BIC calculation in both `submission.py` and `validation.py` to count only model parameters:
+    - Current bug: `k = len(s.parameters)` counts ALL parameters including metadata like `t_ref`, `limb_darkening_coeffs`
+    - Fix: Use existing parameter definitions from `validate_parameters.py` to count only actual model parameters
+    - Update BIC calculation to use: core model parameters + higher-order effect parameters + flux parameters
+    - Exclude metadata parameters like `t_ref`, `limb_darkening_coeffs` from parameter count
+    - Update both `Submission.export()` and `compare_solutions()` CLI command
+  - *Why:* Current BIC calculation over-penalizes complex models by counting metadata as "free parameters", leading to incorrect relative probability calculations.
+  - *Impact:* This affects automatic relative probability calculation during export and solution comparison.
+
 - **Task 7: Enhanced Physical Parameter Validation**
   - *Goal:* Validate physical parameters for reasonableness and consistency.
   - *Action:* Extend validation logic to check:

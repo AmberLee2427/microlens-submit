@@ -97,6 +97,151 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
    - The notes file is included in the exported zip and rendered in the HTML dossier.
 
+   **Quick Notes Editing:**
+
+   The ``microlens-submit notes <solution_id>`` command is a convenient way to quickly edit solution notes:
+
+   .. code-block:: bash
+
+     # Open notes in your default editor
+     microlens-submit notes <solution_id>
+
+     # This will:
+     # - Open the notes file in your $EDITOR environment variable
+     # - If $EDITOR is not set, it will try nano, then vi
+     # - Save changes automatically when you exit the editor
+     # - Validate the markdown formatting
+
+   **Editor Configuration:**
+
+   You can set your preferred editor by setting the $EDITOR environment variable:
+
+   .. code-block:: bash
+
+     # Set VS Code as your default editor
+     export EDITOR="code --wait"
+
+     # Set Vim as your default editor
+     export EDITOR="vim"
+
+     # Set Emacs as your default editor
+     export EDITOR="emacs"
+
+     # Then use the notes command
+     microlens-submit notes <solution_id>
+
+   **Alternative Editing Methods:**
+
+   You can also edit notes directly or use the append method:
+
+   .. code-block:: bash
+
+     # Method 1: Direct file editing (if you know the path)
+     nano events/EVENT123/solutions/<solution_id>.md
+
+     # Method 2: Append to existing notes
+     microlens-submit edit-solution <solution_id> \
+          --append-notes "Additional analysis results..."
+
+     # Method 3: Replace notes entirely
+     microlens-submit edit-solution <solution_id> \
+          --notes "Complete replacement of notes content"
+
+   **Rich Documentation with Markdown Notes:**
+
+   The notes field supports **full Markdown formatting**, allowing you to create rich, structured documentation for your solutions. This is particularly valuable for creating detailed submission dossiers for evaluators.
+
+   **Example: Comprehensive Solution Documentation**
+
+   Create detailed notes with markdown formatting:
+
+   .. code-block:: bash
+
+     microlens-submit add-solution EVENT123 1S2L \
+          --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
+          --param q=0.001 --param s=1.15 --param alpha=45.2 \
+          --alias "binary_planetary" \
+          --notes "# Binary Lens Solution for EVENT123
+
+   ## Model Overview
+   This solution represents a **binary lens** with a planetary companion (q = 0.001).
+
+   ## Fitting Strategy
+   - **Sampling Method:** MCMC with 1000 walkers
+   - **Chain Length:** 50,000 steps per walker
+   - **Burn-in:** First 10,000 steps discarded
+   - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
+
+   ## Key Findings
+   1. **Planetary Signal:** Clear detection of a planetary companion
+   2. **Caustic Crossing:** Source crosses the planetary caustic
+   3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
+
+   ## Physical Parameters
+   | Parameter | Value | Units |
+   |-----------|-------|-------|
+   | M_L | 0.45 ± 0.05 | M☉ |
+   | D_L | 6.2 ± 0.3 | kpc |
+   | M_planet | 1.5 ± 0.2 | M⊕ |
+   | a | 2.8 ± 0.4 | AU |
+
+   ## Model Comparison
+   - **Single Lens:** Δχ² = 156.7 (rejected)
+   - **Binary Lens:** Best fit with ΔBIC = 23.4
+
+   ## Code Reference
+   ```python
+   # Fitting code snippet
+   import emcee
+   sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
+   sampler.run_mcmc(initial_state, 50000)
+   ```
+
+   ## References
+   - [Gould & Loeb 1992](https://ui.adsabs.harvard.edu/abs/1992ApJ...396..104G)
+   - [Mao & Paczynski 1991](https://ui.adsabs.harvard.edu/abs/1991ApJ...374L..37M)
+
+   ---
+   *Last updated: 2025-01-15*"
+
+   **Markdown Features Supported:**
+   - **Headers** (##, ###, etc.) for section organization
+   - **Bold** and *italic* text for emphasis
+   - **Lists** (numbered and bulleted) for structured information
+   - **Tables** for parameter comparisons and data presentation
+   - **Code blocks** for algorithm snippets and examples
+   - **Links** to external references and documentation
+   - **Images** (if referenced files exist in your project)
+   - **Mathematical expressions** using LaTeX syntax
+
+   **Appending to Existing Notes:**
+
+   You can build up detailed documentation over time:
+
+   .. code-block:: bash
+
+     # Add initial notes
+     microlens-submit add-solution EVENT123 1S1L \
+          --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
+          --notes "# Initial Single Lens Fit
+
+   Basic point-source point-lens model as starting point."
+
+     # Later, append additional analysis
+     microlens-submit edit-solution <solution_id> \
+          --append-notes "
+
+   ## Follow-up Analysis
+
+   After reviewing the residuals, we identified systematic deviations
+   that suggest a more complex model is needed. The binary lens model
+   provides a significantly better fit (Δχ² = 156.7).
+
+   ### Residual Analysis
+   - Peak deviation: 0.15 magnitudes
+   - Systematic pattern suggests caustic crossing
+   - Finite source effects may be important"
+
    **Solution Aliases:**
 
    You can assign human-readable aliases to your solutions for easier identification:
@@ -425,6 +570,124 @@ Compare solutions using BIC-based relative probabilities:
 
    microlens-submit compare-solutions EVENT123
 
+**Advanced Solution Comparison Workflow:**
+
+When you have multiple solutions for the same event, it's crucial to manage them effectively and specify how they should be weighted. Here's a comprehensive workflow:
+
+**1. Add Multiple Solutions for Comparison:**
+
+.. code-block:: bash
+
+   # Add a simple single-lens solution
+   microlens-submit add-solution EVENT123 1S1L \
+        --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
+        --alias "simple_1S1L" \
+        --log-likelihood -1234.56 --n-data-points 1250 \
+        --notes "Initial single-lens fit using MCMC sampling"
+
+   # Add a more complex binary-lens solution
+   microlens-submit add-solution EVENT123 1S2L \
+        --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
+        --param q=0.001 --param s=1.15 --param alpha=45.2 \
+        --alias "binary_1S2L" \
+        --log-likelihood -1189.34 --n-data-points 1250 \
+        --notes "Binary-lens fit with planetary companion. MCMC with 1000 walkers."
+
+   # Add a third alternative solution
+   microlens-submit add-solution EVENT123 1S2L \
+        --param t0=2459123.8 --param u0=0.18 --param tE=19.8 \
+        --param q=0.002 --param s=0.95 --param alpha=32.1 \
+        --alias "alternative_1S2L" \
+        --log-likelihood -1201.45 --n-data-points 1250 \
+        --notes "Alternative binary solution with different parameter space."
+
+**2. Compare Solutions with Detailed Analysis:**
+
+.. code-block:: bash
+
+   # View comparison table
+   microlens-submit compare-solutions EVENT123
+
+   # This will show:
+   # - Model types and parameter counts
+   # - Log-likelihood values
+   # - BIC scores (calculated automatically)
+   # - Relative probabilities (calculated automatically)
+   # - Higher-order effects used
+
+**3. Set Explicit Relative Probabilities:**
+
+If you want to override the automatic BIC-based calculation:
+
+.. code-block:: bash
+
+   # Set explicit probabilities based on your analysis
+   microlens-submit edit-solution <solution_id_1> --relative-probability 0.1
+   microlens-submit edit-solution <solution_id_2> --relative-probability 0.7
+   microlens-submit edit-solution <solution_id_3> --relative-probability 0.2
+
+   # Verify probabilities sum to 1.0
+   microlens-submit compare-solutions EVENT123
+
+**4. Manage Solution States:**
+
+.. code-block:: bash
+
+   # Deactivate the worst solution (keeps it for reference)
+   microlens-submit deactivate <solution_id_3>
+
+   # Re-activate if needed later
+   microlens-submit activate <solution_id_3>
+
+   # Remove completely if it was a mistake
+   microlens-submit remove-solution <solution_id_3> --force
+
+**5. Update Solutions Based on Comparison:**
+
+.. code-block:: bash
+
+   # Refine the best solution with additional analysis
+   microlens-submit edit-solution <solution_id_2> \
+        --append-notes "
+
+   ## Model Comparison Results
+
+   After comparing all three solutions:
+   - **Simple 1S1L:** Δχ² = 156.7 vs binary models (rejected)
+   - **Binary 1S2L (primary):** Best fit with ΔBIC = 23.4
+   - **Binary 1S2L (alternative):** ΔBIC = 11.2 vs primary
+
+   The primary binary solution is clearly preferred, with the
+   alternative binary solution having some merit but lower probability."
+
+**6. Validate Your Final Solution Set:**
+
+.. code-block:: bash
+
+   # Check that everything is valid
+   microlens-submit validate-event EVENT123
+
+   # Ensure relative probabilities sum to 1.0 for active solutions
+   microlens-submit validate-submission
+
+**Solution Comparison Best Practices:**
+
+1. **Start Simple:** Always begin with a single-lens model as baseline
+2. **Document Decisions:** Use notes to explain why you prefer certain solutions
+3. **Use Aliases:** Give meaningful names to solutions for easier management
+4. **Keep History:** Use deactivate() rather than remove() to preserve analysis history
+5. **Validate Regularly:** Check that relative probabilities sum to 1.0
+6. **Consider Uncertainties:** Include parameter uncertainties when available
+7. **Record Compute Time:** Track computational resources for each solution
+
+**Relative Probability Guidelines:**
+
+- **Sum to 1.0:** All active solutions in an event must have probabilities summing to 1.0
+- **Automatic Calculation:** If you provide log-likelihood and n_data_points, BIC-based probabilities are calculated automatically
+- **Manual Override:** You can set explicit probabilities based on your analysis
+- **Single Solution:** If only one active solution exists, its probability should be 1.0 or None
+- **Validation:** The system will warn you if probabilities don't sum correctly
+
 **Parameter File Management:**
 
 Use structured parameter files for complex models:
@@ -509,3 +772,125 @@ Manage multiple events and solutions efficiently:
 4. **Version control**: Use git to track changes to your project
 5. **Backup regularly**: Keep copies of your project directory
 6. **Test export**: Verify your submission package before final submission
+
+**Comprehensive Best Practices Guide**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Reproducibility:**
+
+- **Always use `--cpu-hours` and `--wall-time-hours`** to record computational details
+- **Include version information** for key dependencies in your notes
+- **Use descriptive notes** for each solution explaining your methodology
+- **Record your analysis pipeline** with code snippets and parameter choices
+- **Document data preprocessing** steps and quality cuts applied
+
+.. code-block:: bash
+
+   # Example of comprehensive compute info
+   microlens-submit add-solution EVENT123 1S1L \
+        --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
+        --cpu-hours 15.2 --wall-time-hours 3.8 \
+        --notes "# Single Lens Analysis
+
+   ## Analysis Pipeline
+   - **Data Source:** Roman DC2 2018-test tier
+   - **Preprocessing:** 3σ outlier removal, band-specific calibration
+   - **Fitting Method:** MCMC with 500 walkers, 20,000 steps
+   - **Software Versions:** MulensModel 2.8.1, emcee 3.1.4
+   - **Hardware:** 16-core Intel Xeon, 64GB RAM
+
+   ## Quality Cuts
+   - Removed data points with mag_err > 0.1
+   - Applied systematic error floor of 0.02 mag
+   - Used only I-band data for final fit
+
+   ## Convergence Criteria
+   - Gelman-Rubin statistic < 1.01 for all parameters
+   - Effective sample size > 1000 for all parameters
+   - Visual inspection of chain traces"
+
+**Workflow Management:**
+
+- **Save frequently** with regular validation checks
+- **Use `deactivate()` instead of deleting solutions** to preserve analysis history
+- **Keep multiple solutions** for comparison and model selection
+- **Use meaningful aliases** for easier solution identification
+- **Organize your project structure** with clear file naming conventions
+
+.. code-block:: bash
+
+   # Example workflow with multiple solutions
+   microlens-submit add-solution EVENT123 1S1L \
+        --alias "baseline_1S1L" --notes "Baseline single-lens model"
+
+   microlens-submit add-solution EVENT123 1S2L \
+        --alias "planetary_1S2L" --notes "Planetary companion model"
+
+   # Compare and document your decision
+   microlens-submit compare-solutions EVENT123
+
+   # Deactivate the worse solution but keep for reference
+   microlens-submit deactivate <baseline_solution_id>
+
+   # Update the preferred solution with comparison results
+   microlens-submit edit-solution <planetary_solution_id> \
+        --append-notes "Selected over single-lens model: Δχ² = 156.7"
+
+**Data Quality:**
+
+- **Validate your parameters** before adding solutions
+- **Include uncertainties** when available for better statistical analysis
+- **Record the number of data points** used in each fit
+- **Document data quality cuts** and preprocessing steps
+- **Check for systematic errors** and include them in your analysis
+
+.. code-block:: bash
+
+   # Example with comprehensive data quality info
+   microlens-submit add-solution EVENT123 1S2L \
+        --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
+        --param q=0.001 --param s=1.15 --param alpha=45.2 \
+        --param-uncertainty t0=[0.1,0.1] --param-uncertainty u0=0.02 \
+        --param-uncertainty tE=[0.3,0.4] --param-uncertainty q=0.0001 \
+        --n-data-points 1250 \
+        --notes "# High-Quality Binary Lens Fit
+
+   ## Data Quality Assessment
+   - **Total data points:** 1,450 (raw)
+   - **Points used in fit:** 1,250 (after quality cuts)
+   - **Systematic error floor:** 0.02 mag applied
+   - **Band coverage:** I-band primary, V-band secondary
+   - **Temporal coverage:** 2459120-2459130 (10 days)
+
+   ## Uncertainty Analysis
+   - Parameter uncertainties from MCMC posterior distributions
+   - Asymmetric uncertainties for t0 and tE due to light curve asymmetry
+   - Systematic uncertainties included in error budget"
+
+**Performance Optimization:**
+
+- **The tool is designed for long-term projects** with efficient handling of large numbers of solutions
+- **Export only when ready** for final submission to avoid unnecessary processing
+- **Use bulk import** for large datasets to save time
+- **Organize your file structure** efficiently with clear naming conventions
+- **Monitor disk space** for large posterior files and plots
+
+.. code-block:: bash
+
+   # Example of efficient bulk processing
+   # Create a CSV file with all your solutions
+   cat > solutions.csv << EOF
+   event_id,solution_alias,model_tags,t0,u0,tE,log_likelihood,n_data_points,notes
+   EVENT123,baseline,["1S1L"],2459123.5,0.15,20.5,-1234.56,1250,"Baseline model"
+   EVENT123,planetary,["1S2L"],2459123.5,0.12,22.1,-1189.34,1250,"Planetary model"
+   EVENT124,simple,["1S1L"],2459156.2,0.08,35.7,-2156.78,2100,"Simple fit"
+   EOF
+
+   # Bulk import all solutions at once
+   microlens-submit import-solutions solutions.csv --validate
+
+   # Generate dossier for review
+   microlens-submit generate-dossier
+
+   # Export only when ready for submission
+   microlens-submit export final_submission.zip
