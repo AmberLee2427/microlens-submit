@@ -159,12 +159,12 @@ Higher-Order Effect Parameters
      - ``finite-source``
    * - ``piEN``
      - float
-     - Einstein radius
+     - θE
      - Parallax vector component (North)
      - ``parallax``
    * - ``piEE``
      - float
-     - Einstein radius
+     - θE
      - Parallax vector component (East)
      - ``parallax``
    * - ``dsdt``
