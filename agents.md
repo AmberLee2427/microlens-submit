@@ -182,6 +182,17 @@ The library is built around a stateful, object-oriented model that mirrors the s
   - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
   - *Why:* Physical parameters often have significant uncertainties that should be captured.
 
+- **Task 9: Event Notes Section** 📝 **NEW FEATURE**
+  - *Goal:* Add support for event-level notes to complement solution-level notes.
+  - *Action:* Implement event notes functionality:
+    - Add `notes_path` field to `Event` model (similar to solution notes)
+    - Create `add_event_notes()` method to `Event` class
+    - Add CLI command `microlens-submit add-event-notes <event_id> <notes_file>`
+    - Include event notes in dossier generation
+    - Update validation to check event notes file exists if specified
+  - *Why:* Users need to document event-level observations, data quality issues, or general context that applies to all solutions for an event.
+  - *Implementation:* Mirror the existing solution notes system but at the event level. Don't take the examples function names as law, they should be as similar as possible to, if not the same as, the solution-specific versions.
+
 ### v1.0.0 — Official Release
 
 Release after comprehensive testing and PyPI publication.
