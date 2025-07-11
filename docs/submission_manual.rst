@@ -311,6 +311,10 @@ Describes a single event.
      - string
      - Yes
      - Unique identifier for the event.
+   * - ``notes_path``
+     - string
+     - Yes
+     - Path to the markdown notes file for this event.
 
 **Example:**
 
