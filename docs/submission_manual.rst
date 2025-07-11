@@ -38,7 +38,7 @@ For users who want minimal interaction with the submission tool, here's the simp
 
       microlens-submit export-submission
 
-That's it! Your submission is ready for upload.
+That's it! Your submission has been sent.
 
 CSV Import Format
 -----------------
@@ -48,17 +48,26 @@ The tool can import solutions from a CSV file with the following columns:
 Required Columns
 ~~~~~~~~~~~~~~~
 
-+------------------+----------+------------------------------------------------+-------------------------+
-| Column           | Type     | Description                                    | Example                 |
-+==================+==========+================================================+=========================+
-| ``event_id``     | string   | Unique identifier for the microlensing event  | ``"OGLE-2023-BLG-0001"`` |
-+------------------+----------+------------------------------------------------+-------------------------+
-| ``solution_alias``| string  | Human-readable name for the solution          | ``"best_fit"`` or       |
-|                  |          | (must be unique within event)                  | ``"parallax_model"``     |
-+------------------+----------+------------------------------------------------+-------------------------+
-| ``model_tags``   | JSON     | Model type and higher-order effects           | ``["1S1L"]`` or         |
-|                  | array    |                                                | ``["1S2L", "parallax"]`` |
-+------------------+----------+------------------------------------------------+-------------------------+
+.. list-table:: Required CSV Columns
+   :widths: 25 15 40 20
+   :header-rows: 1
+
+   * - Column
+     - Type
+     - Description
+     - Example
+   * - ``event_id``
+     - string
+     - Unique identifier for the microlensing event
+     - ``"OGLE-2023-BLG-0001"``
+   * - ``solution_alias``
+     - string
+     - Human-readable name for the solution (must be unique within event)
+     - ``"best_fit"`` or ``"parallax_model"``
+   * - ``model_tags``
+     - JSON array
+     - Model type and higher-order effects
+     - ``["1S1L"]`` or ``["1S2L", "parallax"]``
 
 Model Types (Required in model_tags)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,6 +90,7 @@ Higher-Order Effects (Optional in model_tags)
 - ``gaussian-process``: Gaussian process noise modeling
 - ``stellar-rotation``: Stellar rotation effects
 - ``fitted-limb-darkening``: Fitted limb darkening coefficients
+- ``other``: Custom higher-order effect
 
 Parameter Columns
 ~~~~~~~~~~~~~~~~
@@ -90,46 +100,83 @@ You can include model parameters as individual columns. The tool will automatica
 Core Parameters (Required based on model type)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+----------+--------+--------+--------------------------------+------------------+
-| Parameter| Type   | Units  | Description                    | Required for     |
-+==========+========+========+================================+==================+
-| ``t0``   | float  | HJD    | Time of closest approach       | All models       |
-+----------+--------+--------+--------------------------------+------------------+
-| ``u0``   | float  | θE     | Minimum impact parameter       | All models       |
-+----------+--------+--------+--------------------------------+------------------+
-| ``tE``   | float  | days   | Einstein radius crossing time  | All models       |
-+----------+--------+--------+--------------------------------+------------------+
-| ``s``    | float  | θE     | Binary separation scaled by    | 1S2L, 2S2L models|
-|          |        |        | Einstein radius                |                  |
-+----------+--------+--------+--------------------------------+------------------+
-| ``q``    | float  | mass   | Mass ratio M2/M1               | 1S2L, 2S2L models|
-|          |        | ratio  |                                |                  |
-+----------+--------+--------+--------------------------------+------------------+
-| ``alpha``| float  | rad    | Angle of source trajectory     | 1S2L, 2S2L models|
-|          |        |        | relative to binary axis        |                  |
-+----------+--------+--------+--------------------------------+------------------+
+.. list-table:: Core Model Parameters
+   :widths: 20 15 15 40 10
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Units
+     - Description
+     - Required for
+   * - ``t0``
+     - float
+     - HJD
+     - Time of closest approach
+     - All models
+   * - ``u0``
+     - float
+     - θE
+     - Minimum impact parameter
+     - All models
+   * - ``tE``
+     - float
+     - days
+     - Einstein radius crossing time
+     - All models
+   * - ``s``
+     - float
+     - θE
+     - Binary separation scaled by Einstein radius
+     - 1S2L, 2S2L
+   * - ``q``
+     - float
+     - mass ratio
+     - Mass ratio M2/M1
+     - 1S2L, 2S2L
+   * - ``alpha``
+     - float
+     - rad
+     - Angle of source trajectory relative to binary axis
+     - 1S2L, 2S2L
 
 Higher-Order Effect Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+----------+--------+------------------+--------------------------------+----------------------+
-| Parameter| Type   | Units            | Description                    | Required for Effect  |
-+==========+========+==================+================================+======================+
-| ``rho``  | float  | θE               | Source radius scaled by        | ``finite-source``    |
-|          |        |                  | Einstein radius                |                    |
-+----------+--------+------------------+--------------------------------+----------------------+
-| ``piEN`` | float  | Einstein radius  | Parallax vector component      | ``parallax``         |
-|          |        |                  | (North)                        |                    |
-+----------+--------+------------------+--------------------------------+----------------------+
-| ``piEE`` | float  | Einstein radius  | Parallax vector component      | ``parallax``         |
-|          |        |                  | (East)                         |                    |
-+----------+--------+------------------+--------------------------------+----------------------+
-| ``dsdt`` | float  | θE/year          | Rate of change of binary       | ``lens-orbital-     |
-|          |        |                  | separation                     | motion``            |
-+----------+--------+------------------+--------------------------------+----------------------+
-| ``dadt`` | float  | rad/year         | Rate of change of binary       | ``lens-orbital-     |
-|          |        |                  | orientation                    | motion``            |
-+----------+--------+------------------+--------------------------------+----------------------+
+.. list-table:: Higher-Order Effect Parameters
+   :widths: 20 15 20 40 20
+   :header-rows: 1
+
+   * - Parameter
+     - Type
+     - Units
+     - Description
+     - Required for Effect
+   * - ``rho``
+     - float
+     - θE
+     - Source radius scaled by Einstein radius
+     - ``finite-source``
+   * - ``piEN``
+     - float
+     - Einstein radius
+     - Parallax vector component (North)
+     - ``parallax``
+   * - ``piEE``
+     - float
+     - Einstein radius
+     - Parallax vector component (East)
+     - ``parallax``
+   * - ``dsdt``
+     - float
+     - θE/year
+     - Rate of change of binary separation
+     - ``lens-orbital-motion``
+   * - ``dadt``
+     - float
+     - rad/year
+     - Rate of change of binary orientation
+     - ``lens-orbital-motion``
 
 Flux Parameters (Required if using bands)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -145,18 +192,30 @@ For binary source models, use ``F0_S1``, ``F0_S2``, ``F0_B`` etc.
 Optional Columns
 ~~~~~~~~~~~~~~~
 
-+----------------------+----------+--------------------------------+--------------------------------+
-| Column               | Type     | Description                    | Example                         |
-+======================+==========+================================+================================+
-| ``notes``            | string   | Solution notes (supports       | ``"# My Solution\n\nThis is a   |
-|                      |          | Markdown)                      | simple fit."``                  |
-+----------------------+----------+--------------------------------+--------------------------------+
-| ``log_likelihood``   | float    | Log-likelihood value           | ``-1234.56``                    |
-+----------------------+----------+--------------------------------+--------------------------------+
-| ``n_data_points``    | integer  | Number of data points used    | ``1250``                        |
-+----------------------+----------+--------------------------------+--------------------------------+
-| ``relative_probability``| float | Relative probability (0-1)    | ``0.8``                         |
-+----------------------+----------+--------------------------------+--------------------------------+
+.. list-table:: Optional CSV Columns
+   :widths: 25 15 40 20
+   :header-rows: 1
+
+   * - Column
+     - Type
+     - Description
+     - Example
+   * - ``notes``
+     - string
+     - Solution notes (supports Markdown)
+     - ``"# My Solution\n\nThis is a simple fit."``
+   * - ``log_likelihood``
+     - float
+     - Log-likelihood value
+     - ``-1234.56``
+   * - ``n_data_points``
+     - integer
+     - Number of data points used
+     - ``1250``
+   * - ``relative_probability``
+     - float
+     - Relative probability (0-1)
+     - ``0.8``
 
 Example CSV
 ^^^^^^^^^^
@@ -196,19 +255,30 @@ submission.json
 
 Global metadata for the entire submission.
 
-+----------------+--------+----------+--------------------------------+
-| Field          | Type   | Required | Description                    |
-+================+========+==========+================================+
-| ``team_name``  | string | Yes      | Name of the participant team.  |
-+----------------+--------+----------+--------------------------------+
-| ``tier``       | string | Yes      | Challenge tier.                |
-+----------------+--------+----------+--------------------------------+
-| ``repo_url``   | string | Yes      | GitHub repository URL for the  |
-|                |        |          | team codebase.                 |
-+----------------+--------+----------+--------------------------------+
-| ``hardware_info``| dict | Yes      | Details about the compute      |
-|                |        |          | environment.                   |
-+----------------+--------+----------+--------------------------------+
+.. list-table:: submission.json Fields
+   :widths: 25 15 15 45
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Required
+     - Description
+   * - ``team_name``
+     - string
+     - Yes
+     - Name of the participant team.
+   * - ``tier``
+     - string
+     - Yes
+     - Challenge tier.
+   * - ``repo_url``
+     - string
+     - Yes
+     - GitHub repository URL for the team codebase.
+   * - ``hardware_info``
+     - dict
+     - Yes
+     - Details about the compute environment.
 
 **Example:**
 
@@ -229,18 +299,26 @@ event.json
 
 Describes a single event.
 
-+-----------+--------+----------+--------------------------------+
-| Field     | Type   | Required | Description                    |
-+===========+========+==========+================================+
-| ``event_id``| string| Yes     | Unique identifier for the event.|
-+-----------+--------+----------+--------------------------------+
+.. list-table:: event.json Fields
+   :widths: 25 15 15 45
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Required
+     - Description
+   * - ``event_id``
+     - string
+     - Yes
+     - Unique identifier for the event.
 
 **Example:**
 
 .. code-block:: json
 
    {
-     "event_id": "KMT-2025-BLG-001"
+     "event_id": "KMT-2025-BLG-001",
+     "notes_path": "events/KMT-2025-BLG-001/notes.md"
    }
 
 solution.json
@@ -248,78 +326,102 @@ solution.json
 
 Represents a single model fit.
 
-+------------------------+--------+----------+--------------------------------+
-| Field                  | Type   | Required | Description                    |
-+========================+========+==========+================================+
-| ``solution_id``        | string | Yes      | Unique identifier for the      |
-|                        |        |          | solution.                      |
-+------------------------+--------+----------+--------------------------------+
-| ``model_type``         | string | Yes      | Must be one of ``1S1L``,       |
-|                        |        |          | ``1S2L``, ``2S1L``, ``2S2L``,  |
-|                        |        |          | ``1S3L``, ``2S3L``, or         |
-|                        |        |          | ``other``.                     |
-+------------------------+--------+----------+--------------------------------+
-| ``bands``              | list   | No       | Photometric bands used, e.g.,  |
-|                        |        |          | ``["0", "1"]``.                |
-+------------------------+--------+----------+--------------------------------+
-| ``higher_order_effects``| list  | No       | Additional effects like        |
-|                        |        |          | ``parallax`` or                |
-|                        |        |          | ``finite-source``.             |
-+------------------------+--------+----------+--------------------------------+
-| ``t_ref``              | float  | No       | Reference time for the model.  |
-+------------------------+--------+----------+--------------------------------+
-| ``parameters``         | dict   | Yes      | Dictionary of model parameters.|
-+------------------------+--------+----------+--------------------------------+
-| ``is_active``          | bool   | No       | If ``true``, this solution is  |
-|                        |        |          | included in exports. Defaults  |
-|                        |        |          | to ``true``.                   |
-+------------------------+--------+----------+--------------------------------+
-| ``compute_info``       | dict   | No       | Recorded dependencies and      |
-|                        |        |          | timing information.            |
-+------------------------+--------+----------+--------------------------------+
-| ``posterior_path``     | string | No       | Path to a stored posterior     |
-|                        |        |          | sample file.                   |
-+------------------------+--------+----------+--------------------------------+
-| ``lightcurve_plot_path``| string| No       | Path to the lightcurve plot    |
-|                        |        |          | file.                          |
-+------------------------+--------+----------+--------------------------------+
-| ``lens_plane_plot_path``| string| No       | Path to the lens plane plot    |
-|                        |        |          | file.                          |
-+------------------------+--------+----------+--------------------------------+
-| ``notes_path``         | string | No       | Path to the markdown notes     |
-|                        |        |          | file for this solution.        |
-+------------------------+--------+----------+--------------------------------+
-| ``used_astrometry``    | bool   | No       | Indicates use of astrometric   |
-|                        |        |          | data. Defaults to ``false``.   |
-+------------------------+--------+----------+--------------------------------+
-| ``used_postage_stamps``| bool   | No       | Indicates use of postage-stamp |
-|                        |        |          | images. Defaults to ``false``. |
-+------------------------+--------+----------+--------------------------------+
-| ``limb_darkening_model``| string| No       | Name of the limb darkening     |
-|                        |        |          | model employed.                |
-+------------------------+--------+----------+--------------------------------+
-| ``limb_darkening_coeffs``| dict | No       | Mapping of limb darkening      |
-|                        |        |          | coefficients.                  |
-+------------------------+--------+----------+--------------------------------+
-| ``parameter_uncertainties``| dict| No      | Uncertainties for parameters   |
-|                        |        |          | in parameters.                 |
-+------------------------+--------+----------+--------------------------------+
-| ``physical_parameters``| dict   | No       | Physical parameters derived    |
-|                        |        |          | from the model.                |
-+------------------------+--------+----------+--------------------------------+
-| ``log_likelihood``     | float  | No       | Log-likelihood value of the    |
-|                        |        |          | fit.                           |
-+------------------------+--------+----------+--------------------------------+
-| ``relative_probability``| float | No       | Optional probability of this   |
-|                        |        |          | solution being the best model. |
-+------------------------+--------+----------+--------------------------------+
-| ``n_data_points``      | integer| No       | Number of data points used in  |
-|                        |        |          | the fit.                       |
-+------------------------+--------+----------+--------------------------------+
-| ``creation_timestamp`` | string | No       | ISO timestamp. If omitted, the |
-|                        |        |          | validator will add a current   |
-|                        |        |          | timestamp.                     |
-+------------------------+--------+----------+--------------------------------+
+.. list-table:: solution.json Fields (Part 1: Core Fields)
+   :widths: 25 15 15 45
+   :header-rows: 1
+
+   * - Field
+     - Type
+     - Required
+     - Description
+   * - ``solution_id``
+     - string
+     - Yes
+     - Unique identifier for the solution.
+   * - ``model_type``
+     - string
+     - Yes
+     - Must be one of ``1S1L``, ``1S2L``, ``2S1L``, ``2S2L``, ``1S3L``, ``2S3L``, or ``other``.
+   * - ``bands``
+     - list
+     - No
+     - Photometric bands used, e.g., ``["0", "1"]``.
+   * - ``higher_order_effects``
+     - list
+     - No
+     - Additional effects like ``parallax`` or ``finite-source``.
+   * - ``t_ref``
+     - float
+     - No
+     - Reference time for the model.
+   * - ``parameters``
+     - dict
+     - Yes
+     - Dictionary of model parameters.
+   * - ``is_active``
+     - bool
+     - No
+     - If ``true``, this solution is included in exports. Defaults to ``true``.
+   * - ``compute_info``
+     - dict
+     - No
+     - Recorded dependencies and timing information.
+   * - ``posterior_path``
+     - string
+     - No
+     - Path to a stored posterior sample file.
+   * - ``lightcurve_plot_path``
+     - string
+     - No
+     - Path to the lightcurve plot file.
+   * - ``lens_plane_plot_path``
+     - string
+     - No
+     - Path to the lens plane plot file.
+   * - ``notes_path``
+     - string
+     - No
+     - Path to the markdown notes file for this solution.
+   * - ``used_astrometry``
+     - bool
+     - No
+     - Indicates use of astrometric data. Defaults to ``false``.
+   * - ``used_postage_stamps``
+     - bool
+     - No
+     - Indicates use of postage-stamp images. Defaults to ``false``.
+   * - ``limb_darkening_model``
+     - string
+     - No
+     - Name of the limb darkening model employed.
+   * - ``limb_darkening_coeffs``
+     - dict
+     - No
+     - Mapping of limb darkening coefficients.
+   * - ``parameter_uncertainties``
+     - dict
+     - No
+     - Uncertainties for parameters in parameters.
+   * - ``physical_parameters``
+     - dict
+     - No
+     - Physical parameters derived from the model.
+   * - ``log_likelihood``
+     - float
+     - No
+     - Log-likelihood value of the fit.
+   * - ``relative_probability``
+     - float
+     - No
+     - Optional probability of this solution being the best model.
+   * - ``n_data_points``
+     - integer
+     - No
+     - Number of data points used in the fit.
+   * - ``creation_timestamp``
+     - string
+     - No
+     - ISO timestamp. If omitted, the validator will add a current timestamp.
 
 **Example:**
 
