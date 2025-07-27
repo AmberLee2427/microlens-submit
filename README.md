@@ -8,10 +8,7 @@
 
 *A stateful submission toolkit for the RGES-PIT Microlensing Data Challenge.*
 
-[![PyPI - v0.16.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)
+[![PyPI - v0.16.0](https://img.shields.io/pypi/v/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)[![Read the Docs](https://readthedocs.org/projects/microlens-submit/badge/?version=latest)](https://microlens-submit.readthedocs.io/en/latest/?badge=latest)[![CI](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml/badge.svg)](https://github.com/AmberLee2427/microlens-submit/actions/workflows/ci.yml)[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/microlens-submit.svg)](https://pypi.org/project/microlens-submit/)[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 <br>
 
