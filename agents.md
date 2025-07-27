@@ -168,7 +168,18 @@ The library is built around a stateful, object-oriented model that mirrors the s
   - *Why:* Current BIC calculation over-penalizes complex models by counting metadata as "free parameters", leading to incorrect relative probability calculations.
   - *Impact:* This affects automatic relative probability calculation during export and solution comparison.
 
-- **Task 7: Enhanced Physical Parameter Validation**
+- **Task 7: Automated Release workflow**
+  - *Goal:* Automate the release process as a GItHub Actions workflow.
+  - *Actions:* Add a GitHub Actions workflow to automatically update all version numbers in the codebase, build the package and upload it to TestPyPI and PyPI.
+    - Trigger by pushing a version tag.
+    - Add API keys as GitHub secrets.
+    - Update badges, where necessary.
+    - Update version numbers in the codebase, e.g. `__init__.py`.
+    - Update version numbers in the docsumentation, etc. e.g. `CITATION.cff`
+  - *Why:* Current implementation is time consuming and prone to error.
+  - *Impact:* Increased release and documentation reliability and decrease of manual intervention.
+
+- **Task 8: Enhanced Physical Parameter Validation**
   - *Goal:* Validate physical parameters for reasonableness and consistency.
   - *Action:* Extend validation logic to check:
     - Lens mass ranges (typically 0.1-1.0 M☉)
@@ -177,12 +188,12 @@ The library is built around a stateful, object-oriented model that mirrors the s
     - Consistency between derived and fitted parameters
   - *Why:* Catches physically impossible or unlikely parameter combinations.
 
-- **Task 8: Physical Parameter Uncertainties**
+- **Task 9: Physical Parameter Uncertainties**
   - *Goal:* Support uncertainties for physical parameters (not just model parameters).
   - *Action:* Add `physical_parameter_uncertainties` field to `Solution` model with validation.
   - *Why:* Physical parameters often have significant uncertainties that should be captured.
 
-- **Task 9: Event Notes Section** 📝 **NEW FEATURE**
+- **Task 10: Event Notes Section** 📝 **NEW FEATURE**
   - *Goal:* Add support for event-level notes to complement solution-level notes.
   - *Action:* Implement event notes functionality:
     - Add `notes_path` field to `Event` model (similar to solution notes)
@@ -195,7 +206,7 @@ The library is built around a stateful, object-oriented model that mirrors the s
 
 ### v1.0.0 — Official Release
 
-Release after comprehensive testing and PyPI publication.
+Release after comprehensive testing on the Roman Research Nexus with Data Challenge 2 test data.
 
 - **Task 8: Interactive Mode**
   - *Goal:* Provide a guided, interactive experience for new users to reduce complexity and improve onboarding.
