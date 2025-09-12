@@ -23,7 +23,7 @@ jobs:
               
               const newIssue = await github.rest.issues.create({
                 owner: 'rges-pit',
-                repo: 'rges-pit.github.io',
+                repo: 'microlens-submit',
                 title: originalIssue.title,
                 body: cleanBody + '\n\n---\n*Originally submitted via help form*',
                 labels: ['type:help', 'source:web-form']
