@@ -1,0 +1,56 @@
+name: Forward Help Form Issues
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  process-help-form:
+    if: contains(github.event.issue.body, 'Repost:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Forward or close issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ORG_REPO_PAT }}
+          script: |
+            const originalIssue = context.payload.issue;
+            const body = originalIssue.body;
+            
+            if (body.includes('Repost: Yes')) {
+              // Forward to org repo
+              const cleanBody = body.replace(/Repost:\s*(Yes|No)\s*\n?/gi, '').trim();
+              
+              const newIssue = await github.rest.issues.create({
+                owner: 'rges-pit',
+                repo: 'rges-pit.github.io',
+                title: originalIssue.title,
+                body: cleanBody + '\n\n---\n*Originally submitted via help form*',
+                labels: ['type:help', 'source:web-form']
+              });
+              
+              // Comment with forward link
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: originalIssue.number,
+                body: `✅ Forwarded to: ${newIssue.data.html_url}`
+              });
+              
+            } else if (body.includes('Repost: No')) {
+              // Just add a comment explaining why it's being closed
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: originalIssue.number,
+                body: '❌ Not forwarded as requested. Closing help form issue.'
+              });
+            }
+            
+            // Close the original issue in both cases
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: originalIssue.number,
+              state: 'closed'
+            });
