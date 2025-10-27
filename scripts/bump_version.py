@@ -290,11 +290,15 @@ def maybe_stage_unstaged_changes() -> None:
         print("Proceeding without staging unstaged changes.")
 
 
-def create_release_commit(version: str) -> None:
-    """Create a release commit and annotated tag."""
+def create_release_commit(version: str) -> tuple[bool, bool, str]:
+    """Create a release commit and annotated tag.
+
+    Returns:
+        (commit_created, tag_created, tag_name)
+    """
     if not is_git_repository():
         print("Not inside a git repository; skipping release commit and tagging.")
-        return
+        return False, False, ""
 
     commit_message = f"Release version {version}"
     commit = subprocess.run(
@@ -308,12 +312,14 @@ def create_release_commit(version: str) -> None:
         print(commit.stdout.strip())
         print(commit.stderr.strip())
         print("Commit failed (see messages above). Resolve issues and rerun the release step.")
-        return
+        return False, False, ""
 
     if "nothing to commit" in commit.stdout.lower() or "nothing to commit" in commit.stderr.lower():
         print("No new changes were committed; continuing with tagging.")
+        commit_created = False
     else:
         print("Release commit created.")
+        commit_created = True
 
     tag_name = f"v{version}"
     existing_tag = subprocess.run(
@@ -338,7 +344,7 @@ def create_release_commit(version: str) -> None:
                 print("Could not delete remote tag (it may not exist remotely).")
         else:
             print("Keeping existing tag; skipping tag recreation.")
-            return
+            return commit_created, False, tag_name
 
     tag_result = subprocess.run(
         ["git", "tag", "-a", tag_name, "-m", f"Release {version}"],
@@ -349,6 +355,48 @@ def create_release_commit(version: str) -> None:
     if tag_result.returncode != 0:
         print(tag_result.stderr.strip())
         print(f"Skipping tag creation; ensure tag {tag_name} does not already exist.")
+        return commit_created, False, tag_name
+
+    print(f"Created tag {tag_name}.")
+    return commit_created, True, tag_name
+
+
+def maybe_push_release(commit_created: bool, tag_created: bool, tag_name: str) -> None:
+    if not is_git_repository():
+        return
+    if not commit_created and not tag_created:
+        return
+
+    if not prompt_yes_no("Push release commit and tag to origin now?"):
+        print("Skipping push; remember to run `git push` manually.")
+        return
+
+    push_commit = subprocess.run(
+        ["git", "push", "origin", "HEAD"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if push_commit.returncode == 0:
+        print("Pushed release commit to origin.")
+    else:
+        print(push_commit.stdout.strip())
+        print(push_commit.stderr.strip())
+        print("Failed to push release commit. Push manually after resolving the issue.")
+
+    if tag_created:
+        push_tag = subprocess.run(
+            ["git", "push", "origin", tag_name],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        if push_tag.returncode == 0:
+            print(f"Pushed tag {tag_name} to origin.")
+        else:
+            print(push_tag.stdout.strip())
+            print(push_tag.stderr.strip())
+            print(f"Failed to push tag {tag_name}. Push manually after resolving the issue.")
 
 
 def handle_bump(bump_type: str) -> str:
@@ -388,7 +436,8 @@ def handle_release(dry_run: bool) -> None:
         print("Dry run: release notes generated and files staged (if in git).")
         return
 
-    create_release_commit(version)
+    commit_created, tag_created, tag_name = create_release_commit(version)
+    maybe_push_release(commit_created, tag_created, tag_name)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
