@@ -45,8 +45,21 @@ The CLI is the recommended way to interact with your submission project.
 
 You can pass ``--no-color`` to any command if your terminal does not support ANSI colors.
 
-1. Initialize your project: `microlens-submit init --team-name "Planet Pounders" --tier "advanced"`
+1. Initialize your project:
+
+   ```bash
+   microlens-submit init --team-name "Planet Pounders" --tier "advanced"
+   # if a project directory was provided to `init`, you should now `cd` into that project
+   ```
+
+   To pass validation, you need to have provided a `repo_url` and `hardware_info` to the project and have a git project initialized in your sumission-project directory.
+
+   ```bash
+   microlens-submit set-repo-url <url> ./
+   microlens-submit set-hardware-info --cpu-details "intel i7 xxx" --ram-gb 32 ./
+   ```
 2. Add a new solution to an event:
+
    ```bash
    microlens-submit add-solution ogle-2025-blg-0042 1S2L \
        --param t0=555.5 \
@@ -54,18 +67,28 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
        --param tE=25.0 \
        --notes "This is a great fit!"
    ```
+
    Model types must be one of `1S1L`, `1S2L`, `2S1L`, `2S2L`, `1S3L`, `2S3L`, or `other`.
    This will create a new solution and print its unique `solution_id`.
+
    You can run the same command with `--dry-run` first to verify the
    parsed input without saving anything.
+
 3. **Bulk import multiple solutions from a CSV file:**
+
    ```bash
    microlens-submit import-solutions tests/data/test_import.csv --dry-run
    ```
-   See the file `tests/data/test_import.csv` for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
+
+   See the file `tests/data/test_import.csv` for a comprehensive example covering all features and edge cases.
+   You can use this file as a template for your own imports.
+
 4. Deactivate a solution that didn't work out: `microlens-submit deactivate <solution_id>`
+
 5. List all solutions for an event: `microlens-submit list-solutions ogle-2025-blg-0042`
+
 6. Validate solutions and check for issues: `microlens-submit validate-solution <solution_id>`
+
 7. Export your final submission: `microlens-submit export final_submission.zip`
 
 **Note:** When you add a solution, it's automatically validated and any warnings are displayed. Use `--dry-run` to check validation without saving.

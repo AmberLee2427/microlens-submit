@@ -90,7 +90,8 @@ jobs:
 
     - name: Run tests in venv (non-editable install)
       run: |
-        venv_test/bin/python -m pytest --maxfail=1 --disable-warnings -q
+        source venv_test/bin/activate
+        pytest --maxfail=1 --disable-warnings -q
 
     - name: Show installed package info (sanity)
       run: |
