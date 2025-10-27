@@ -54,3 +54,44 @@ jobs:
     - name: Run tests with pytest
       run: |
         pytest --cov=microlens_submit --cov-report=xml
+
+  # Additional job: build a wheel/sdist and test normal (non-editable) installation
+  normal-install-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.11", "3.12"]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build sdist and wheel
+      run: |
+        python -m pip install --upgrade pip build
+        python -m build --sdist --wheel --outdir dist
+
+    - name: Create fresh venv and install wheel
+      run: |
+        python -m venv venv_test
+        venv_test/bin/python -m pip install --upgrade pip
+        # install the built wheel (non-editable, no dev extras)
+        venv_test/bin/pip install dist/*.whl
+
+    - name: Install pytest in venv
+      run: |
+        venv_test/bin/pip install pytest
+
+    - name: Run tests in venv (non-editable install)
+      run: |
+        venv_test/bin/python -m pytest --maxfail=1 --disable-warnings -q
+
+    - name: Show installed package info (sanity)
+      run: |
+        venv_test/bin/python -c "import microlens_submit, sys; print(microlens_submit.__file__); print(sys.version)"

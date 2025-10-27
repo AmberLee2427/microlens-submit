@@ -11,7 +11,10 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-import importlib_resources
+try:  # Prefer stdlib importlib.resources when available (Python >= 3.9)
+    import importlib.resources as importlib_resources
+except ImportError:  # pragma: no cover - fallback for Python < 3.9
+    import importlib_resources
 
 from ..models.submission import Submission
 from .utils import extract_github_repo_name, format_hardware_info
