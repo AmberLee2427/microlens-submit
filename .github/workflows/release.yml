@@ -7,6 +7,9 @@ on:
 
 jobs:
   build-and-publish:
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
 
     steps:
@@ -39,11 +42,9 @@ jobs:
           MICROLENS_SKIP_EDITABLE_INSTALL=1 PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
 
       - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          python -m twine upload dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
