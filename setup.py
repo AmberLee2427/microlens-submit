@@ -9,7 +9,7 @@ if __name__ == "__main__":
     setup(
         name="microlens-submit",
         version="0.16.1",
-        packages=find_packages(),
+        packages=find_packages(include=("microlens_submit", "microlens_submit.*")),
         include_package_data=True,
         package_data={
             "microlens_submit": ["assets/*"],

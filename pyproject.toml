@@ -65,7 +65,7 @@ dev = [
 # Setuptools package configuration
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["microlens_submit*"]
+include = ["microlens_submit", "microlens_submit.*"]
 exclude = ["tests*", "docs*"]
 
 [tool.setuptools.package-data]
