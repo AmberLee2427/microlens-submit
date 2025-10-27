@@ -36,7 +36,7 @@ jobs:
           pip install pytest
           pip install dist/*.whl
           python scripts/verify_cli_install.py
-          PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
+          MICROLENS_SKIP_EDITABLE_INSTALL=1 PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
 
       - name: Publish to PyPI
         env:

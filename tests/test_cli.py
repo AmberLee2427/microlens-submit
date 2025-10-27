@@ -61,20 +61,22 @@ Note:
     The test suite ensures CLI functionality matches API behavior.
 """
 
-# Install package in editable mode to ensure assets are available
+# Install package in editable mode to ensure assets are available when running tests
+import os
 import subprocess
 import sys
 
-try:
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", "."],
-        capture_output=True,
-        check=True,
-    )
-except subprocess.CalledProcessError:
-    # If we're not in the right directory or package isn't set up, continue anyway
-    # The asset check fixture will catch missing assets
-    pass
+if os.environ.get("MICROLENS_SKIP_EDITABLE_INSTALL") != "1":
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", "."],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        # If we're not in the right directory or package isn't set up, continue anyway
+        # The asset check fixture will catch missing assets
+        pass
 
 import json
 import zipfile
