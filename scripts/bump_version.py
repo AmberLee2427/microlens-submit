@@ -218,6 +218,12 @@ def extract_changelog_entry(version: str) -> Optional[str]:
 
 def generate_release_notes(version: str) -> None:
     """Create or overwrite RELEASE_NOTES.md based on the changelog entry."""
+    if RELEASE_NOTES_PATH.exists():
+        existing = read_text(RELEASE_NOTES_PATH)
+        if f"v{version}" in existing:
+            print(f"RELEASE_NOTES.md already documents v{version}; leaving it unchanged.")
+            return
+
     changelog_entry = extract_changelog_entry(version)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     release_date = today
@@ -300,26 +306,37 @@ def create_release_commit(version: str) -> tuple[bool, bool, str]:
         print("Not inside a git repository; skipping release commit and tagging.")
         return False, False, ""
 
-    commit_message = f"Release version {version}"
-    commit = subprocess.run(
-        ["git", "commit", "-m", commit_message],
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
     )
-
-    if commit.returncode != 0:
-        print(commit.stdout.strip())
-        print(commit.stderr.strip())
-        print("Commit failed (see messages above). Resolve issues and rerun the release step.")
-        return False, False, ""
-
-    if "nothing to commit" in commit.stdout.lower() or "nothing to commit" in commit.stderr.lower():
-        print("No new changes were committed; continuing with tagging.")
+    has_changes = bool(status.stdout.strip())
+    if not has_changes:
+        print("Working tree clean; skipping creation of a release commit.")
         commit_created = False
     else:
-        print("Release commit created.")
-        commit_created = True
+        commit_message = f"Release version {version}"
+        commit = subprocess.run(
+            ["git", "commit", "-m", commit_message],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        if commit.returncode != 0:
+            print(commit.stdout.strip())
+            print(commit.stderr.strip())
+            print("Commit failed (see messages above). Resolve issues and rerun the release step.")
+            return False, False, ""
+
+        if "nothing to commit" in commit.stdout.lower() or "nothing to commit" in commit.stderr.lower():
+            print("No new changes were committed; continuing with tagging.")
+            commit_created = False
+        else:
+            print("Release commit created.")
+            commit_created = True
 
     tag_name = f"v{version}"
     existing_tag = subprocess.run(

@@ -2,6 +2,8 @@
 
 **Release Date:** 2025-10-27
 
+This release introduces the automated packaging pipeline and ensures clean installs behave correctly.
+
 ## Changelog
 
 ## [0.16.1] - 2025-10-27
