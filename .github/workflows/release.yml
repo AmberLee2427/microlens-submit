@@ -37,14 +37,6 @@ jobs:
           pip install dist/*.whl
           PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
 
-      - name: Publish to TestPyPI
-        if: secrets.TEST_PYPI_API_TOKEN != ''
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        run: |
-          python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
       - name: Publish to PyPI
         if: secrets.PYPI_API_TOKEN != ''
         env:
