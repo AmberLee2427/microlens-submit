@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build distribution artifacts
+        run: python -m build
+
+      - name: Verify wheel in a clean environment
+        run: |
+          python -m venv dist-env
+          . dist-env/bin/activate
+          pip install --upgrade pip
+          pip install pytest
+          pip install dist/*.whl
+          PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
+
+      - name: Publish to TestPyPI
+        if: secrets.TEST_PYPI_API_TOKEN != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+      - name: Publish to PyPI
+        if: secrets.PYPI_API_TOKEN != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload dist/*
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          body_path: RELEASE_NOTES.md
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
