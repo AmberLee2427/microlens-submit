@@ -35,17 +35,7 @@ jobs:
           pip install --upgrade pip
           pip install pytest
           pip install dist/*.whl
-          python - <<'PY'
-            import importlib
-            import microlens_submit
-            import pkgutil
-
-            print("microlens_submit located at:", microlens_submit.__file__)
-            submodules = [m.name for m in pkgutil.iter_modules(microlens_submit.__path__)]
-            print("Available subpackages:", submodules)
-            import microlens_submit.cli
-            print("CLI module path:", microlens_submit.cli.__file__)
-          PY
+          python scripts/verify_cli_install.py
           PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
 
       - name: Publish to PyPI
