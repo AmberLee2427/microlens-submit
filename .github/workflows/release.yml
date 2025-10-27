@@ -49,7 +49,6 @@ jobs:
           PATH="$PWD/dist-env/bin:$PATH" pytest --maxfail=1 --disable-warnings -q
 
       - name: Publish to PyPI
-        if: ${{ secrets.PYPI_API_TOKEN != '' }}
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
