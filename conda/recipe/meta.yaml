@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://files.pythonhosted.org/packages/source/m/microlens-submit/microlens_submit-0.16.3.tar.gz
-  sha256: 52aa8d36e8f4d50110fa9f626ddebc0c1019e7417fed689aa18b7295c03f7d34
+  sha256: e1081a269bfa164e53f7c1e1e65789bc22d95a99c0dc569b40e4d2fe555cac0b
 
 build:
   number: 0
