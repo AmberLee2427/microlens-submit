@@ -105,20 +105,18 @@ jobs:
 
       - name: Build Conda package
         shell: bash -l {0}
-        run: conda run -n build conda build conda/recipe
-
-      - name: Collect Conda package
-        shell: bash -l {0}
         run: |
-          OUTPUT=$(conda run -n build conda build conda/recipe --output)
+          conda run -n build conda build conda/recipe --output-folder conda-output
           mkdir -p conda-dist
-          cp "$OUTPUT" conda-dist/
+          find conda-output -name '*.tar.bz2' -o -name '*.conda' -print -exec cp {} conda-dist/ \;
 
       - name: Upload Conda artifact
         uses: actions/upload-artifact@v4
         with:
           name: conda-package
-          path: conda-dist/*.tar.bz2
+          path: |
+            conda-dist/*.tar.bz2
+            conda-dist/*.conda
 
   publish_pypi:
     name: Publish to PyPI
