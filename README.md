@@ -168,4 +168,4 @@ Cite without version:
 Malpas, A. (2025). microlens-submit. Zenodo. https://doi.org/10.5281/zenodo.17459752
 
 Cite current version:
-Malpas, A. (2025). microlens-submit (v0.16.3). Zenodo. https://doi.org/10.5281/zenodo.17460488
+Malpas, A. (2025). microlens-submit (v0.16.3). Zenodo. https://doi.org/10.5281/zenodo.17468488
