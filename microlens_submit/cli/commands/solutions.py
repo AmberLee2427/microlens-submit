@@ -486,10 +486,11 @@ def edit_solution(
     if target_solution is None:
         console.print(f"Solution {solution_id} not found", style="bold red")
         raise typer.Exit(code=1)
+    arrow = symbol("arrow")
     changes = []
     if alias is not None:
         if target_solution.alias != alias:
-            changes.append(f"Update alias: {target_solution.alias} → {alias}")
+            changes.append(f"Update alias: {target_solution.alias} {arrow} {alias}")
             target_solution.alias = alias
     if clear_relative_probability:
         if target_solution.relative_probability is not None:
@@ -498,7 +499,7 @@ def edit_solution(
     elif relative_probability is not None:
         if target_solution.relative_probability != relative_probability:
             changes.append(
-                f"Update relative_probability: " f"{target_solution.relative_probability} " f"→ {relative_probability}"
+                f"Update relative_probability: {target_solution.relative_probability} {arrow} {relative_probability}"
             )
             target_solution.relative_probability = relative_probability
     if clear_log_likelihood:
@@ -507,7 +508,7 @@ def edit_solution(
             target_solution.log_likelihood = None
     elif log_likelihood is not None:
         if target_solution.log_likelihood != log_likelihood:
-            changes.append(f"Update log_likelihood: {target_solution.log_likelihood} " f"→ {log_likelihood}")
+            changes.append(f"Update log_likelihood: {target_solution.log_likelihood} {arrow} {log_likelihood}")
             target_solution.log_likelihood = log_likelihood
     if clear_n_data_points:
         if target_solution.n_data_points is not None:
@@ -515,7 +516,7 @@ def edit_solution(
             target_solution.n_data_points = None
     elif n_data_points is not None:
         if target_solution.n_data_points != n_data_points:
-            changes.append(f"Update n_data_points: {target_solution.n_data_points} " f"→ {n_data_points}")
+            changes.append(f"Update n_data_points: {target_solution.n_data_points} {arrow} {n_data_points}")
             target_solution.n_data_points = n_data_points
     # Notes file logic
     canonical_notes_path = (
@@ -554,9 +555,9 @@ def edit_solution(
         old_cpu = target_solution.compute_info.get("cpu_hours")
         old_wall = target_solution.compute_info.get("wall_time_hours")
         if cpu_hours is not None and old_cpu != cpu_hours:
-            changes.append(f"Update cpu_hours: {old_cpu} → {cpu_hours}")
+            changes.append(f"Update cpu_hours: {old_cpu} {arrow} {cpu_hours}")
         if wall_time_hours is not None and old_wall != wall_time_hours:
-            changes.append(f"Update wall_time_hours: {old_wall} → {wall_time_hours}")
+            changes.append(f"Update wall_time_hours: {old_wall} {arrow} {wall_time_hours}")
         target_solution.set_compute_info(
             cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
             wall_time_hours=(wall_time_hours if wall_time_hours is not None else old_wall),
@@ -572,7 +573,7 @@ def edit_solution(
                 new_value = value
             old_value = target_solution.parameters.get(key)
             if old_value != new_value:
-                changes.append(f"Update parameter {key}: {old_value} → {new_value}")
+                changes.append(f"Update parameter {key}: {old_value} {arrow} {new_value}")
                 target_solution.parameters[key] = new_value
     if param_uncertainty:
         if target_solution.parameter_uncertainties is None:
@@ -587,7 +588,7 @@ def edit_solution(
                 new_value = value
             old_value = target_solution.parameter_uncertainties.get(key)
             if old_value != new_value:
-                changes.append(f"Update uncertainty {key}: {old_value} → {new_value}")
+                changes.append(f"Update uncertainty {key}: {old_value} {arrow} {new_value}")
                 target_solution.parameter_uncertainties[key] = new_value
     if clear_higher_order_effects:
         if target_solution.higher_order_effects:
@@ -596,7 +597,7 @@ def edit_solution(
     elif higher_order_effect:
         if target_solution.higher_order_effects != higher_order_effect:
             changes.append(
-                f"Update higher_order_effects: " f"{target_solution.higher_order_effects} " f"→ {higher_order_effect}"
+                f"Update higher_order_effects: {target_solution.higher_order_effects} {arrow} {higher_order_effect}"
             )
             target_solution.higher_order_effects = higher_order_effect
     if dry_run:

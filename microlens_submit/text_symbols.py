@@ -40,6 +40,7 @@ _SYMBOL_MAP: Dict[str, Tuple[str, str]] = {
     "note": ("💡", "[NOTE]"),
     "trash": ("🗑️", "[REMOVE]"),
     "search": ("🔍", "[DRY RUN]"),
+    "arrow": ("→", "->"),
 }
 
 
