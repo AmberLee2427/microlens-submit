@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from ..text_symbols import symbol
 from .solution import Solution
 
 if TYPE_CHECKING:
@@ -122,11 +123,11 @@ class Event(BaseModel):
 
         # Provide feedback about the created solution
         alias_info = f" with alias '{alias}'" if alias else ""
-        print(f"✅ Created solution {solution_id}{alias_info}")
+        print(f"{symbol('check')} Created solution {solution_id}{alias_info}")
         print(f"   Model: {model_type}, Parameters: {len(parameters)}")
         if alias:
-            print(f"   ⚠️  Note: Alias '{alias}' will be validated for uniqueness when saved")
-        print("   💾 Remember to call submission.save() to persist to disk")
+            print(f"   {symbol('warning')}  Note: Alias '{alias}' will be validated for uniqueness when saved")
+        print(f"   {symbol('save')} Remember to call submission.save() to persist to disk")
 
         return sol
 
@@ -322,14 +323,14 @@ class Event(BaseModel):
                 try:
                     if full_path.exists():
                         full_path.unlink()
-                        print(f"🗑️  Removed temporary notes file: {notes_path}")
+                        print(f"{symbol('trash')} Removed temporary notes file: {notes_path}")
                 except OSError:
-                    print(f"⚠️  Warning: Could not remove temporary file {notes_path}")
+                    print(f"{symbol('warning')}  Warning: Could not remove temporary file {notes_path}")
 
         # Remove from solutions dict
         del self.solutions[solution_id]
 
-        print(f"🗑️  Removed solution {solution_id[:8]}... from event {self.event_id}")
+        print(f"{symbol('trash')} Removed solution {solution_id[:8]}... from event {self.event_id}")
         return True
 
     def remove_all_solutions(self, force: bool = False) -> int:
@@ -366,7 +367,9 @@ class Event(BaseModel):
                     removed_count += 1
             except ValueError:
                 if not force:
-                    print(f"⚠️  Skipped saved solution {solution_id[:8]}... (use force=True to remove)")
+                    print(
+                        f"{symbol('warning')}  Skipped saved solution {solution_id[:8]}... (use force=True to remove)"
+                    )
                 else:
                     # Force=True should override the saved check
                     if self.remove_solution(solution_id, force=True):

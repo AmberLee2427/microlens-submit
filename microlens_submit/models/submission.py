@@ -15,6 +15,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from ..text_symbols import symbol
 from .event import Event
 from .solution import Solution
 
@@ -348,22 +349,22 @@ class Submission(BaseModel):
 
     def print_solution_status(self) -> None:
         status = self.get_solution_status()
-        print("📊 Solution Status Summary:")
+        print(f"{symbol('progress')} Solution Status Summary:")
         print(f"   Total solutions: {status['total']}")
         print(f"   Saved to disk: {status['saved']}")
         print(f"   Unsaved (in memory): {status['unsaved']}")
         if status["unsaved"] > 0:
-            print("   💾 Call submission.save() to persist unsaved solutions")
+            print(f"   {symbol('save')} Call submission.save() to persist unsaved solutions")
         if status["duplicate_aliases"]:
-            print("   ❌ Alias conflicts found:")
+            print(f"   {symbol('error')} Alias conflicts found:")
             for error in status["duplicate_aliases"]:
                 print(f"      {error}")
-            print("   💡 Resolve conflicts before saving")
+            print(f"   {symbol('hint')} Resolve conflicts before saving")
         for event_id, event_status in status["events"].items():
-            print(f"\n📁 Event {event_id}:")
+            print(f"\n{symbol('folder')} Event {event_id}:")
             print(f"   Solutions: {event_status['saved']} saved, {event_status['unsaved']} unsaved")
             for sol_id, sol_status in event_status["solutions"].items():
-                status_icon = "✅" if sol_status["saved"] else "⏳"
+                status_icon = symbol("check") if sol_status["saved"] else symbol("pending")
                 alias_info = f" (alias: {sol_status['alias']})" if sol_status["alias"] else ""
                 active_info = "" if sol_status["is_active"] else " [inactive]"
                 print(f"   {status_icon} {sol_id} - {sol_status['model_type']}{alias_info}{active_info}")
@@ -372,25 +373,25 @@ class Submission(BaseModel):
         # Run comprehensive validation first
         validation_errors = self.run_validation()
         if validation_errors:
-            print("⚠️  Save completed with validation warnings:")
+            print(f"{symbol('warning')}  Save completed with validation warnings:")
             for error in validation_errors:
                 print(f"   {error}")
-            print("💡 Fix validation errors before exporting for submission")
+            print(f"{symbol('hint')} Fix validation errors before exporting for submission")
 
             if not force:
-                print("💾 Submission saved locally (incomplete - not ready for submission)")
+                print(f"{symbol('save')} Submission saved locally (incomplete - not ready for submission)")
             else:
-                print("💾 Submission saved locally (forced save with validation errors)")
+                print(f"{symbol('save')} Submission saved locally (forced save with validation errors)")
         else:
-            print("✅ Submission saved successfully (ready for export)")
+            print(f"{symbol('check')} Submission saved successfully (ready for export)")
 
         # Check for alias conflicts (existing behavior)
         alias_errors = self._validate_alias_uniqueness()
         if alias_errors:
-            print("❌ Save failed due to alias validation errors:")
+            print(f"{symbol('error')} Save failed due to alias validation errors:")
             for error in alias_errors:
                 print(f"   {error}")
-            print("💡 Solutions with duplicate aliases remain in memory but are not saved")
+            print(f"{symbol('hint')} Solutions with duplicate aliases remain in memory but are not saved")
             print("   Use different aliases or remove aliases to resolve conflicts")
             raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
 
@@ -420,9 +421,9 @@ class Submission(BaseModel):
             for sol in event.solutions.values():
                 sol.saved = True
         if unsaved_count > 0:
-            print(f"✅ Successfully saved {unsaved_count} new solution(s) to disk")
+            print(f"{symbol('check')} Successfully saved {unsaved_count} new solution(s) to disk")
         else:
-            print("✅ Successfully saved submission to disk")
+            print(f"{symbol('check')} Successfully saved submission to disk")
         saved_aliases = [
             f"{event_id} {sol.alias}"
             for event_id, event in self.events.items()
@@ -430,17 +431,17 @@ class Submission(BaseModel):
             if sol.alias and sol.saved
         ]
         if saved_aliases:
-            print(f"📋 Saved aliases: {', '.join(saved_aliases)}")
+            print(f"{symbol('clipboard')} Saved aliases: {', '.join(saved_aliases)}")
 
     def export(self, output_path: str) -> None:
         # Run comprehensive validation first - export is strict
         validation_errors = self.run_validation()
         if validation_errors:
-            print("❌ Export failed due to validation errors:")
+            print(f"{symbol('error')} Export failed due to validation errors:")
             for error in validation_errors:
                 print(f"   {error}")
-            print("💡 Fix validation errors before exporting for submission")
-            print("💡 Use submission.save() to save incomplete work locally")
+            print(f"{symbol('hint')} Fix validation errors before exporting for submission")
+            print(f"{symbol('hint')} Use submission.save() to save incomplete work locally")
             raise ValueError("Validation failed:\n" + "\n".join(validation_errors))
 
         project = Path(self.project_path)
@@ -559,11 +560,11 @@ class Submission(BaseModel):
                     try:
                         if full_path.exists():
                             full_path.unlink()
-                            print(f"🗑️  Removed temporary notes file: {notes_path}")
+                            print(f"{symbol('trash')} Removed temporary notes file: {notes_path}")
                     except OSError as e:
-                        print(f"⚠️  Warning: Could not remove temporary file {notes_path}: {e}")
+                        print(f"{symbol('warning')}  Warning: Could not remove temporary file {notes_path}: {e}")
         del self.events[event_id]
-        print(f"🗑️  Removed event '{event_id}' with {len(event.solutions)} solutions")
+        print(f"{symbol('trash')} Removed event '{event_id}' with {len(event.solutions)} solutions")
         return True
 
     # ... (all methods from Submission class, unchanged, including docstrings)

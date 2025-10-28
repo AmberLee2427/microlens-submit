@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - conda build to release action
 - local `.env` support
 - Zenodo doi automation
-- Install smoke test on Mac, Linux, and Windows
+- build wheel and conda build install smoke tests on Mac, Linux, and Windows, python 3.8 and 3.11
 
 
 ## [0.16.1] - 2025-10-27

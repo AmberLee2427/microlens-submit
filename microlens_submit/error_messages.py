@@ -8,6 +8,8 @@ to help users understand and fix issues more easily.
 import re
 from typing import Dict, List, Optional
 
+from microlens_submit.text_symbols import symbol
+
 
 def get_model_type_suggestions(invalid_type: str) -> List[str]:
     """Get suggestions for model type corrections."""
@@ -156,9 +158,9 @@ def format_validation_message(message: str, suggestions: Optional[List[str]] = N
 
     formatted = message
     if len(suggestions) == 1:
-        formatted += f"\n💡 Suggestion: {suggestions[0]}"
+        formatted += f"\n{symbol('hint')} Suggestion: {suggestions[0]}"
     else:
-        formatted += "\n💡 Suggestions:"
+        formatted += f"\n{symbol('hint')} Suggestions:"
         for suggestion in suggestions:
             formatted += f"\n   • {suggestion}"
 
@@ -259,7 +261,7 @@ def format_cli_error_with_suggestions(error_message: str, context: Dict) -> str:
 
     # Add context-specific suggestions
     if "model_type must be one of" in error_message:
-        enhanced += "\n\n💡 Quick Start Examples:"
+        enhanced += f"\n\n{symbol('hint')} Quick Start Examples:"
         enhanced += (
             "\n   microlens-submit add-solution EVENT123 1S1L " "--param t0=2459123.5 --param u0=0.1 --param tE=20.0"
         )
@@ -275,7 +277,7 @@ def format_cli_error_with_suggestions(error_message: str, context: Dict) -> str:
         enhanced += "\n   Multiple parameters: --param t0=2459123.5 " "--param u0=0.1 --param tE=20.0"
 
     elif "Cannot use --param with --params-file" in error_message:
-        enhanced += "\n\n💡 Parameter Options:"
+        enhanced += f"\n\n{symbol('hint')} Parameter Options:"
         enhanced += "\n   Use --param for individual parameters on command line"
         enhanced += "\n   Use --params-file for parameters from a JSON/YAML file"
         enhanced += "\n   Choose one method, not both"

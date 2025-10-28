@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
+from microlens_submit.text_symbols import symbol
 from microlens_submit.utils import load
 
 console = Console()
@@ -101,19 +102,21 @@ def init(
     # Run warnings-only validation
     warnings = sub.run_validation_warnings()
     if warnings:
-        console.print("[yellow]⚠️  Project initialized with warnings:[/yellow]")
+        console.print(f"[yellow]{symbol('warning')}  Project initialized with warnings:[/yellow]")
         for warning in warnings:
             console.print(f"   [yellow]• {warning}[/yellow]")
-        console.print("[yellow]💡 These warnings will become errors when saving or exporting.[/yellow]")
+        console.print(f"[yellow]{symbol('hint')} These warnings will become errors when saving or exporting.[/yellow]")
 
     # Try to save, but don't fail if there are validation errors
     try:
         sub.save()
         console.print(Panel(f"Initialized project at {project_path}", style="bold green"))
     except ValueError as e:
-        console.print("[yellow]⚠️  Project initialized but could not save due to validation errors:[/yellow]")
+        console.print(
+            f"[yellow]{symbol('warning')}  Project initialized but could not save due to validation errors:[/yellow]"
+        )
         console.print(f"[yellow]{str(e)}[/yellow]")
-        console.print("[yellow]💡 Fix validation errors before saving or exporting.[/yellow]")
+        console.print(f"[yellow]{symbol('hint')} Fix validation errors before saving or exporting.[/yellow]")
         console.print(Panel(f"Initialized project at {project_path} (unsaved)", style="bold yellow"))
 
 
@@ -156,17 +159,19 @@ def nexus_init(
     # Run warnings-only validation after adding hardware info
     warnings = sub.run_validation_warnings()
     if warnings:
-        console.print("[yellow]⚠️  Project updated with warnings:[/yellow]")
+        console.print(f"[yellow]{symbol('warning')}  Project updated with warnings:[/yellow]")
         for warning in warnings:
             console.print(f"   [yellow]• {warning}[/yellow]")
-        console.print("[yellow]💡 These warnings will become errors when saving or exporting.[/yellow]")
+        console.print(f"[yellow]{symbol('hint')} These warnings will become errors when saving or exporting.[/yellow]")
 
     # Try to save, but don't fail if there are validation errors
     try:
         sub.save()
         console.print("Nexus platform info captured.", style="bold green")
     except ValueError as e:
-        console.print("[yellow]⚠️  Project updated but could not save due to validation errors:[/yellow]")
+        console.print(
+            f"[yellow]{symbol('warning')}  Project updated but could not save due to validation errors:[/yellow]"
+        )
         console.print(f"[yellow]{str(e)}[/yellow]")
-        console.print("[yellow]💡 Fix validation errors before saving or exporting.[/yellow]")
+        console.print(f"[yellow]{symbol('hint')} Fix validation errors before saving or exporting.[/yellow]")
         console.print("Nexus platform info captured (unsaved).", style="bold yellow")

@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
+from microlens_submit.text_symbols import symbol
 from microlens_submit.utils import load
 
 console = Console()
@@ -48,30 +49,32 @@ def remove_event(
     submission = load(str(project_path))
 
     if event_id not in submission.events:
-        typer.echo(f"❌ Event '{event_id}' not found in submission")
+        typer.echo(f"{symbol('error')} Event '{event_id}' not found in submission")
         raise typer.Exit(1)
 
     event = submission.events[event_id]
     solution_count = len(event.solutions)
 
     if not force:
-        typer.echo(f"⚠️  This will permanently remove event '{event_id}' " f"and all {solution_count} solutions.")
+        typer.echo(
+            f"{symbol('warning')}  This will permanently remove event '{event_id}' and all {solution_count} solutions."
+        )
         typer.echo("   This action cannot be undone.")
         confirm = typer.confirm("Are you sure you want to continue?")
         if not confirm:
-            typer.echo("❌ Operation cancelled")
+            typer.echo(f"{symbol('error')} Operation cancelled")
             raise typer.Exit(0)
 
     try:
         removed = submission.remove_event(event_id, force=force)
         if removed:
-            typer.echo(f"✅ Removed event '{event_id}' and all {solution_count} solutions")
+            typer.echo(f"{symbol('check')} Removed event '{event_id}' and all {solution_count} solutions")
             submission.save()
         else:
-            typer.echo(f"❌ Failed to remove event '{event_id}'")
+            typer.echo(f"{symbol('error')} Failed to remove event '{event_id}'")
             raise typer.Exit(1)
     except ValueError as e:
-        typer.echo(f"❌ Cannot remove event: {e}")
+        typer.echo(f"{symbol('error')} Cannot remove event: {e}")
         raise typer.Exit(1)
 
 

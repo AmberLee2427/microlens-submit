@@ -10,6 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from microlens_submit.error_messages import enhance_validation_messages
+from microlens_submit.text_symbols import symbol
 from microlens_submit.utils import load
 
 console = Console()
@@ -42,7 +43,7 @@ def validate_solution(
     if not enhanced_messages:
         console.print(
             Panel(
-                f"✅ All validations passed for {solution_id} (event {target_event_id})",
+                f"{symbol('check')} All validations passed for {solution_id} (event {target_event_id})",
                 style="bold green",
             )
         )
@@ -65,7 +66,7 @@ def validate_submission(
     warnings = sub.run_validation_warnings()
 
     if not warnings:
-        console.print(Panel("\u2705 All validations passed!", style="bold green"))
+        console.print(Panel(f"{symbol('check')} All validations passed!", style="bold green"))
     else:
         console.print(Panel("Validation Warnings", style="yellow"))
         for warning in warnings:
@@ -78,21 +79,24 @@ def validate_submission(
 
         if has_repo_issue:
             console.print(
-                "\n[blue]💡 To fix repository URL issues:[/blue]\n"
+                f"\n[blue]{symbol('hint')} To fix repository URL issues:[/blue]\n"
                 "   microlens-submit set-repo-url <url> <project_dir>",
                 style="blue",
             )
 
         if has_hardware_issue:
             console.print(
-                "\n[blue]💡 To fix hardware info issues:[/blue]\n"
+                f"\n[blue]{symbol('hint')} To fix hardware info issues:[/blue]\n"
                 "   microlens-submit nexus-init --team-name <name> --tier <tier> <project_dir>\n"
                 "   (or manually set hardware_info in submission.json)",
                 style="blue",
             )
 
         console.print(
-            "\n[yellow]⚠️  Note: These warnings will become errors when saving or exporting.[/yellow]", style="yellow"
+            "\n[yellow]"
+            f"{symbol('warning')}  Note: These warnings will become errors when saving or exporting."
+            "[/yellow]",
+            style="yellow",
         )
 
 
@@ -121,10 +125,10 @@ def validate_event(
                 console.print(f"  • {msg}")
                 all_messages.append(f"{solution.solution_id}: {msg}")
         else:
-            console.print(f"✅ Solution {solution.solution_id}: All validations passed")
+            console.print(f"{symbol('check')} Solution {solution.solution_id}: All validations passed")
 
     if not all_messages:
-        console.print(Panel("✅ All solutions passed validation!", style="bold green"))
+        console.print(Panel(f"{symbol('check')} All solutions passed validation!", style="bold green"))
     else:
         console.print(
             f"\nFound {len(all_messages)} validation issue(s) across all solutions",

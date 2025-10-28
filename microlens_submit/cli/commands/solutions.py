@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from microlens_submit.error_messages import enhance_validation_messages, format_cli_error_with_suggestions
+from microlens_submit.text_symbols import symbol
 from microlens_submit.utils import import_solutions_from_csv, load
 
 console = Console()
@@ -319,7 +320,7 @@ def add_solution(
             console.print(f"  • {msg}")
     else:
         console.print(
-            f"✅ Solution {sol.solution_id} created successfully!",
+            f"{symbol('check')} Solution {sol.solution_id} created successfully!",
             style="green",
         )
 
@@ -362,7 +363,7 @@ def activate(
 
     solution.activate()
     submission.save()
-    console.print(f"[green]✅ Activated solution {solution_id[:8]}... in event {event_id}[/green]")
+    console.print(f"[green]{symbol('check')} Activated solution {solution_id[:8]}... in event {event_id}[/green]")
 
 
 def remove_solution(
@@ -390,14 +391,17 @@ def remove_solution(
         removed = submission.events[event_id].remove_solution(solution_id, force=force)
         if removed:
             submission.save()
-            console.print(f"[green]✅ Solution {solution_id[:8]}... removed from event " f"{event_id}[/green]")
+            console.print(
+                f"[green]{symbol('check')} Solution {solution_id[:8]}... removed from event {event_id}[/green]"
+            )
         else:
             console.print(f"[red]Error: Failed to remove solution {solution_id}[/red]")
             raise typer.Exit(1)
     except ValueError as e:
         console.print(f"[red]Error: {e}[/red]")
         console.print(
-            "[yellow]💡 Use --force to override safety checks, or use deactivate to " "keep the solution[/yellow]"
+            f"[yellow]{symbol('hint')} Use --force to override safety checks, "
+            "or use deactivate to keep the solution[/yellow]"
         )
         raise typer.Exit(1)
 
@@ -670,14 +674,14 @@ def import_solutions(
 ) -> None:
     """Import solutions from a CSV file into the current project."""
     if on_duplicate not in ["error", "override", "ignore"]:
-        typer.echo(f"❌ Invalid --on-duplicate option: {on_duplicate}")
+        typer.echo(f"{symbol('error')} Invalid --on-duplicate option: {on_duplicate}")
         typer.echo("   Valid options: error, override, ignore")
         raise typer.Exit(1)
 
     try:
         submission = load(str(project_path))
     except Exception as e:  # pragma: no cover - unexpected I/O errors
-        typer.echo(f"❌ Failed to load submission: {e}")
+        typer.echo(f"{symbol('error')} Failed to load submission: {e}")
         raise typer.Exit(1)
 
     try:
@@ -692,17 +696,17 @@ def import_solutions(
             project_path=project_path,
         )
     except Exception as e:  # pragma: no cover - unexpected parse errors
-        typer.echo(f"❌ Failed to import solutions: {e}")
+        typer.echo(f"{symbol('error')} Failed to import solutions: {e}")
         raise typer.Exit(1)
 
     if not dry_run and stats["successful_imports"] > 0:
         try:
             submission.save()
         except Exception as e:  # pragma: no cover - disk failures
-            typer.echo(f"❌ Failed to save submission: {e}")
+            typer.echo(f"{symbol('error')} Failed to save submission: {e}")
             raise typer.Exit(1)
 
-    typer.echo("\n📊 Import Summary:")
+    typer.echo(f"\n{symbol('progress')} Import Summary:")
     typer.echo(f"   Total rows processed: {stats['total_rows']}")
     typer.echo(f"   Successful imports: {stats['successful_imports']}")
     typer.echo(f"   Skipped rows: {stats['skipped_rows']}")
@@ -710,13 +714,13 @@ def import_solutions(
     typer.echo(f"   Duplicates handled: {stats['duplicate_handled']}")
 
     if stats["errors"]:
-        typer.echo("\n⚠️  Errors encountered:")
+        typer.echo(f"\n{symbol('warning')}  Errors encountered:")
         for error in stats["errors"][:10]:
             typer.echo(f"   {error}")
         if len(stats["errors"]) > 10:
             typer.echo(f"   ... and {len(stats['errors']) - 10} more errors")
 
     if dry_run:
-        typer.echo("\n🔍 Dry run completed - no changes made")
+        typer.echo(f"\n{symbol('search')} Dry run completed - no changes made")
     else:
-        typer.echo("\n✅ Import completed successfully")
+        typer.echo(f"\n{symbol('check')} Import completed successfully")
