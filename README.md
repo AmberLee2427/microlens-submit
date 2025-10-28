@@ -152,15 +152,15 @@ import this file directly.
 
 Bibtex:
 ```
-@software{malpas_2025_17460500,
+@software{malpas_2025_17468488,
   author       = {Malpas, Amber},
   title        = {microlens-submit},
   month        = oct,
   year         = 2025,
   publisher    = {Zenodo},
   version      = {v0.16.3},
-  doi          = {10.5281/zenodo.17460500},
-  url          = {https://doi.org/10.5281/zenodo.17460500},
+  doi          = {10.5281/zenodo.17468488},
+  url          = {https://doi.org/10.5281/zenodo.17468488},
 }
 ```
 
