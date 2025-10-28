@@ -4,10 +4,10 @@
 
 ## Changelog
 
-## [0.16.2] - 2025-10-28
+## [0.16.3] - 2025-10-28
 
 ### Added
-- conda build to release action
-- local `.env` support
-- Zenodo doi automation
-- Install smoke test on Mac, Linux, and Windows
+-  Publish to `conda-forge`.
+
+### Fixed
+- Include `pyproject.toml` and other metadata in the sdist so `pip install .` works (fixes conda builds).

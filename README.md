@@ -158,7 +158,7 @@ Bibtex:
   month        = oct,
   year         = 2025,
   publisher    = {Zenodo},
-  version      = {v0.16.1},
+  version      = {v0.16.3},
   doi          = {10.5281/zenodo.17460500},
   url          = {https://doi.org/10.5281/zenodo.17460500},
 }
@@ -168,4 +168,4 @@ Cite without version:
 Malpas, A. (2025). microlens-submit. Zenodo. https://doi.org/10.5281/zenodo.17459752
 
 Cite current version:
-Malpas, A. (2025). microlens-submit (v0.16.1). Zenodo. https://doi.org/10.5281/zenodo.17459753
+Malpas, A. (2025). microlens-submit (v0.16.1). Zenodo. https://doi.org/10.5281/zenodo.17460500

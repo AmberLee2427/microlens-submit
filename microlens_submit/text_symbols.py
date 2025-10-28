@@ -9,6 +9,8 @@ otherwise falls back to a readable ASCII alternative.
 
 from __future__ import annotations
 
+import locale
+import os
 import sys
 from typing import Dict, Tuple
 
@@ -70,6 +72,25 @@ def symbol(name: str) -> str:
         fallback.
     """
     unicode_char, fallback = _SYMBOL_MAP.get(name, ("", ""))
-    if unicode_char and _can_encode(unicode_char):
+
+    if not unicode_char:
+        return fallback
+
+    # On Windows runners the locale is frequently a legacy code page (e.g. cp1252)
+    # even when rich/click report UTF-8.  Prefer ASCII fallbacks unless we can
+    # confidently detect a UTF-capable encoding.
+    if os.name == "nt":
+        candidate_encodings = [
+            os.environ.get("PYTHONIOENCODING"),
+            getattr(sys.stdout, "encoding", None),
+            getattr(sys.stderr, "encoding", None),
+            getattr(sys.__stdout__, "encoding", None),
+            getattr(sys.__stderr__, "encoding", None),
+            locale.getpreferredencoding(False),
+        ]
+        if not any(enc and "utf" in enc.lower() for enc in candidate_encodings if enc):
+            return fallback or unicode_char
+
+    if _can_encode(unicode_char):
         return unicode_char
     return fallback or unicode_char

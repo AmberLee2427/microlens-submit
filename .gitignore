@@ -216,3 +216,4 @@ test_submission_project/
 test_env/
 test_dossier_output.log
 aliases.json
+tmp/
