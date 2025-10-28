@@ -10,3 +10,4 @@
 - conda build to release action
 - local `.env` support
 - Zenodo doi automation
+- Install smoke test on Mac, Linux, and Windows

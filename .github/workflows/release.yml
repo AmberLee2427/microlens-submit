@@ -67,12 +67,14 @@ jobs:
           python-version: "3.11"
 
       - name: Install and test wheel
+        shell: bash
         env:
           MICROLENS_SKIP_EDITABLE_INSTALL: "1"
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
-          python -m pip install dist/*.whl
+          wheel=$(ls dist/*.whl | head -n 1)
+          python -m pip install "$wheel"
           python scripts/verify_cli_install.py
           pytest --maxfail=1 --disable-warnings -q
 
