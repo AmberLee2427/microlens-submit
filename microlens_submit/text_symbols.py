@@ -1,31 +1,16 @@
-"""Helper utilities that provide console-friendly status symbols.
+"""Console-friendly symbols with graceful fallbacks.
 
-Many commands display small status icons (check marks, warnings, etc.).
-Windows terminals that use legacy code pages cannot encode these glyphs,
-which previously caused ``UnicodeEncodeError`` exceptions.  This module
-provides a thin compatibility layer that falls back to ASCII text when
-Unicode output is not supported.
+Some Windows terminals still use legacy code pages (e.g., CP1252) that cannot
+encode emoji-style glyphs. Attempting to print those characters raises
+``UnicodeEncodeError``.  This module exposes a :func:`symbol` helper that
+returns the Unicode glyph when the current output stream supports it and
+otherwise falls back to a readable ASCII alternative.
 """
 
 from __future__ import annotations
 
 import sys
 from typing import Dict, Tuple
-
-
-def _supports_unicode_output() -> bool:
-    """Return True if the current stdout encoding can handle Unicode glyphs."""
-    encoding = getattr(sys.stdout, "encoding", None)
-    if not encoding:
-        return False
-    try:
-        "✅".encode(encoding)
-    except UnicodeEncodeError:
-        return False
-    return True
-
-
-_SUPPORTS_UNICODE = _supports_unicode_output()
 
 _SYMBOL_MAP: Dict[str, Tuple[str, str]] = {
     "check": ("✅", "[OK]"),
@@ -44,6 +29,36 @@ _SYMBOL_MAP: Dict[str, Tuple[str, str]] = {
 }
 
 
+def _can_encode(text: str) -> bool:
+    """Return ``True`` if ``text`` can be encoded using the current stdout/stderr."""
+
+    def _stream_supports(stream) -> bool | None:
+        if stream is None:
+            return None
+        encoding = getattr(stream, "encoding", None)
+        if not encoding:
+            return None
+        try:
+            text.encode(encoding)
+        except UnicodeEncodeError:
+            return False
+        else:
+            return True
+
+    # Prefer the actively used stdout/stderr streams.
+    for attr in ("stdout", "stderr"):
+        result = _stream_supports(getattr(sys, attr, None))
+        if result is not None:
+            return result
+
+    # Fall back to the original streams if the active ones are unavailable.
+    for attr in ("__stdout__", "__stderr__"):
+        result = _stream_supports(getattr(sys, attr, None))
+        if result:
+            return True
+    return False
+
+
 def symbol(name: str) -> str:
     """Return a console-friendly symbol for ``name``.
 
@@ -55,4 +70,6 @@ def symbol(name: str) -> str:
         fallback.
     """
     unicode_char, fallback = _SYMBOL_MAP.get(name, ("", ""))
-    return unicode_char if _SUPPORTS_UNICODE else fallback
+    if unicode_char and _can_encode(unicode_char):
+        return unicode_char
+    return fallback or unicode_char
