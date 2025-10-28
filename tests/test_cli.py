@@ -391,11 +391,12 @@ def test_cli_compare_solutions_skips_zero_data_points():
         result = runner.invoke(app, ["compare-solutions", "evt"])
         assert result.exit_code == 0
         # Should only show the valid solution in the table. Depending on console support
-        # Rich may render Unicode box characters or ASCII fallbacks.
-        relative_header = "┃ Relative  ┃"
-        if relative_header not in result.stdout:
-            relative_header = "| Relative  |"
-        assert result.stdout.count(relative_header) == 1
+        # Rich may render Unicode box characters or ASCII fallbacks. Count the header row
+        # that contains the "Relative" column (ignoring the footer line that describes BIC).
+        header_lines = [
+            line for line in result.stdout.splitlines() if "Relative" in line and "Relative probabilities" not in line
+        ]
+        assert len(header_lines) == 1
 
 
 def test_params_file_option_and_bands():
