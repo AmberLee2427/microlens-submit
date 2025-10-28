@@ -149,3 +149,23 @@ A comprehensive test CSV file is provided at `tests/data/test_import.csv`. This 
 If you use **microlens-submit** in your research, please cite the project using
 the metadata provided in the `CITATION.cff` file. Most reference managers can
 import this file directly.
+
+Bibtex:
+```
+@software{malpas_2025_17460500,
+  author       = {Malpas, Amber},
+  title        = {microlens-submit},
+  month        = oct,
+  year         = 2025,
+  publisher    = {Zenodo},
+  version      = {v0.16.1},
+  doi          = {10.5281/zenodo.17460500},
+  url          = {https://doi.org/10.5281/zenodo.17460500},
+}
+```
+
+Cite without version:
+Malpas, A. (2025). microlens-submit. Zenodo. https://doi.org/10.5281/zenodo.17459752
+
+Cite current version:
+Malpas, A. (2025). microlens-submit (v0.16.1). Zenodo. https://doi.org/10.5281/zenodo.17459753

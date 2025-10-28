@@ -1,19 +1,12 @@
-# microlens-submit v0.16.1 Release Notes
+# microlens-submit v0.16.2 Release Notes
 
-**Release Date:** 2025-10-27
-
-This release introduces the automated packaging pipeline and ensures clean installs behave correctly.
+**Release Date:** 2025-10-28
 
 ## Changelog
 
-## [0.16.1] - 2025-10-27
+## [0.16.2] - 2025-10-28
 
 ### Added
-- Release automation
-- CI now installs from the wheel across 3.8/3.12 to mirror beta testers’ reports
-
-### Changed
-- `README.md` to clarify Quickstart
-
-### Fixed
-- `importlib_resources` version bug
+- conda build to release action
+- local `.env` support
+- Zenodo doi automation

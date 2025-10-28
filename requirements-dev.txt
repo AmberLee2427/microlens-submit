@@ -12,6 +12,7 @@ pytest-cov
 #Packaging and distribution
 build
 twine
+python-dotenv
 
 # Formatting and linting
 black

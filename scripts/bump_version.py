@@ -27,21 +27,34 @@ The release mode expects the version to already be correct.  It will:
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
 SETUP_PY_PATH = PROJECT_ROOT / "setup.py"
 PACKAGE_INIT_PATH = PROJECT_ROOT / "microlens_submit" / "__init__.py"
 DOCS_CONF_PATH = PROJECT_ROOT / "docs" / "conf.py"
 CITATION_PATH = PROJECT_ROOT / "CITATION.cff"
+README_PATH = PROJECT_ROOT / "README.md"
 CHANGELOG_PATH = PROJECT_ROOT / "CHANGELOG.md"
 RELEASE_NOTES_PATH = PROJECT_ROOT / "RELEASE_NOTES.md"
+ZENODO_INFO_PATH = PROJECT_ROOT / "zenodo_draft.json"
+
+if load_dotenv:
+    load_dotenv(PROJECT_ROOT / ".env")
 
 
 VERSION_PATTERN = re.compile(r'version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
@@ -170,6 +183,27 @@ def update_citation(new_version: str) -> None:
     write_text(CITATION_PATH, new_content)
 
 
+def update_citation_doi(doi: str) -> None:
+    if not CITATION_PATH.exists():
+        return
+    content = read_text(CITATION_PATH)
+    if "doi:" in content:
+        new_content, count = re.subn(r'^doi:\s*".*"$', f'doi: "{doi}"', content, flags=re.MULTILINE)
+        if count == 0:
+            return
+        write_text(CITATION_PATH, new_content)
+        return
+
+    lines = content.splitlines()
+    insert_index = 0
+    for idx, line in enumerate(lines):
+        if line.startswith("version:"):
+            insert_index = idx + 1
+            break
+    lines.insert(insert_index, f'doi: "{doi}"')
+    write_text(CITATION_PATH, "\n".join(lines) + ("\n" if content.endswith("\n") else ""))
+
+
 def ensure_changelog_entry(new_version: str) -> None:
     """Insert a templated changelog section if one does not already exist."""
     if not CHANGELOG_PATH.exists():
@@ -242,6 +276,139 @@ def generate_release_notes(version: str) -> None:
         body = "## Changelog\n\n" "_No changelog entry found. Update CHANGELOG.md before publishing._\n"
 
     write_text(RELEASE_NOTES_PATH, header + metadata + body)
+
+
+def update_readme_with_doi(version: str, doi: str) -> None:
+    if not README_PATH.exists():
+        return
+    content = read_text(README_PATH)
+    updated = content
+
+    doi_leaf = doi.split("/")[-1]
+    if doi_leaf.startswith("zenodo."):
+        key_suffix = doi_leaf.split(".", 1)[1]
+    else:
+        key_suffix = doi_leaf.replace(".", "_")
+
+    new_key = f"malpas_2025_{key_suffix}"
+    updated, _ = re.subn(
+        r"(@software\{)[^,]+",
+        rf"\1{new_key}",
+        updated,
+        count=1,
+    )
+    updated, _ = re.subn(
+        r"(doi\s*=\s*\{)[^}]+(\})",
+        lambda m: f"{m.group(1)}{doi}{m.group(2)}",
+        updated,
+        count=1,
+    )
+    updated, _ = re.subn(
+        r"(url\s*=\s*\{https://doi.org/)[^}]+(\})",
+        lambda m: f"{m.group(1)}{doi}{m.group(2)}",
+        updated,
+        count=1,
+    )
+    version_line_pattern = re.compile(rf"(microlens-submit \(v{re.escape(version)}\).*?https://doi.org/)([^\s)]+)")
+    updated, _ = version_line_pattern.subn(lambda m: m.group(1) + doi, updated)
+
+    if updated != content:
+        write_text(README_PATH, updated)
+
+
+def load_existing_zenodo_info() -> Optional[dict]:
+    if not ZENODO_INFO_PATH.exists():
+        return None
+    try:
+        return json.loads(read_text(ZENODO_INFO_PATH))
+    except (json.JSONDecodeError, FileNotFoundError):
+        return None
+
+
+def save_zenodo_info(info: dict) -> None:
+    write_text(ZENODO_INFO_PATH, json.dumps(info, indent=2) + "\n")
+
+
+def reserve_zenodo_doi(version: str) -> Optional[dict]:
+    token = os.environ.get("ZENODO_TOKEN")
+    if not token:
+        print("ZENODO_TOKEN not set; skipping Zenodo DOI reservation.")
+        return None
+
+    api_url = os.environ.get("ZENODO_API_URL", "https://zenodo.org/api").rstrip("/")
+    existing = load_existing_zenodo_info()
+
+    if existing and existing.get("version") == version:
+        print(f"Existing reserved Zenodo DOI found for v{version}: {existing.get('doi')}")
+        return existing
+
+    if existing and existing.get("version") != version:
+        print(f"Existing Zenodo draft references version {existing.get('version')}.")
+        if not prompt_yes_no("Create a new Zenodo draft for this release?"):
+            print("Keeping previously reserved DOI. Update README/CITATION manually if needed.")
+            return None
+
+    metadata = {
+        "upload_type": "software",
+        "title": f"microlens-submit (v{version})",
+        "description": f"Release version {version} of microlens-submit.",
+        "creators": [{"name": "Malpas, Amber"}],
+        "version": version,
+        "access_right": "open",
+        "prereserve_doi": True,
+    }
+    payload = json.dumps({"metadata": metadata}).encode("utf-8")
+    request = urllib.request.Request(
+        f"{api_url}/deposit/depositions",
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(request) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="ignore")
+        print("Failed to reserve Zenodo DOI.")
+        print(f"Status: {exc.code}")
+        if error_body:
+            print(error_body)
+        return None
+    except urllib.error.URLError as exc:
+        print(f"Failed to contact Zenodo API: {exc}")
+        return None
+
+    metadata_info = response_data.get("metadata", {})
+    prereserve = metadata_info.get("prereserve_doi", {})
+    doi = prereserve.get("doi")
+    conceptrecid = response_data.get("conceptrecid")
+    deposition_id = response_data.get("id")
+    links = response_data.get("links", {})
+
+    if not doi:
+        print("Zenodo response did not include a reserved DOI; skipping DOI updates.")
+        return None
+
+    info = {
+        "version": version,
+        "deposition_id": deposition_id,
+        "conceptrecid": conceptrecid,
+        "doi": doi,
+        "prereserve": prereserve,
+        "links": links,
+        "created": response_data.get("created"),
+    }
+    save_zenodo_info(info)
+
+    print(f"Reserved Zenodo DOI {doi} (deposition {deposition_id}).")
+    latest_draft = links.get("latest_draft_html") or links.get("html")
+    if latest_draft:
+        print(f"Draft deposition URL: {latest_draft}")
+
+    return info
 
 
 def stage_files(paths: list[Path]) -> None:
@@ -436,17 +603,27 @@ def handle_release(dry_run: bool) -> None:
     print(f"Preparing release for version {version}")
 
     generate_release_notes(version)
-    stage_files(
-        [
-            PYPROJECT_PATH,
-            SETUP_PY_PATH,
-            PACKAGE_INIT_PATH,
-            DOCS_CONF_PATH,
-            CITATION_PATH,
-            CHANGELOG_PATH,
-            RELEASE_NOTES_PATH,
-        ]
-    )
+    zenodo_info = reserve_zenodo_doi(version)
+    if zenodo_info:
+        doi = zenodo_info.get("doi")
+        if doi:
+            update_citation_doi(doi)
+            update_readme_with_doi(version, doi)
+
+    paths_to_stage = [
+        PYPROJECT_PATH,
+        SETUP_PY_PATH,
+        PACKAGE_INIT_PATH,
+        DOCS_CONF_PATH,
+        CITATION_PATH,
+        CHANGELOG_PATH,
+        RELEASE_NOTES_PATH,
+    ]
+
+    if zenodo_info:
+        paths_to_stage.extend([README_PATH, ZENODO_INFO_PATH])
+
+    stage_files(paths_to_stage)
     maybe_stage_unstaged_changes()
 
     if dry_run:
