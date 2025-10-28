@@ -80,9 +80,35 @@ jobs:
           python scripts/verify_cli_install.py
           pytest --maxfail=1 --disable-warnings -q
 
+  publish_pypi:
+    name: Publish to PyPI
+    needs:
+      - build_dist
+      - verify_wheels
+    runs-on: ubuntu-latest
+    environment: pypi
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true
+
   build_conda:
     name: Build Conda package
-    needs: build_dist
+    needs:
+      - publish_pypi
     runs-on: ubuntu-latest
 
     steps:
@@ -118,35 +144,11 @@ jobs:
             conda-dist/*.tar.bz2
             conda-dist/*.conda
 
-  publish_pypi:
-    name: Publish to PyPI
-    needs:
-      - build_dist
-      - verify_wheels
-      - build_conda
-    runs-on: ubuntu-latest
-    environment: pypi
-
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-artifacts
-          path: dist
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist
-          skip-existing: true
-
   github_release:
     name: Create GitHub release
-    needs: publish_pypi
+    needs:
+      - publish_pypi
+      - build_conda
     runs-on: ubuntu-latest
 
     permissions:
