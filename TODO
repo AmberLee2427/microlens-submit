@@ -9,7 +9,7 @@
   - [ ] must include hardware info
     or
   - [ ] nexus init
-- [ ] required venv with windows (huh? who uses windows anyway)
+- [ ] required venv with windows (huh? who uses windows anyway?)
     - [ ] export location-of-script to PATH
 - [x] add GPU section to hardware info
 - [ ] auto populate hardware info

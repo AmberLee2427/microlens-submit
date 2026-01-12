@@ -17,6 +17,7 @@ def init(
     team_name: str = typer.Option(..., help="Team name"),
     tier: str = typer.Option(..., help="Challenge tier"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
+    show_warnings: bool = True,
 ) -> None:
     """Create a new submission project in the specified directory.
 
@@ -100,12 +101,15 @@ def init(
         )
 
     # Run warnings-only validation
-    warnings = sub.run_validation_warnings()
-    if warnings:
-        console.print(f"[yellow]{symbol('warning')}  Project initialized with warnings:[/yellow]")
-        for warning in warnings:
-            console.print(f"   [yellow]• {warning}[/yellow]")
-        console.print(f"[yellow]{symbol('hint')} These warnings will become errors when saving or exporting.[/yellow]")
+    if show_warnings:
+        warnings = sub.run_validation_warnings()
+        if warnings:
+            console.print(f"[yellow]{symbol('warning')}  Project initialized with warnings:[/yellow]")
+            for warning in warnings:
+                console.print(f"   [yellow]• {warning}[/yellow]")
+            console.print(
+                f"[yellow]{symbol('hint')} These warnings will become errors when saving or exporting.[/yellow]"
+            )
 
     # Try to save, but don't fail if there are validation errors
     try:
@@ -152,7 +156,7 @@ def nexus_init(
         environment. It will silently skip any environment information that
         cannot be detected (e.g., if running outside of Nexus).
     """
-    init(team_name=team_name, tier=tier, project_path=project_path)
+    init(team_name=team_name, tier=tier, project_path=project_path, show_warnings=False)
     sub = load(str(project_path))
     sub.autofill_nexus_info()
 

@@ -240,6 +240,12 @@ class Submission(BaseModel):
         except Exception as exc:
             logging.debug("Failed to read JUPYTER_IMAGE_SPEC: %s", exc)
         try:
+            server_name = os.environ.get("JUPYTERHUB_SERVER_NAME")
+            if server_name:
+                self.hardware_info["server_name"] = server_name
+        except Exception as exc:
+            logging.debug("Failed to read JUPYTERHUB_SERVER_NAME: %s", exc)
+        try:
             with open("/proc/cpuinfo", "r", encoding="utf-8") as fh:
                 for line in fh:
                     if line.lower().startswith("model name"):
