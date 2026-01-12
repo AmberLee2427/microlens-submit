@@ -13,7 +13,7 @@
     - [ ] export location-of-script to PATH
 - [x] add GPU section to hardware info
 - [ ] auto populate hardware info
-- [ ] ".001" gets interpreted as a string
+- [x] ".001" gets interpreted as a string
 - [ ] nexus init gives hardware warning and it doesn't need to
 - [ ] nexus dosiers (with submission in /teams/*) not displaying images
 - [x] "Experienced' tier not "Advanced"

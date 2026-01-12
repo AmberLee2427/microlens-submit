@@ -2,8 +2,9 @@
 
 import json
 import os
+import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import typer
 from rich.console import Console
@@ -16,6 +17,24 @@ from microlens_submit.utils import import_solutions_from_csv, load
 console = Console()
 
 
+_NUMERIC_RE = re.compile(r"^[+-]?((\\d+(\\.\\d*)?)|(\\.\\d+))([eE][+-]?\\d+)?$")
+
+
+def _parse_cli_value(value: str) -> Any:
+    """Parse a CLI value using JSON, with a numeric fallback for .001-style input."""
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        if _NUMERIC_RE.match(value.strip()):
+            try:
+                if re.match(r"^[+-]?\\d+$", value.strip()):
+                    return int(value)
+                return float(value)
+            except ValueError:
+                pass
+        return value
+
+
 def _parse_pairs(pairs: Optional[List[str]]) -> Optional[Dict]:
     """Convert CLI key=value options into a dictionary."""
     if not pairs:
@@ -25,10 +44,7 @@ def _parse_pairs(pairs: Optional[List[str]]) -> Optional[Dict]:
         if "=" not in item:
             raise typer.BadParameter(f"Invalid format: {item}")
         key, value = item.split("=", 1)
-        try:
-            out[key] = json.loads(value)
-        except json.JSONDecodeError:
-            out[key] = value
+        out[key] = _parse_cli_value(value)
     return out
 
 
@@ -219,10 +235,7 @@ def add_solution(
             if "=" not in p:
                 raise typer.BadParameter(f"Invalid parameter format: {p}")
             key, value = p.split("=", 1)
-            try:
-                params[key] = json.loads(value)
-            except json.JSONDecodeError:
-                params[key] = value
+            params[key] = _parse_cli_value(value)
     allowed_model_types = [
         "1S1L",
         "1S2L",
@@ -567,10 +580,7 @@ def edit_solution(
             if "=" not in p:
                 raise typer.BadParameter(f"Invalid parameter format: {p}")
             key, value = p.split("=", 1)
-            try:
-                new_value = json.loads(value)
-            except json.JSONDecodeError:
-                new_value = value
+            new_value = _parse_cli_value(value)
             old_value = target_solution.parameters.get(key)
             if old_value != new_value:
                 changes.append(f"Update parameter {key}: {old_value} {arrow} {new_value}")
@@ -582,10 +592,7 @@ def edit_solution(
             if "=" not in p:
                 raise typer.BadParameter(f"Invalid uncertainty format: {p}")
             key, value = p.split("=", 1)
-            try:
-                new_value = json.loads(value)
-            except json.JSONDecodeError:
-                new_value = value
+            new_value = _parse_cli_value(value)
             old_value = target_solution.parameter_uncertainties.get(key)
             if old_value != new_value:
                 changes.append(f"Update uncertainty {key}: {old_value} {arrow} {new_value}")
