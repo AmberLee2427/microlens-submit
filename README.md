@@ -48,11 +48,13 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
 1. Initialize your project:
 
    ```bash
-   microlens-submit init --team-name "Planet Pounders" --tier "experienced"
-   # if a project directory was provided to `init`, you should now `cd` into that project
+   microlens-submit init --team-name "Planet Pounders" --tier "experienced" ./my_submission
+   cd ./my_submission
    ```
 
-   To pass validation, you need to have provided a `repo_url` and `hardware_info` to the project and have a git project initialized in your sumission-project directory.
+   If you prefer to initialize inside an existing folder, run `microlens-submit init` without a path after `cd` into it.
+
+   To pass validation, you need to have provided a `repo_url` and `hardware_info` to the project and have a git project initialized in your sumission-project directory. On Roman Nexus, you can use `microlens-submit nexus-init` to auto-populate hardware info.
 
    ```bash
    microlens-submit set-repo-url <url> ./

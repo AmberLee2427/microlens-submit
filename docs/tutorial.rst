@@ -38,6 +38,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. note::
       If you need to update your team name, tier, or other top-level submission info later, you can simply re-run ``microlens-submit init`` in the same project directory. This will overwrite the ``submission.json`` metadata with your new values, but will not affect your events or solutions. It's a quick way to fix mistakes without editing the JSON file directly.
+      If you pass a project path, ``init`` creates that directory. Run subsequent commands from inside it (``cd /path/to/project``), or re-run ``init`` without a path while already inside the project directory.
 
    This creates the project directory structure and initializes the submission metadata.
 
@@ -51,6 +52,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    Before validation and export, set your repository URL and hardware details.
    GPU information is optional (Roman Nexus nodes are CPU-only), so omit it if
    not applicable.
+   If you are working on Roman Nexus, you can use ``nexus-init`` instead of
+   ``init`` to auto-populate hardware info.
 
    .. code-block:: bash
 

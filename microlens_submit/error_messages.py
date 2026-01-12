@@ -76,7 +76,8 @@ def get_parameter_suggestions(model_type: str, user_param: str) -> List[str]:
     for canonical, typos in common_typos.items():
         for typo in typos:
             if user_param.lower() == typo.lower():
-                suggestions.append(f"Did you mean '{canonical}' instead of '{user_param}'?")
+                if user_param != canonical:
+                    suggestions.append(f"Did you mean '{canonical}' instead of '{user_param}'?")
     # Also suggest case sensitivity if relevant
     for canonical in common_typos.keys():
         if user_param.lower() == canonical.lower() and user_param != canonical:

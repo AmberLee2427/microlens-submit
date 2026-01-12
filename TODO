@@ -1,25 +1,28 @@
 ## Beta-Test Edits
 - [ ] `remove_event()` function (very low priority)
 - [ ] Window 11 text editior
-- [ ] Quickstart/tutorial:
-  - [ ] cd to project directory
+- [x] Quickstart/tutorial:
+  - [x] cd to project directory
     or
-  - [ ] init withour name inside the existing project folder
-  - [ ] must include repo
-  - [ ] must include hardware info
+  - [x] init without name inside the existing project folder
+    and
+  - [x] must include repo
+    and
+  - [x] must include hardware info
     or
-  - [ ] nexus init
+  - [x] nexus init
 - [ ] required venv with windows (huh? who uses windows anyway?)
     - [ ] export location-of-script to PATH
 - [x] add GPU section to hardware info
 - [ ] auto populate hardware info
 - [x] ".001" gets interpreted as a string
-- [ ] nexus init gives hardware warning and it doesn't need to
+- [x] nexus init gives hardware warning and it doesn't need to
 - [ ] nexus dosiers (with submission in /teams/*) not displaying images
 - [x] "Experienced' tier not "Advanced"
 - [ ] validate physical parameters
-- [ ] "piEN (instead of piEN)" when piEN was missing
+- [x] "piEN (instead of piEN)" when piEN was missing
 - [ ] additional model types
+- [ ] git and submission in different locations (add git_dir)
 - [x] Windows build in workflow
 - [x] Release Workflow
 - [x] Wheel build CI
