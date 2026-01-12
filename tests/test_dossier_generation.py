@@ -59,7 +59,7 @@ def main():
     print("\n📁 Creating test submission project...")
 
     # Initialize the project
-    run_command("microlens-submit init --team-name 'Test Team Alpha' --tier 'advanced' " + str(project_dir))
+    run_command("microlens-submit init --team-name 'Test Team Alpha' --tier 'experienced' " + str(project_dir))
 
     print("\n🔗 Setting GitHub repository URL...")
 

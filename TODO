@@ -27,6 +27,7 @@
 - [x] Windows build in workflow
 - [x] Release Workflow
 - [x] Wheel build CI
+- [x] Unhelpful error when band not supoplied but a flux value is
 
 
 ## Conda Forge

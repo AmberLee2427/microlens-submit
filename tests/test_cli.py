@@ -1047,7 +1047,7 @@ def test_cli_generate_dossier():
 
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "DossierTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "DossierTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Set GitHub repository URL
@@ -1087,7 +1087,7 @@ def test_cli_generate_dossier_selective_event():
     """Test generate-dossier --event-id flag generates only specific event page."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "SelectiveTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "SelectiveTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Add solutions to multiple events
@@ -1156,7 +1156,7 @@ def test_cli_generate_dossier_selective_solution():
     """Test generate-dossier --solution-id flag generates only specific solution page."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "SolutionTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "SolutionTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Add multiple solutions to same event
@@ -1240,7 +1240,7 @@ def test_cli_generate_dossier_invalid_event():
     """Test generate-dossier --event-id with invalid event ID returns error."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Try to generate dossier for non-existent event
@@ -1253,7 +1253,7 @@ def test_cli_generate_dossier_invalid_solution():
     """Test generate-dossier --solution-id with invalid solution ID returns error."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "ErrorTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Try to generate dossier for non-existent solution
@@ -1273,7 +1273,7 @@ def test_cli_generate_dossier_full_generation():
     """Test generate-dossier without flags generates complete dossier."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "FullTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "FullTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Add solutions to multiple events
@@ -1340,7 +1340,7 @@ def test_cli_generate_dossier_priority_flags():
     """Test that --solution-id takes priority over --event-id when both are provided."""
     with runner.isolated_filesystem():
         # Initialize project
-        result = runner.invoke(app, ["init", "--team-name", "PriorityTesters", "--tier", "standard"])
+        result = runner.invoke(app, ["init", "--team-name", "PriorityTesters", "--tier", "beginner"])
         assert result.exit_code == 0
 
         # Add a solution

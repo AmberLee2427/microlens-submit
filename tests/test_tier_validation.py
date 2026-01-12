@@ -18,8 +18,8 @@ def test_get_available_tiers():
     tiers = get_available_tiers()
     assert isinstance(tiers, list)
     assert len(tiers) > 0
-    assert "standard" in tiers
-    assert "advanced" in tiers
+    assert "beginner" in tiers
+    assert "experienced" in tiers
     assert "test" in tiers
     assert "2018-test" in tiers
     assert "None" in tiers
@@ -27,9 +27,9 @@ def test_get_available_tiers():
 
 def test_get_tier_description():
     """Test getting tier descriptions."""
-    desc = get_tier_description("standard")
+    desc = get_tier_description("beginner")
     assert isinstance(desc, str)
-    assert "Standard challenge tier" in desc
+    assert "Beginner challenge tier" in desc
 
     desc = get_tier_description("None")
     assert "No validation tier" in desc
@@ -40,11 +40,11 @@ def test_get_tier_description():
 
 def test_get_tier_event_list():
     """Test getting event lists for tiers."""
-    events = get_tier_event_list("standard")
+    events = get_tier_event_list("beginner")
     assert isinstance(events, set)
-    assert "EVENT001" in events
-    assert "EVENT002" in events
-    assert "EVENT003" in events
+    assert "rmdc26_0000" in events
+    assert "rmdc26_0001" in events
+    assert "rmdc26_0200" in events
 
     events = get_tier_event_list("None")
     assert isinstance(events, set)
@@ -57,14 +57,15 @@ def test_get_tier_event_list():
 def test_validate_event_id():
     """Test event ID validation."""
     # Test valid events
-    assert validate_event_id("EVENT001", "standard")
-    assert validate_event_id("EVENT001", "advanced")
+    assert validate_event_id("rmdc26_0000", "beginner")
+    assert validate_event_id("rmdc26_0000", "experienced")
     assert validate_event_id("evt", "test")
     assert validate_event_id("2018-EVENT-001", "2018-test")
+    assert validate_event_id("ulwdc1_293", "2018-test")
 
     # Test invalid events
-    assert not validate_event_id("INVALID_EVENT", "standard")
-    assert not validate_event_id("EVENT999", "advanced")
+    assert not validate_event_id("INVALID_EVENT", "beginner")
+    assert not validate_event_id("rmdc26_2001", "experienced")
 
     # Test None tier and invalid tiers (should always return True)
     assert validate_event_id("ANY_EVENT", "None")
@@ -76,35 +77,35 @@ def test_validate_event_id():
 def test_get_event_validation_error():
     """Test getting validation error messages."""
     # Test valid events (should return None)
-    assert get_event_validation_error("EVENT001", "standard") is None
+    assert get_event_validation_error("rmdc26_0000", "beginner") is None
     assert get_event_validation_error("ANY_EVENT", "None") is None
     assert get_event_validation_error("ANY_EVENT", "invalid-tier") is None
 
     # Test invalid events
-    error = get_event_validation_error("INVALID_EVENT", "standard")
+    error = get_event_validation_error("INVALID_EVENT", "beginner")
     assert isinstance(error, str)
     assert "INVALID_EVENT" in error
-    assert "standard" in error
-    assert "Standard challenge tier" in error
-    assert "EVENT001" in error  # Should list valid events
+    assert "beginner" in error
+    assert "Beginner challenge tier" in error
+    assert "rmdc26_0000" in error  # Should list valid events
 
-    error = get_event_validation_error("EVENT999", "advanced")
+    error = get_event_validation_error("rmdc26_2001", "experienced")
     assert isinstance(error, str)
-    assert "EVENT999" in error
-    assert "advanced" in error
-    assert "Advanced challenge tier" in error
+    assert "rmdc26_2001" in error
+    assert "experienced" in error
+    assert "Experienced challenge tier" in error
 
 
 def test_tier_hierarchy():
     """Test that higher tiers include events from lower tiers."""
-    standard_events = get_tier_event_list("standard")
-    advanced_events = get_tier_event_list("advanced")
+    standard_events = get_tier_event_list("beginner")
+    advanced_events = get_tier_event_list("experienced")
 
-    # Standard events should be in advanced
+    # Beginner events should be in experienced
     for event in standard_events:
         assert event in advanced_events
 
-    # Advanced should have more events than standard
+    # Experienced should have more events than beginner
     assert len(advanced_events) >= len(standard_events)
 
 
@@ -127,35 +128,35 @@ def test_submission_validation_with_invalid_events(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
 
-    # Set tier to standard (which only allows EVENT001, EVENT002, EVENT003)
-    sub.tier = "standard"
+    # Set tier to beginner
+    sub.tier = "beginner"
     sub.team_name = "Test Team"
     sub.repo_url = "https://github.com/test/team"
     sub.hardware_info = {"cpu": "test"}
 
     # Add a valid event
-    evt1 = sub.get_event("EVENT001")
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    # Add an invalid event (not in standard tier)
-    evt2 = sub.get_event("EVENT999")
+    # Add an invalid event (not in beginner tier)
+    evt2 = sub.get_event("rmdc26_9999")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Run validation - should catch the invalid event
     warnings = sub.run_validation()
 
     # Should have a warning about the invalid event
-    invalid_event_warnings = [w for w in warnings if "EVENT999" in w and "not valid for tier" in w]
+    invalid_event_warnings = [w for w in warnings if "rmdc26_9999" in w and "not valid for tier" in w]
     assert len(invalid_event_warnings) > 0, f"Expected validation warning for invalid event, got: {warnings}"
 
     # Should not have warnings about the valid event being invalid for tier
-    # The warning message mentions EVENT001 in the list of valid events, but EVENT001 itself is not the
+    # The warning message mentions rmdc26_0000 in the list of valid events, but rmdc26_0000 itself is not the
     # subject of the warning
-    # So we should check that there are no warnings that start with "Event 'EVENT001'"
-    event001_as_subject_warnings = [w for w in warnings if w.startswith("Event 'EVENT001'")]
+    # So we should check that there are no warnings that start with "Event 'rmdc26_0000'"
+    event001_as_subject_warnings = [w for w in warnings if w.startswith("Event 'rmdc26_0000'")]
     assert (
         len(event001_as_subject_warnings) == 0
-    ), f"Should not have tier validation warning for valid event EVENT001, got: {warnings}"
+    ), f"Should not have tier validation warning for valid event rmdc26_0000, got: {warnings}"
 
 
 def test_submission_validation_with_valid_events(tmp_path):
@@ -163,20 +164,20 @@ def test_submission_validation_with_valid_events(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
 
-    # Set tier to standard
-    sub.tier = "standard"
+    # Set tier to beginner
+    sub.tier = "beginner"
     sub.team_name = "Test Team"
     sub.repo_url = "https://github.com/test/team"
     sub.hardware_info = {"cpu": "test"}
 
-    # Add only valid events for standard tier
-    evt1 = sub.get_event("EVENT001")
+    # Add only valid events for beginner tier
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt2 = sub.get_event("EVENT002")
+    evt2 = sub.get_event("rmdc26_0001")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt3 = sub.get_event("EVENT003")
+    evt3 = sub.get_event("rmdc26_0002")
     evt3.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Run validation - should not have tier validation warnings
@@ -229,7 +230,7 @@ def test_submission_validation_with_invalid_tier(tmp_path):
     sub.hardware_info = {"cpu": "test"}
 
     # Add any events
-    evt1 = sub.get_event("EVENT001")
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Run validation - should change tier to "None" and warn about the change
@@ -252,18 +253,18 @@ def test_export_with_invalid_events_should_fail(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
 
-    # Set tier to standard
-    sub.tier = "standard"
+    # Set tier to beginner
+    sub.tier = "beginner"
     sub.team_name = "Test Team"
     sub.repo_url = "https://github.com/test/team"
     sub.hardware_info = {"cpu": "test"}
 
     # Add a valid event
-    evt1 = sub.get_event("EVENT001")
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Add an invalid event
-    evt2 = sub.get_event("EVENT999")
+    evt2 = sub.get_event("rmdc26_9999")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Save the submission first
@@ -279,18 +280,18 @@ def test_save_with_invalid_events_should_warn(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
 
-    # Set tier to standard
-    sub.tier = "standard"
+    # Set tier to beginner
+    sub.tier = "beginner"
     sub.team_name = "Test Team"
     sub.repo_url = "https://github.com/test/team"
     sub.hardware_info = {"cpu": "test"}
 
     # Add a valid event
-    evt1 = sub.get_event("EVENT001")
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Add an invalid event
-    evt2 = sub.get_event("EVENT999")
+    evt2 = sub.get_event("rmdc26_9999")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Try to save - should warn but not fail due to validation
@@ -305,7 +306,7 @@ def test_save_with_invalid_events_should_warn(tmp_path):
     output = f.getvalue()
 
     # Should have a warning about the invalid event
-    assert "EVENT999" in output
+    assert "rmdc26_9999" in output
     assert "not valid for tier" in output
     assert "Save completed with validation warnings" in output
 
@@ -315,17 +316,17 @@ def test_export_with_valid_events_should_succeed(tmp_path):
     project = tmp_path / "proj"
     sub = load(str(project))
 
-    # Set tier to standard
-    sub.tier = "standard"
+    # Set tier to beginner
+    sub.tier = "beginner"
     sub.team_name = "Test Team"
     sub.repo_url = "https://github.com/test/team"
     sub.hardware_info = {"cpu": "test"}
 
-    # Add only valid events for standard tier
-    evt1 = sub.get_event("EVENT001")
+    # Add only valid events for beginner tier
+    evt1 = sub.get_event("rmdc26_0000")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt2 = sub.get_event("EVENT002")
+    evt2 = sub.get_event("rmdc26_0001")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Save the submission

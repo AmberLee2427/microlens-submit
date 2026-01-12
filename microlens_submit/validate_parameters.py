@@ -57,6 +57,7 @@ Note:
     custom parameters and future model types.
 """
 
+import re
 from typing import Any, Dict, List, Optional
 
 MODEL_DEFINITIONS = {
@@ -94,6 +95,27 @@ MODEL_DEFINITIONS = {
     #     "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]
     # },
 }
+
+_FLUX_PARAM_RE = re.compile(r"^F(?P<band>\\d+)_S(?:[12])?$|^F(?P<band_b>\\d+)_B$")
+
+
+def _find_flux_params(parameters: Dict[str, Any]) -> List[str]:
+    """Return a list of parameters that look like band-specific flux terms."""
+    return [param for param in parameters.keys() if _FLUX_PARAM_RE.match(param)]
+
+
+def _infer_bands_from_flux_params(flux_params: List[str]) -> List[str]:
+    """Infer band identifiers from flux parameter names."""
+    bands = set()
+    for param in flux_params:
+        match = _FLUX_PARAM_RE.match(param)
+        if not match:
+            continue
+        band = match.group("band") or match.group("band_b")
+        if band is not None:
+            bands.add(band)
+    return sorted(bands)
+
 
 HIGHER_ORDER_EFFECT_DEFINITIONS = {
     "parallax": {
@@ -504,6 +526,16 @@ def check_solution_completeness(
                 messages.append(f"Reference time (t_ref) required for effect '{effect}'")
 
     # Validate band-specific parameters
+    flux_params = _find_flux_params(parameters)
+    if flux_params and not bands:
+        inferred_bands = _infer_bands_from_flux_params(flux_params)
+        example_bands = inferred_bands or ["0"]
+        messages.append(
+            "Flux parameters were provided but bands is empty. "
+            "Set bands to match your flux terms (Python API: solution.bands = "
+            f"{example_bands!r})."
+        )
+
     if bands:
         required_flux_params = get_required_flux_params(model_type, bands)
         for param in required_flux_params:
@@ -530,6 +562,8 @@ def check_solution_completeness(
 
     # Check for invalid parameters
     invalid_params = set(parameters.keys()) - all_valid_params
+    if flux_params and not bands:
+        invalid_params -= set(flux_params)
     for param in invalid_params:
         messages.append(f"Warning: Parameter '{param}' not recognized for model type " f"'{model_type}'")
 
@@ -856,6 +890,16 @@ def validate_solution_rigorously(
             if not isinstance(band, str):
                 messages.append(f"band {i} must be a string, got {type(band).__name__}")
 
+    flux_params = _find_flux_params(parameters)
+    if flux_params and not bands:
+        inferred_bands = _infer_bands_from_flux_params(flux_params)
+        example_bands = inferred_bands or ["0"]
+        messages.append(
+            "Flux parameters were provided but bands is empty. "
+            "Set bands to match your flux terms (Python API: solution.bands = "
+            f"{example_bands!r})."
+        )
+
     # 3. Check if t_ref is provided when not needed
     t_ref_required = False
     for effect in higher_order_effects:
@@ -892,6 +936,8 @@ def validate_solution_rigorously(
     # 5. Check for invalid parameters (unless model_type or effects are "other")
     if model_type != "other" and "other" not in higher_order_effects:
         invalid_params = set(parameters.keys()) - valid_params
+        if flux_params and not bands:
+            invalid_params -= set(flux_params)
         for param in invalid_params:
             messages.append(f"Invalid parameter '{param}' for model type '{model_type}'")
 
