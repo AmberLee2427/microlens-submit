@@ -34,7 +34,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-      microlens-submit init --team-name "Your Team" --tier "standard" /path/to/project
+      microlens-submit init --team-name "Your Team" --tier "beginner" /path/to/project
 
    .. note::
       If you need to update your team name, tier, or other top-level submission info later, you can simply re-run ``microlens-submit init`` in the same project directory. This will overwrite the ``submission.json`` metadata with your new values, but will not affect your events or solutions. It's a quick way to fix mistakes without editing the JSON file directly.
@@ -43,10 +43,28 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Options:**
    - ``--team-name``: Your team's name (required)
-   - ``--tier``: Challenge tier ("standard" or "advanced")
+   - ``--tier``: Challenge tier ("beginner" or "experienced")
    - Project path: Where to create the project directory
 
-2. **Add your first solution**
+2. **Record repository and hardware info**
+
+   Before validation and export, set your repository URL and hardware details.
+   GPU information is optional (Roman Nexus nodes are CPU-only), so omit it if
+   not applicable.
+
+   .. code-block:: bash
+
+      microlens-submit set-repo-url https://github.com/team/microlens-analysis /path/to/project
+
+      microlens-submit set-hardware-info \
+          --cpu-details "Intel Xeon Gold 6248" \
+          --ram-gb 128 \
+          --gpu "NVIDIA A100" \
+          --gpu-count 1 \
+          --gpu-memory-gb 40 \
+          /path/to/project
+
+3. **Add your first solution**
 
    Add a microlensing solution with all required parameters:
 

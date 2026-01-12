@@ -48,7 +48,7 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
 1. Initialize your project:
 
    ```bash
-   microlens-submit init --team-name "Planet Pounders" --tier "advanced"
+   microlens-submit init --team-name "Planet Pounders" --tier "experienced"
    # if a project directory was provided to `init`, you should now `cd` into that project
    ```
 
@@ -103,7 +103,7 @@ import microlens_submit
 # Load or create the project
 sub = microlens_submit.load(project_path="./my_challenge_submission")
 sub.team_name = "Planet Pounders"
-sub.tier = "advanced"
+sub.tier = "experienced"
 
 # Get an event and add a solution
 evt = sub.get_event("ogle-2025-blg-0042")

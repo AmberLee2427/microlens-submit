@@ -1,0 +1,32 @@
+## Beta-Test Edits
+- [ ] `remove_event()` function (very low priority)
+- [ ] Window 11 text editior
+- [ ] Quickstart/tutorial:
+  - [ ] cd to project directory
+    or
+  - [ ] init withour name inside the existing project folder
+  - [ ] must include repo
+  - [ ] must include hardware info
+    or
+  - [ ] nexus init
+- [ ] required venv with windows (huh? who uses windows anyway)
+    - [ ] export location-of-script to PATH
+- [x] add GPU section to hardware info
+- [ ] auto populate hardware info
+- [ ] ".001" gets interpreted as a string
+- [ ] nexus init gives hardware warning and it doesn't need to
+- [ ] nexus dosiers (with submission in /teams/*) not displaying images
+- [x] "Experienced' tier not "Advanced"
+- [ ] validate physical parameters
+- [ ] "piEN (instead of piEN)" when piEN was missing
+- [ ] additional model types
+- [x] Windows build in workflow
+- [x] Release Workflow
+- [x] Wheel build CI
+
+
+## Conda Forge
+- [ ] Windows installer isn't made?
+- [ ] related to do's from other projects:
+  - [ ] MulensModel feedstock
+  - [ ] VBMicrolensing feedstock

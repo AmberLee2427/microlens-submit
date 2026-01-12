@@ -17,7 +17,7 @@ and scripted usage patterns.
 
 **Example Workflow:**
     # Initialize a new project
-    microlens-submit init --team-name "Team Alpha" --tier "advanced" ./my_project
+    microlens-submit init --team-name "Team Alpha" --tier "experienced" ./my_project
 
     # Add a solution
     microlens-submit add-solution EVENT001 1S1L ./my_project \

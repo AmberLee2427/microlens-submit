@@ -11,9 +11,8 @@ The module defines:
 - Tier-specific validation logic
 
 **Supported Tiers:**
-- basic: Basic challenge tier with limited event set
-- standard: Standard challenge tier with full event set
-- advanced: Advanced challenge tier with all events
+- beginner: Beginner challenge tier with limited event set
+- experienced: Experienced challenge tier with full event set
 - test: Testing tier for development
 - 2018-test: 2018 test events tier
 - None: No validation tier (skips event validation)
@@ -22,11 +21,11 @@ Example:
     >>> from microlens_submit.tier_validation import validate_event_id, TIER_DEFINITIONS
     >>>
     >>> # Check if an event is valid for a tier
-    >>> is_valid = validate_event_id("EVENT001", "standard")
+    >>> is_valid = validate_event_id("EVENT001", "beginner")
     >>> if is_valid:
-    ...     print("Event is valid for standard tier")
-    >>> else:
-    ...     print("Event is not valid for standard tier")
+    ...     print("Event is valid for beginner tier")
+    ... else:
+    ...     print("Event is not valid for beginner tier")
 
     >>> # Get available tiers
     >>> print("Available tiers:", list(TIER_DEFINITIONS.keys()))
@@ -40,19 +39,22 @@ from typing import Dict, List, Optional, Set
 
 # Tier definitions with their associated event lists
 TIER_DEFINITIONS = {
-    "standard": {
-        "description": "Standard challenge tier with limited event set",
-        "event_list": [
-            # Add standard tier events here
-            "EVENT001",
-            "EVENT002",
-            "EVENT003",
-        ],
+    "beginner": {
+        "description": "Beginner challenge tier with limited event set",
+        "event_prefix": "rmdc26_",
+        "event_range": [0, 200],
     },
-    "advanced": {
-        "description": "Advanced challenge tier with full event set",
+    "experienced": {
+        "description": "Experienced challenge tier with full event set",
+        "event_prefix": "rmdc26_",
+        "event_range": [0, 2000],
+    },
+    "test": {
+        "description": "Testing tier for development",
         "event_list": [
-            # Add advanced tier events here
+            # Add test events here
+            "evt",
+            "test-event",
             "EVENT001",
             "EVENT002",
             "EVENT003",
@@ -62,16 +64,10 @@ TIER_DEFINITIONS = {
             "EVENT007",
         ],
     },
-    "test": {
-        "description": "Testing tier for development",
-        "event_list": [
-            # Add test events here
-            "evt",
-            "test-event",
-        ],
-    },
     "2018-test": {
         "description": "2018 test events tier",
+        "event_prefix": "ulwdc1_",
+        "event_range": [0, 293],
         "event_list": [
             # Add 2018 test events here
             "2018-EVENT-001",
@@ -101,8 +97,8 @@ def get_tier_event_list(tier: str) -> Set[str]:
         ValueError: If the tier is not defined.
 
     Example:
-        >>> events = get_tier_event_list("standard")
-        >>> print(f"Standard tier has {len(events)} events")
+        >>> events = get_tier_event_list("beginner")
+        >>> print(f"Beginner tier has {len(events)} events")
         >>> print("EVENT001" in events)
     """
     if tier not in TIER_DEFINITIONS:
@@ -110,7 +106,17 @@ def get_tier_event_list(tier: str) -> Set[str]:
 
     # Use cache for performance
     if tier not in _EVENT_LIST_CACHE:
-        _EVENT_LIST_CACHE[tier] = set(TIER_DEFINITIONS[tier]["event_list"])
+        event_list = list(TIER_DEFINITIONS[tier].get("event_list", []))
+        if "event_prefix" in TIER_DEFINITIONS[tier] and "event_range" in TIER_DEFINITIONS[tier]:
+            event_prefix = str(TIER_DEFINITIONS[tier]["event_prefix"])
+            event_range = tuple(TIER_DEFINITIONS[tier]["event_range"])
+            for i in range(event_range[0], event_range[1] + 1):
+                if tier == "2018-test":
+                    event_list.append(f"{event_prefix}{i:03d}")
+                else:
+                    event_list.append(f"{event_prefix}{i:04d}")
+
+        _EVENT_LIST_CACHE[tier] = set(event_list)
 
     return _EVENT_LIST_CACHE[tier]
 
@@ -126,11 +132,11 @@ def validate_event_id(event_id: str, tier: str) -> bool:
         bool: True if the event ID is valid for the tier, False otherwise.
 
     Example:
-        >>> is_valid = validate_event_id("EVENT001", "standard")
+        >>> is_valid = validate_event_id("EVENT001", "beginner")
         >>> if is_valid:
-        ...     print("Event is valid for standard tier")
+        ...     print("Event is valid for beginner tier")
         >>> else:
-        ...     print("Event is not valid for standard tier")
+        ...     print("Event is not valid for beginner tier")
     """
     # Skip validation for "None" tier or if tier is not defined
     if tier == "None" or tier not in TIER_DEFINITIONS:
@@ -151,7 +157,7 @@ def get_event_validation_error(event_id: str, tier: str) -> Optional[str]:
         Optional[str]: Error message if the event is invalid, None if valid.
 
     Example:
-        >>> error = get_event_validation_error("INVALID_EVENT", "standard")
+        >>> error = get_event_validation_error("INVALID_EVENT", "beginner")
         >>> if error:
         ...     print(f"Validation error: {error}")
         >>> else:
@@ -199,8 +205,8 @@ def get_tier_description(tier: str) -> str:
         ValueError: If the tier is not defined.
 
     Example:
-        >>> desc = get_tier_description("standard")
-        >>> print(f"Standard tier: {desc}")
+        >>> desc = get_tier_description("beginner")
+        >>> print(f"Beginner tier: {desc}")
     """
     if tier not in TIER_DEFINITIONS:
         raise ValueError(f"Unknown tier: {tier}. Available tiers: {list(TIER_DEFINITIONS.keys())}")

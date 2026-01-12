@@ -38,7 +38,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    pip install microlens-submit
 
    # Initialize your project
-   microlens-submit init --team-name "Your Team" --tier "standard" ./my_submission
+   microlens-submit init --team-name "Your Team" --tier "beginner" ./my_submission
 
    # Add your first solution
    microlens-submit add-solution EVENT123 1S1L \

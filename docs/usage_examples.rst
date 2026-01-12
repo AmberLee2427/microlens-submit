@@ -17,7 +17,7 @@ Quick Start
     >>> # Or create a new submission
     >>> submission = Submission()
     >>> submission.team_name = "Team Alpha"
-    >>> submission.tier = "advanced"
+    >>> submission.tier = "experienced"
     >>> submission.save("./my_project")
     >>>
     >>> # Add a solution to an event
@@ -36,7 +36,7 @@ Command Line Usage
 .. code-block:: bash
 
     # Initialize a new project
-    microlens-submit init --team-name "Team Alpha" --tier "advanced" ./project
+    microlens-submit init --team-name "Team Alpha" --tier "experienced" ./project
 
     # Add a solution
     microlens-submit add-solution EVENT001 1S1L ./project \
@@ -82,7 +82,7 @@ Extended Example
     >>> # Create a new submission project
     >>> submission = Submission()
     >>> submission.team_name = "Team Alpha"
-    >>> submission.tier = "advanced"
+    >>> submission.tier = "experienced"
     >>> submission.repo_url = "https://github.com/team-alpha/microlens-analysis"
     >>>
     >>> # Add hardware information

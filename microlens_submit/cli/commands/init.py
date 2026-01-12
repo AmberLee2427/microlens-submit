@@ -29,7 +29,7 @@ def init(
 
     Args:
         team_name: Name of the participating team (e.g., "Team Alpha").
-        tier: Challenge tier level (e.g., "basic", "advanced").
+        tier: Challenge tier level (e.g., "beginner", "experienced").
         project_path: Directory where the project will be created.
             Defaults to current directory if not specified.
 
@@ -38,10 +38,10 @@ def init(
 
     Example:
         # Create project in current directory
-        microlens-submit init --team-name "Team Alpha" --tier "advanced"
+        microlens-submit init --team-name "Team Alpha" --tier "experienced"
 
         # Create project in specific directory
-        microlens-submit init --team-name "Team Beta" --tier "basic" ./my_submission
+        microlens-submit init --team-name "Team Beta" --tier "beginner" ./my_submission
 
         # Project structure created:
         # ./my_submission/
@@ -134,13 +134,13 @@ def nexus_init(
 
     Args:
         team_name: Name of the participating team (e.g., "Team Alpha").
-        tier: Challenge tier level (e.g., "basic", "advanced").
+        tier: Challenge tier level (e.g., "beginner", "experienced").
         project_path: Directory where the project will be created.
             Defaults to current directory if not specified.
 
     Example:
         # Initialize project with Nexus platform info
-        microlens-submit nexus-init --team-name "Team Alpha" --tier "advanced" ./project
+        microlens-submit nexus-init --team-name "Team Alpha" --tier "experienced" ./project
 
         # This will automatically detect:
         # - CPU model from /proc/cpuinfo

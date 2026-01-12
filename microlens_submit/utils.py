@@ -36,7 +36,7 @@ def load(project_path: str) -> Submission:
         >>>
         >>> # Set submission metadata
         >>> submission.team_name = "Team Alpha"
-        >>> submission.tier = "advanced"
+        >>> submission.tier = "experienced"
         >>> submission.repo_url = "https://github.com/team/repo"
         >>>
         >>> # Add an event and solution

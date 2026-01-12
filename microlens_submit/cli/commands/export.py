@@ -99,6 +99,9 @@ def set_hardware_info(
     cpu_details: Optional[str] = typer.Option(None, "--cpu-details", help="Detailed CPU information"),
     memory_gb: Optional[float] = typer.Option(None, "--memory-gb", help="Memory in GB"),
     ram_gb: Optional[float] = typer.Option(None, "--ram-gb", help="RAM in GB (alternative to --memory-gb)"),
+    gpu: Optional[str] = typer.Option(None, "--gpu", help="GPU model/description"),
+    gpu_count: Optional[int] = typer.Option(None, "--gpu-count", help="Number of GPUs"),
+    gpu_memory_gb: Optional[float] = typer.Option(None, "--gpu-memory-gb", help="GPU memory per device in GB"),
     platform: Optional[str] = typer.Option(
         None,
         "--platform",
@@ -152,6 +155,24 @@ def set_hardware_info(
         if sub.hardware_info.get("nexus_image") != nexus_image:
             changes.append(f"Set nexus_image: {nexus_image}")
             sub.hardware_info["nexus_image"] = nexus_image
+
+    if any(value is not None for value in (gpu, gpu_count, gpu_memory_gb)):
+        gpu_info = sub.hardware_info.get("gpu")
+        if not isinstance(gpu_info, dict):
+            gpu_info = {}
+        if gpu is not None:
+            if gpu_info.get("model") != gpu:
+                changes.append(f"Set gpu.model: {gpu}")
+                gpu_info["model"] = gpu
+        if gpu_count is not None:
+            if gpu_info.get("count") != gpu_count:
+                changes.append(f"Set gpu.count: {gpu_count}")
+                gpu_info["count"] = gpu_count
+        if gpu_memory_gb is not None:
+            if gpu_info.get("memory_gb") != gpu_memory_gb:
+                changes.append(f"Set gpu.memory_gb: {gpu_memory_gb}")
+                gpu_info["memory_gb"] = gpu_memory_gb
+        sub.hardware_info["gpu"] = gpu_info
 
     # Show dry run results
     if dry_run:

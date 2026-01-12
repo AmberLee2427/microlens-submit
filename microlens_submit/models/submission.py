@@ -31,7 +31,7 @@ class Submission(BaseModel):
     Attributes:
         project_path: Root directory where submission files are stored.
         team_name: Name of the participating team (required for validation).
-        tier: Challenge tier for the submission (e.g., "basic", "advanced") (required for validation).
+        tier: Challenge tier for the submission (e.g., "beginner", "experienced") (required for validation).
         hardware_info: Dictionary describing the compute platform (required for validation).
         events: Mapping of event IDs to :class:`Event` instances.
         repo_url: GitHub repository URL for the team codebase (required for validation).
@@ -44,7 +44,7 @@ class Submission(BaseModel):
         >>>
         >>> # Set submission metadata
         >>> submission.team_name = "Team Alpha"
-        >>> submission.tier = "advanced"
+        >>> submission.tier = "experienced"
         >>> submission.repo_url = "https://github.com/team/microlens-submit"
         >>>
         >>> # Add events and solutions
