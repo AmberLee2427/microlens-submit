@@ -275,6 +275,10 @@ Global metadata for the entire submission.
      - string
      - Yes
      - GitHub repository URL for the team codebase.
+   * - ``git_dir``
+     - string
+     - No
+     - Optional path to the git working tree (used for dirty checks).
    * - ``hardware_info``
      - dict
      - Yes
@@ -288,6 +292,7 @@ Global metadata for the entire submission.
      "team_name": "Planet Pounders",
      "tier": "experienced",
      "repo_url": "https://github.com/planet-pounders/microlens-analysis",
+     "git_dir": "/path/to/microlens-analysis",
      "hardware_info": {
        "cpu": "Intel i9",
        "ram_gb": 64,

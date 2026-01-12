@@ -95,6 +95,25 @@ def set_repo_url(
     )
 
 
+def set_git_dir(
+    git_dir: Path = typer.Argument(..., help="Path to the git working tree"),
+    project_path: Path = typer.Argument(Path("."), help="Project directory"),
+) -> None:
+    """Set or update the git working tree path in the submission metadata."""
+    sub = load(str(project_path))
+    git_dir_path = git_dir.expanduser().resolve()
+    if not git_dir_path.exists():
+        raise typer.BadParameter(f"git_dir does not exist: {git_dir_path}")
+    sub.git_dir = str(git_dir_path)
+    sub.save()
+    console.print(
+        Panel(
+            f"Set git_dir to {git_dir_path} in {project_path}/submission.json",
+            style="bold green",
+        )
+    )
+
+
 def set_hardware_info(
     cpu: Optional[str] = typer.Option(None, "--cpu", help="CPU model/description"),
     cpu_details: Optional[str] = typer.Option(None, "--cpu-details", help="Detailed CPU information"),

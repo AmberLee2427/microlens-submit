@@ -59,6 +59,8 @@ You can pass ``--no-color`` to any command if your terminal does not support ANS
    ```bash
    microlens-submit set-repo-url <url> ./
    microlens-submit set-hardware-info --cpu-details "intel i7 xxx" --ram-gb 32 ./
+   # if your git repo lives elsewhere:
+   microlens-submit set-git-dir /path/to/repo ./
    ```
 2. Add a new solution to an event:
 

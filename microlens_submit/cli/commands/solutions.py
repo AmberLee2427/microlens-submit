@@ -267,7 +267,7 @@ def add_solution(
     sol.relative_probability = relative_probability
     sol.n_data_points = n_data_points
     if cpu_hours is not None or wall_time_hours is not None:
-        sol.set_compute_info(cpu_hours=cpu_hours, wall_time_hours=wall_time_hours)
+        sol.set_compute_info(cpu_hours=cpu_hours, wall_time_hours=wall_time_hours, git_dir=sub.git_dir)
     sol.lightcurve_plot_path = str(lightcurve_plot_path) if lightcurve_plot_path else None
     sol.lens_plane_plot_path = str(lens_plane_plot_path) if lens_plane_plot_path else None
     # Handle notes file logic
@@ -587,6 +587,7 @@ def edit_solution(
         target_solution.set_compute_info(
             cpu_hours=cpu_hours if cpu_hours is not None else old_cpu,
             wall_time_hours=(wall_time_hours if wall_time_hours is not None else old_wall),
+            git_dir=sub.git_dir,
         )
     if param:
         for p in param:

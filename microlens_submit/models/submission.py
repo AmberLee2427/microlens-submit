@@ -35,6 +35,7 @@ class Submission(BaseModel):
         hardware_info: Dictionary describing the compute platform (required for validation).
         events: Mapping of event IDs to :class:`Event` instances.
         repo_url: GitHub repository URL for the team codebase (required for validation).
+        git_dir: Optional path to the codebase (used for git metadata capture).
 
     Example:
         >>> from microlens_submit import load
@@ -82,6 +83,7 @@ class Submission(BaseModel):
     hardware_info: Optional[dict] = None
     events: Dict[str, Event] = Field(default_factory=dict)
     repo_url: Optional[str] = None
+    git_dir: Optional[str] = None
 
     def run_validation_warnings(self) -> List[str]:
         """Validate the submission and return warnings only (non-blocking issues).

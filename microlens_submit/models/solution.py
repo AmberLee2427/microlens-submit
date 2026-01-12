@@ -188,6 +188,7 @@ class Solution(BaseModel):
         self,
         cpu_hours: Optional[float] = None,
         wall_time_hours: Optional[float] = None,
+        git_dir: Optional[str] = None,
     ) -> None:
         """Record compute metadata and capture environment details.
 
@@ -199,6 +200,7 @@ class Solution(BaseModel):
         Args:
             cpu_hours: Total CPU time consumed by the model fit in hours.
             wall_time_hours: Real-world time consumed by the fit in hours.
+            git_dir: Optional path to the code repository for git metadata capture.
 
         Example:
             >>> solution = event.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1})
@@ -240,23 +242,27 @@ class Solution(BaseModel):
 
         # Capture Git repository information
         try:
+            git_cwd = Path(git_dir).expanduser().resolve() if git_dir else None
             commit = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
                 capture_output=True,
                 text=True,
                 check=True,
+                cwd=git_cwd,
             ).stdout.strip()
             branch = subprocess.run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
                 check=True,
+                cwd=git_cwd,
             ).stdout.strip()
             status = subprocess.run(
                 ["git", "status", "--porcelain"],
                 capture_output=True,
                 text=True,
                 check=True,
+                cwd=git_cwd,
             ).stdout.strip()
             self.compute_info["git_info"] = {
                 "commit": commit,

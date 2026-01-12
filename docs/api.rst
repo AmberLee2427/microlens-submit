@@ -46,6 +46,7 @@ The main container class that represents an entire microlensing challenge submis
       >>> submission.team_name = "Team Alpha"
       >>> submission.tier = "experienced"
       >>> submission.repo_url = "https://github.com/team-alpha/microlens-analysis"
+      >>> submission.git_dir = "/path/to/microlens-analysis"
       >>> # GPU info is optional; omit it for CPU-only environments.
       >>> submission.hardware_info = {
       ...     "cpu": "Intel i9",

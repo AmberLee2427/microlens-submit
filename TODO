@@ -23,7 +23,7 @@
 - [ ] validate physical parameters
 - [x] "piEN (instead of piEN)" when piEN was missing
 - [ ] additional model types
-- [ ] git and submission in different locations (add git_dir)
+- [x] git and submission in different locations (add git_dir)
 - [x] Windows build in workflow
 - [x] Release Workflow
 - [x] Wheel build CI
