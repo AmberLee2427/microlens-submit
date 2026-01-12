@@ -18,7 +18,7 @@
 - [ ] auto populate hardware info
 - [x] ".001" gets interpreted as a string
 - [x] nexus init gives hardware warning and it doesn't need to
-- [ ] nexus dosiers (with submission in /teams/*) not displaying images
+- [ ] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebook)
 - [x] "Experienced' tier not "Advanced"
 - [ ] validate physical parameters
 - [x] "piEN (instead of piEN)" when piEN was missing

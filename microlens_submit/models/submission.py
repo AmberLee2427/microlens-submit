@@ -9,10 +9,12 @@ import json
 import logging
 import math
 import os
+import platform
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import psutil
 from pydantic import BaseModel, Field
 
 from ..text_symbols import symbol
@@ -236,6 +238,11 @@ class Submission(BaseModel):
         if self.hardware_info is None:
             self.hardware_info = {}
         try:
+            self.hardware_info.setdefault("platform", platform.platform())
+            self.hardware_info.setdefault("os", platform.system())
+        except Exception as exc:
+            logging.debug("Failed to read platform info: %s", exc)
+        try:
             image = os.environ.get("JUPYTER_IMAGE_SPEC")
             if image:
                 self.hardware_info["nexus_image"] = image
@@ -264,6 +271,22 @@ class Submission(BaseModel):
                         break
         except OSError as exc:
             logging.debug("Failed to read /proc/meminfo: %s", exc)
+        try:
+            if "memory_gb" not in self.hardware_info:
+                mem_bytes = psutil.virtual_memory().total
+                self.hardware_info["memory_gb"] = round(mem_bytes / 1024**3, 2)
+        except Exception as exc:
+            logging.debug("Failed to read memory via psutil: %s", exc)
+        try:
+            if "cpu_details" not in self.hardware_info:
+                cpu = platform.processor() or platform.machine()
+                freq = psutil.cpu_freq()
+                if freq and cpu:
+                    self.hardware_info["cpu_details"] = f"{cpu} ({freq.max:.0f} MHz max)"
+                elif cpu:
+                    self.hardware_info["cpu_details"] = cpu
+        except Exception as exc:
+            logging.debug("Failed to read CPU via psutil: %s", exc)
 
     def _get_alias_lookup_path(self) -> Path:
         return Path(self.project_path) / "aliases.json"
