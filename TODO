@@ -15,7 +15,7 @@
 - [ ] required venv with windows (huh? who uses windows anyway?)
     - [ ] export location-of-script to PATH
 - [x] add GPU section to hardware info
-- [ ] auto populate hardware info
+- [x] auto populate hardware info
 - [x] ".001" gets interpreted as a string
 - [x] nexus init gives hardware warning and it doesn't need to
 - [ ] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebook)

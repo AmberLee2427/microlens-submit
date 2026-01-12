@@ -151,6 +151,10 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      # Then use the notes command
      microlens-submit notes <solution_id>
 
+   **Windows 11 tip:**
+   If you have VS Code installed, set ``EDITOR=code`` (the CLI will add ``--wait``).
+   Otherwise, the notes command will fall back to Notepad or your default app.
+
    **Alternative Editing Methods:**
 
    You can also edit notes directly or use the append method:

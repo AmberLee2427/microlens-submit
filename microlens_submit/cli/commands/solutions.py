@@ -3,6 +3,10 @@
 import json
 import os
 import re
+import shlex
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -33,6 +37,20 @@ def _parse_cli_value(value: str) -> Any:
             except ValueError:
                 pass
         return value
+
+
+def _run_editor(editor_cmd: str, notes_file: Path) -> bool:
+    parts = shlex.split(editor_cmd)
+    if not parts:
+        return False
+    if os.name == "nt" and parts[0].lower() in ("code", "code.exe"):
+        if "--wait" not in parts and "-w" not in parts:
+            parts.append("--wait")
+    try:
+        subprocess.run(parts + [str(notes_file)], check=False)
+        return True
+    except FileNotFoundError:
+        return False
 
 
 def _parse_pairs(pairs: Optional[List[str]]) -> Optional[Dict]:
@@ -657,21 +675,35 @@ def edit_notes(
             notes_file.parent.mkdir(parents=True, exist_ok=True)
             if not notes_file.exists():
                 notes_file.write_text("", encoding="utf-8")
-            editor = os.environ.get("EDITOR", None)
-            if editor:
-                os.system(f'{editor} "{notes_file}"')
+            editor = os.environ.get("EDITOR") or os.environ.get("VISUAL")
+            if editor and _run_editor(editor, notes_file):
+                return
+            fallbacks = ["nano", "vi", "vim", "code"]
+            if os.name == "nt":
+                fallbacks = ["code", "notepad", "notepad.exe"]
+            for fallback in fallbacks:
+                if shutil.which(fallback):
+                    if _run_editor(fallback, notes_file):
+                        return
+            if os.name == "nt":
+                try:
+                    os.startfile(notes_file)  # type: ignore[attr-defined]
+                    return
+                except OSError:
+                    pass
+            elif sys.platform == "darwin":
+                if shutil.which("open"):
+                    subprocess.run(["open", "-W", str(notes_file)], check=False)
+                    return
             else:
-                # Try nano, then vi
-                for fallback in ["nano", "vi"]:
-                    if os.system(f"command -v {fallback} > /dev/null 2>&1") == 0:
-                        os.system(f'{fallback} "{notes_file}"')
-                        break
-                else:
-                    console.print(
-                        f"Could not find an editor to open {notes_file}",
-                        style="bold red",
-                    )
-                    raise typer.Exit(code=1)
+                if shutil.which("xdg-open"):
+                    subprocess.run(["xdg-open", str(notes_file)], check=False)
+                    return
+            console.print(
+                f"Could not find an editor to open {notes_file}",
+                style="bold red",
+            )
+            raise typer.Exit(code=1)
             return
     console.print(f"Solution {solution_id} not found", style="bold red")
     raise typer.Exit(code=1)
