@@ -1,7 +1,7 @@
 ## Beta-Test Edits
 - [x] `remove_event()` function (and CLI)
 - [x] `remove_solution()` function (and CLI)
-- [ ] Window 11 text editior
+- [x] Window 11 text editior
 - [x] Quickstart/tutorial:
   - [x] cd to project directory
     or

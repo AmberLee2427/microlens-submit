@@ -101,7 +101,7 @@ _FLUX_PARAM_RE = re.compile(r"^F(?P<band>\\d+)_S(?:[12])?$|^F(?P<band_b>\\d+)_B$
 
 def _find_flux_params(parameters: Dict[str, Any]) -> List[str]:
     """Return a list of parameters that look like band-specific flux terms."""
-    return [param for param in parameters.keys() if _FLUX_PARAM_RE.match(param)]
+    return [param for param in parameters.keys() if isinstance(param, str) and _FLUX_PARAM_RE.match(param)]
 
 
 def _infer_bands_from_flux_params(flux_params: List[str]) -> List[str]:

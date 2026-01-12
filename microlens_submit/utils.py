@@ -255,6 +255,8 @@ def import_solutions_from_csv(
                 # Parse parameters
                 parameters = {}
                 for key, value in row.items():
+                    if key is None:
+                        continue
                     if key not in [
                         "event_id",
                         "solution_id",
