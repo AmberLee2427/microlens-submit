@@ -381,10 +381,13 @@ def activate(
 
 def remove_solution(
     solution_id: str,
-    force: bool = typer.Option(False, "--force", help="Force removal of saved solutions (use with caution)"),
+    force: bool = typer.Option(False, "--force", help="Required to remove a solution (prevents accidents)"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Completely remove a solution from the submission."""
+    """Completely remove a solution from the submission.
+
+    This action is destructive and requires --force to proceed.
+    """
     submission = load(project_path)
 
     # Find the solution across all events
@@ -399,6 +402,16 @@ def remove_solution(
     if solution is None:
         console.print(f"[red]Error: Solution {solution_id} not found[/red]")
         raise typer.Exit(1)
+
+    if not force:
+        console.print(
+            f"[yellow]{symbol('warning')}  Refusing to remove solution {solution_id[:8]}... without --force.[/yellow]"
+        )
+        console.print(
+            f"[blue]{symbol('hint')} Consider using deactivate to keep the solution, "
+            "or re-run with --force to proceed.[/blue]"
+        )
+        raise typer.Exit(0)
 
     try:
         removed = submission.events[event_id].remove_solution(solution_id, force=force)

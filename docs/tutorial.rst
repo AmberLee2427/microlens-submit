@@ -484,13 +484,13 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **What happens if you forget --force?**
 
-   If you try to remove a saved solution or event without --force, you'll get a helpful error message and nothing will be deleted. For example:
+   If you try to remove a saved solution or event without --force, you'll get a helpful message and nothing will be deleted. For example:
 
    .. code-block:: text
 
       $ microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc
-      Error: Cannot remove saved solution 12345678... without force=True. Use solution.deactivate() to exclude from exports instead, or call remove_solution(solution_id, force=True) to force removal.
-      💡 Use --force to override safety checks, or use deactivate to keep the solution
+      ⚠  Refusing to remove solution 12345678... without --force.
+      💡 Consider using deactivate to keep the solution, or re-run with --force to proceed.
 
    **When to use removal vs deactivation:**
 

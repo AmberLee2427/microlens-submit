@@ -42,10 +42,13 @@ def export(
 
 def remove_event(
     event_id: str,
-    force: bool = typer.Option(False, "--force", help="Force removal even if event has saved solutions"),
+    force: bool = typer.Option(False, "--force", help="Required to remove an event (prevents accidents)"),
     project_path: Path = typer.Argument(Path("."), help="Project directory"),
 ) -> None:
-    """Remove an entire event and all its solutions from the submission."""
+    """Remove an entire event and all its solutions from the submission.
+
+    This action is destructive and requires --force to proceed.
+    """
     submission = load(str(project_path))
 
     if event_id not in submission.events:
@@ -57,13 +60,11 @@ def remove_event(
 
     if not force:
         typer.echo(
-            f"{symbol('warning')}  This will permanently remove event '{event_id}' and all {solution_count} solutions."
+            f"{symbol('warning')}  Refusing to remove event '{event_id}' without --force "
+            f"({solution_count} solutions)."
         )
-        typer.echo("   This action cannot be undone.")
-        confirm = typer.confirm("Are you sure you want to continue?")
-        if not confirm:
-            typer.echo(f"{symbol('error')} Operation cancelled")
-            raise typer.Exit(0)
+        typer.echo(f"{symbol('hint')} Consider deactivating solutions instead, or re-run with --force to proceed.")
+        raise typer.Exit(0)
 
     try:
         removed = submission.remove_event(event_id, force=force)
