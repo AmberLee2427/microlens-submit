@@ -191,6 +191,11 @@ def import_solutions_from_csv(
         )
 
         for row_num, row in enumerate(reader, start=header_row + 2):
+            row_has_data = any((key and str(key).strip()) for key in row.keys()) or any(
+                (value is not None and str(value).strip()) for value in row.values()
+            )
+            if not row_has_data:
+                continue
             stats["total_rows"] += 1
 
             try:
