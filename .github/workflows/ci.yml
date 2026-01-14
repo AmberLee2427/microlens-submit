@@ -126,7 +126,7 @@ jobs:
         conda install -y --use-local microlens-submit
 
     - name: Verify CLI entry point
-      shell: bash -l {0}
       run: |
-        where microlens-submit || true
+        where microlens-submit || exit /b 1
         microlens-submit --help
+      shell: cmd
