@@ -55,6 +55,81 @@ jobs:
       run: |
         pytest --cov=microlens_submit --cov-report=xml
 
+  conda-recipe-ready:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      reason: ${{ steps.check.outputs.reason }}
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Verify conda recipe sha
+      id: check
+      run: |
+        python - <<'PY'
+        import hashlib
+        import os
+        import re
+        import urllib.request
+        from pathlib import Path
+
+        path = Path("conda/recipe/meta.yaml")
+        content = path.read_text(encoding="utf-8")
+        version_match = re.search(
+            r'{%\\s*set\\s+version\\s*=\\s*"(?P<version>\\d+\\.\\d+\\.\\d+)"\\s*%}',
+            content,
+        )
+        sha_match = re.search(
+            r'^\\s*sha256:\\s*(?P<sha>[a-fA-F0-9]{64})',
+            content,
+            flags=re.MULTILINE,
+        )
+
+        ready = False
+        reason = ""
+
+        if not version_match or not sha_match:
+            reason = "missing_version_or_sha"
+        else:
+            version = version_match.group("version")
+            expected_sha = sha_match.group("sha").lower()
+            name = "microlens-submit"
+            filename = name.replace("-", "_")
+            url = f"https://pypi.org/packages/source/{name[0]}/{name}/{filename}-{version}.tar.gz"
+            try:
+                with urllib.request.urlopen(url) as response:
+                    data = response.read()
+                actual_sha = hashlib.sha256(data).hexdigest()
+                if actual_sha == expected_sha:
+                    ready = True
+                    reason = "ok"
+                else:
+                    reason = f"sha_mismatch:{actual_sha}"
+            except Exception as exc:
+                reason = f"download_failed:{exc.__class__.__name__}"
+
+        out_path = os.environ["GITHUB_OUTPUT"]
+        with open(out_path, "a", encoding="utf-8") as handle:
+            handle.write(f"ready={'true' if ready else 'false'}\\n")
+            handle.write(f"reason={reason}\\n")
+
+        print(f"Conda recipe readiness: {ready} ({reason})")
+        PY
+
+    - name: Report conda recipe readiness
+      if: always()
+      run: |
+        echo "## Conda recipe readiness" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Ready: ${{ steps.check.outputs.ready }}" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Reason: ${{ steps.check.outputs.reason }}" >> "$GITHUB_STEP_SUMMARY"
+
   # Additional job: build a wheel/sdist and test normal (non-editable) installation
   normal-install-test:
     runs-on: ubuntu-latest
@@ -98,7 +173,8 @@ jobs:
 
   conda-recipe-build-linux:
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: [build-and-test, conda-recipe-ready]
+    if: needs.conda-recipe-ready.outputs.ready == 'true'
     steps:
     - name: Check out repository
       uses: actions/checkout@v4
