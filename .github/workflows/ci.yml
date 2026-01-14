@@ -148,7 +148,10 @@ jobs:
     - name: Install built package
       shell: bash -l {0}
       run: |
-        local_channel=$(python - <<'PY'\nfrom pathlib import Path\nprint(Path('conda-bld').resolve().as_uri())\nPY\n)\n        echo "Local conda channel: $local_channel"\n        conda search -c "$local_channel" microlens-submit\n        conda install -y -c "$local_channel" microlens-submit
+        local_channel=$(python -c "from pathlib import Path; print(Path('conda-bld').resolve().as_uri())")
+        echo "Local conda channel: $local_channel"
+        conda search -c "$local_channel" microlens-submit
+        conda install -y -c "$local_channel" microlens-submit
 
     - name: Verify CLI entry point
       shell: cmd
