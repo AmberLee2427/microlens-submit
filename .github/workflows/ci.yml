@@ -95,3 +95,38 @@ jobs:
     - name: Show installed package info (sanity)
       run: |
         venv_test/bin/python -c "import microlens_submit, sys; print(microlens_submit.__file__); print(sys.version)"
+
+  conda-recipe-windows:
+    runs-on: windows-latest
+    needs: build-and-test
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        channels: conda-forge
+        channel-priority: strict
+
+    - name: Install conda-build
+      shell: bash -l {0}
+      run: |
+        conda install -y conda-build
+
+    - name: Build conda recipe
+      shell: bash -l {0}
+      run: |
+        conda build conda/recipe
+
+    - name: Install built package
+      shell: bash -l {0}
+      run: |
+        conda install -y --use-local microlens-submit
+
+    - name: Verify CLI entry point
+      shell: bash -l {0}
+      run: |
+        where microlens-submit || true
+        microlens-submit --help
