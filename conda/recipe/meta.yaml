@@ -18,6 +18,10 @@ build:
     - microlens-submit = microlens_submit.cli:app
   script:
     - python -m pip install . --no-deps --ignore-installed -vv
+    - if exist %PREFIX%\Scripts\microlens-submit del %PREFIX%\Scripts\microlens-submit  # [win]
+    - if exist %PREFIX%\Scripts\microlens-submit.exe del %PREFIX%\Scripts\microlens-submit.exe  # [win]
+    - if exist %PREFIX%\Scripts\microlens-submit-script.py del %PREFIX%\Scripts\microlens-submit-script.py  # [win]
+    - rm -f $PREFIX/bin/microlens-submit  # [unix]
 
 requirements:
   host:
