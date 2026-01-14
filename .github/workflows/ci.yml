@@ -124,9 +124,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: conda-package
-        path: |
-          conda-bld/**/microlens-submit-*.conda
-          conda-bld/**/microlens-submit-*.tar.bz2
+        path: conda-bld/**
 
   conda-recipe-windows:
     runs-on: windows-latest
@@ -150,16 +148,7 @@ jobs:
     - name: Install built package
       shell: bash -l {0}
       run: |
-        pkg=$(find conda-bld -name 'microlens-submit-*.conda' | head -n 1)
-        if [ -z "$pkg" ]; then
-          pkg=$(find conda-bld -name 'microlens-submit-*.tar.bz2' | head -n 1)
-        fi
-        if [ -z "$pkg" ]; then
-          echo "No microlens-submit package found in conda-bld"
-          find conda-bld -type f
-          exit 1
-        fi
-        conda install -y "$pkg"
+        local_channel=$(python - <<'PY'\nfrom pathlib import Path\nprint(Path('conda-bld').resolve().as_uri())\nPY\n)\n        echo "Local conda channel: $local_channel"\n        conda search -c "$local_channel" microlens-submit\n        conda install -y -c "$local_channel" microlens-submit
 
     - name: Verify CLI entry point
       shell: cmd
