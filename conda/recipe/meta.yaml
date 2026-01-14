@@ -16,9 +16,7 @@ build:
   noarch: python
   entry_points:
     - microlens-submit = microlens_submit.cli:app
-  script:
-    - python -m pip install . --no-deps --ignore-installed -vv
-    - if exist %PREFIX%\Scripts\microlens-submit del %PREFIX%\Scripts\microlens-submit  # [win]
+  script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
   host:

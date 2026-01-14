@@ -96,8 +96,8 @@ jobs:
       run: |
         venv_test/bin/python -c "import microlens_submit, sys; print(microlens_submit.__file__); print(sys.version)"
 
-  conda-recipe-windows:
-    runs-on: windows-latest
+  conda-recipe-build-linux:
+    runs-on: ubuntu-latest
     needs: build-and-test
     steps:
     - name: Check out repository
@@ -107,7 +107,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
-        activate-environment: test
         channels: conda-forge
         channel-priority: strict
 
@@ -119,12 +118,36 @@ jobs:
     - name: Build conda recipe
       shell: bash -l {0}
       run: |
-        conda build conda/recipe
+        conda build conda/recipe --output-folder conda-bld
+
+    - name: Upload conda artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: conda-package
+        path: conda-bld/**/microlens-submit-*.tar.bz2
+
+  conda-recipe-windows:
+    runs-on: windows-latest
+    needs: conda-recipe-build-linux
+    steps:
+    - name: Download conda artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: conda-package
+        path: conda-bld
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        activate-environment: test
+        channels: conda-forge
+        channel-priority: strict
 
     - name: Install built package
       shell: bash -l {0}
       run: |
-        conda install -y --use-local microlens-submit
+        conda install -y -c conda-bld microlens-submit
 
     - name: Verify CLI entry point
       shell: cmd
