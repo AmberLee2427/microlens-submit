@@ -107,6 +107,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
+        activate-environment: test
         channels: conda-forge
         channel-priority: strict
 
@@ -126,7 +127,9 @@ jobs:
         conda install -y --use-local microlens-submit
 
     - name: Verify CLI entry point
-      run: |
-        where microlens-submit || exit /b 1
-        microlens-submit --help
       shell: cmd
+      run: |
+        call %CONDA%\Scripts\activate.bat test
+        where microlens-submit || exit /b 1
+        dir %CONDA_PREFIX%\Scripts\microlens-submit*
+        microlens-submit --help
