@@ -52,6 +52,7 @@ README_PATH = PROJECT_ROOT / "README.md"
 CHANGELOG_PATH = PROJECT_ROOT / "CHANGELOG.md"
 RELEASE_NOTES_PATH = PROJECT_ROOT / "RELEASE_NOTES.md"
 ZENODO_INFO_PATH = PROJECT_ROOT / "zenodo_draft.json"
+CONDA_RECIPE_PATH = PROJECT_ROOT / "conda" / "recipe" / "meta.yaml"
 
 if load_dotenv:
     load_dotenv(PROJECT_ROOT / ".env")
@@ -62,6 +63,7 @@ SETUP_PATTERN = re.compile(r'version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 INIT_PATTERN = re.compile(r'__version__\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 DOCS_PATTERN = re.compile(r'release\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 CITATION_PATTERN = re.compile(r'version:\s*"(?P<version>\d+\.\d+\.\d+)"')
+CONDA_RECIPE_PATTERN = re.compile(r'{%\s*set\s+version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"\s*%}')
 
 
 def is_git_repository() -> bool:
@@ -181,6 +183,19 @@ def update_citation(new_version: str) -> None:
         CITATION_PATH,
     )
     write_text(CITATION_PATH, new_content)
+
+
+def update_conda_recipe(new_version: str) -> None:
+    if not CONDA_RECIPE_PATH.exists():
+        return
+    content = read_text(CONDA_RECIPE_PATH)
+    new_content = replace_first(
+        CONDA_RECIPE_PATTERN,
+        f'{{% set version = "{new_version}" %}}',
+        content,
+        CONDA_RECIPE_PATH,
+    )
+    write_text(CONDA_RECIPE_PATH, new_content)
 
 
 def update_citation_doi(doi: str) -> None:
@@ -593,6 +608,7 @@ def handle_bump(bump_type: str) -> str:
     update_package_init(new_version)
     update_docs_conf(new_version)
     update_citation(new_version)
+    update_conda_recipe(new_version)
     ensure_changelog_entry(new_version)
 
     return new_version
@@ -616,6 +632,7 @@ def handle_release(dry_run: bool) -> None:
         PACKAGE_INIT_PATH,
         DOCS_CONF_PATH,
         CITATION_PATH,
+        CONDA_RECIPE_PATH,
         CHANGELOG_PATH,
         RELEASE_NOTES_PATH,
     ]

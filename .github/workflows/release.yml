@@ -105,6 +105,135 @@ jobs:
           packages-dir: dist
           skip-existing: true
 
+  update_feedstock:
+    name: Update conda-forge feedstock
+    needs:
+      - publish_pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out microlens-submit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.ORG_REPO_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Determine release version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download sdist and compute sha256
+        id: sdist
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          mkdir -p /tmp/pypi
+          for attempt in {1..6}; do
+            python -m pip download --no-deps --no-binary :all: "microlens-submit==${version}" -d /tmp/pypi && break
+            echo "Retrying PyPI download ($attempt/6)..."
+            sleep 10
+          done
+          sdist=$(ls /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz 2>/dev/null | head -n 1)
+          if [ -z "$sdist" ]; then
+            echo "sdist not found for microlens-submit ${version}"
+            ls -la /tmp/pypi
+            exit 1
+          fi
+          sha=$(sha256sum "$sdist" | awk '{print $1}')
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Update conda recipe for sync
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          sha="${{ steps.sdist.outputs.sha256 }}"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          sha = os.environ["SHA256"]
+          path = Path("conda/recipe/meta.yaml")
+          content = path.read_text(encoding="utf-8")
+          content, count_version = re.subn(
+              r'{%\\s*set\\s+version\\s*=\\s*"\\d+\\.\\d+\\.\\d+"\\s*%}',
+              f'{{% set version = "{version}" %}}',
+              content,
+              count=1,
+          )
+          content, count_sha = re.subn(
+              r'^\\s*sha256:\\s*[a-fA-F0-9]{64}',
+              f'  sha256: {sha}',
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if count_version == 0 or count_sha == 0:
+              raise SystemExit("Failed to update conda/recipe/meta.yaml with version/sha256")
+          path.write_text(content, encoding="utf-8")
+          PY
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA256: ${{ steps.sdist.outputs.sha256 }}
+
+      - name: Commit conda recipe sha update
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if git diff --quiet; then
+            echo "No conda recipe changes to commit."
+            exit 0
+          fi
+          git config user.name "microlens-submit release bot"
+          git config user.email "automation@users.noreply.github.com"
+          git add conda/recipe/meta.yaml
+          git commit -m "Update conda recipe sha256 for v${version}"
+          git push origin main
+
+      - name: Check out feedstock fork
+        uses: actions/checkout@v4
+        with:
+          repository: AmberLee2427/microlens-submit-feedstock
+          token: ${{ secrets.ORG_REPO_PAT }}
+          path: feedstock
+          sparse-checkout: |
+            recipe
+
+      - name: Copy recipe into feedstock
+        run: cp conda/recipe/meta.yaml feedstock/recipe/meta.yaml
+
+      - name: Create feedstock PR
+        env:
+          GH_TOKEN: ${{ secrets.ORG_REPO_PAT }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          branch="update-microlens-submit-${version}"
+          cd feedstock
+          if git diff --quiet; then
+            echo "No feedstock changes to commit."
+            exit 0
+          fi
+          git config user.name "microlens-submit release bot"
+          git config user.email "automation@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add recipe/meta.yaml
+          git commit -m "Update microlens-submit to v${version}"
+          git push -u origin "$branch" --force
+          gh pr create \
+            --repo conda-forge/microlens-submit-feedstock \
+            --head "AmberLee2427:${branch}" \
+            --base main \
+            --title "Update microlens-submit to v${version}" \
+            --body "Automated update from microlens-submit release workflow."
+
   build_conda:
     name: Build Conda package
     needs:

@@ -31,7 +31,8 @@
 
 
 ## Conda Forge
-- [ ] Windows installer isn't made?
+- [x] Windows installer isn't made?
+- [ ] Workflow to update version in recipe and sync feedstock
 - [ ] related to do's from other projects:
   - [ ] MulensModel feedstock
   - [ ] VBMicrolensing feedstock
