@@ -141,7 +141,13 @@ jobs:
             echo "Retrying PyPI download ($attempt/6)..."
             sleep 10
           done
-          sdist=$(ls /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz 2>/dev/null | head -n 1)
+          sdist=""
+          for candidate in /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz; do
+            if [ -f "$candidate" ]; then
+              sdist="$candidate"
+              break
+            fi
+          done
           if [ -z "$sdist" ]; then
             echo "sdist not found for microlens-submit ${version}"
             ls -la /tmp/pypi
@@ -269,7 +275,13 @@ jobs:
             echo "Retrying PyPI download ($attempt/6)..."
             sleep 10
           done
-          sdist=$(ls /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz 2>/dev/null | head -n 1)
+          sdist=""
+          for candidate in /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz; do
+            if [ -f "$candidate" ]; then
+              sdist="$candidate"
+              break
+            fi
+          done
           if [ -z "$sdist" ]; then
             echo "sdist not found for microlens-submit ${version}"
             ls -la /tmp/pypi
