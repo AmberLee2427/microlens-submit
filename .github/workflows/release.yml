@@ -258,6 +258,44 @@ jobs:
         shell: bash -l {0}
         run: conda install -n build -y conda-build
 
+      - name: Sync conda recipe sha256 from PyPI
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p /tmp/pypi
+          for attempt in {1..6}; do
+            python -m pip download --no-deps --no-binary :all: "microlens-submit==${version}" -d /tmp/pypi && break
+            echo "Retrying PyPI download ($attempt/6)..."
+            sleep 10
+          done
+          sdist=$(ls /tmp/pypi/microlens_submit-${version}.tar.gz /tmp/pypi/microlens-submit-${version}.tar.gz 2>/dev/null | head -n 1)
+          if [ -z "$sdist" ]; then
+            echo "sdist not found for microlens-submit ${version}"
+            ls -la /tmp/pypi
+            exit 1
+          fi
+          sha=$(sha256sum "$sdist" | awk '{print $1}')
+          SHA256="$sha" python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          sha = os.environ["SHA256"]
+          path = Path("conda/recipe/meta.yaml")
+          content = path.read_text(encoding="utf-8")
+          new_content, count_sha = re.subn(
+              r'^\s*sha256:\s*[a-fA-F0-9]{64}',
+              f'  sha256: {sha}',
+              content,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if count_sha == 0:
+              raise SystemExit("Failed to update conda/recipe/meta.yaml sha256")
+          path.write_text(new_content, encoding="utf-8")
+          PY
+
       - name: Build Conda package
         shell: bash -l {0}
         run: |
