@@ -170,13 +170,13 @@ jobs:
           path = Path("conda/recipe/meta.yaml")
           content = path.read_text(encoding="utf-8")
           content, count_version = re.subn(
-              r'{%\\s*set\\s+version\\s*=\\s*"\\d+\\.\\d+\\.\\d+"\\s*%}',
+              r'{%\s*set\s+version\s*=\s*"[^"]+"\s*%}',
               f'{{% set version = "{version}" %}}',
               content,
               count=1,
           )
           content, count_sha = re.subn(
-              r'^\\s*sha256:\\s*[a-fA-F0-9]{64}',
+              r'^\s*sha256:\s*[a-fA-F0-9]{64}',
               f'  sha256: {sha}',
               content,
               count=1,
