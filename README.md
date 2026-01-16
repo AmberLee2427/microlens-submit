@@ -45,6 +45,10 @@ The CLI is the recommended way to interact with your submission project.
 
 You can pass ``--no-color`` to any command if your terminal does not support ANSI colors.
 
+**Windows note:** If ``microlens-submit`` is not found after ``pip install``, your Python Scripts folder is likely missing from PATH.
+Try ``py -m pip install microlens-submit`` and run ``py -m microlens_submit.cli --help``, or add the Scripts path shown by
+``py -m pip show -f microlens-submit`` to PATH.
+
 1. Initialize your project:
 
    ```bash

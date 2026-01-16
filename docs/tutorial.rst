@@ -28,6 +28,12 @@ The typical workflow consists of these main steps:
 
 If your terminal does not support ANSI escape codes, add ``--no-color`` to disable colored output.
 
+.. note::
+   **Windows PATH tip:** If ``microlens-submit`` is not found after ``pip install``, your
+   Python Scripts folder is likely missing from PATH. Try ``py -m pip install microlens-submit``
+   and run ``py -m microlens_submit.cli --help``, or add the Scripts path shown by
+   ``py -m pip show -f microlens-submit`` to PATH.
+
 1. **Initialize your project**
 
    Start by creating a new submission project with your team information:

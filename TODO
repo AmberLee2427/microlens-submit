@@ -12,8 +12,8 @@
   - [x] must include hardware info
     or
   - [x] nexus init
-- [ ] required venv with windows (huh? who uses windows anyway?)
-    - [ ] export location-of-script to PATH
+- [x] required venv with windows (huh? who uses windows anyway?)
+    - [x] export location-of-script to PATH
     Some of my beta testers where having issues with the PyPI release on widows. Fuck windows, but I guesss we should try to fix it. The issue they were having was that "the scripts weren't being added to their path unless the used a venv". Is this a them problem, like they are just setting up their python wrong, or is this an us problem?
 - [x] add GPU section to hardware info
 - [x] auto populate hardware info
