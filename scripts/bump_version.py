@@ -58,6 +58,10 @@ if load_dotenv:
     load_dotenv(PROJECT_ROOT / ".env")
 
 
+NON_INTERACTIVE = False
+ASSUME_YES = False
+
+
 VERSION_PATTERN = re.compile(r'version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 SETUP_PATTERN = re.compile(r'version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 INIT_PATTERN = re.compile(r'__version__\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
@@ -79,11 +83,15 @@ def is_git_repository() -> bool:
         return False
 
 
-def prompt_yes_no(message: str) -> bool:
+def prompt_yes_no(message: str, default: bool = False) -> bool:
+    if ASSUME_YES:
+        return True
+    if NON_INTERACTIVE:
+        return default
     try:
         response = input(f"{message} (y/N): ").strip().lower()
     except EOFError:
-        return False
+        return default
     return response in {"y", "yes"}
 
 
@@ -663,11 +671,29 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Preview actions without committing/tagging (only meaningful for release)",
     )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Disable prompts and accept default 'no' responses",
+    )
+    parser.add_argument(
+        "--assume-yes",
+        action="store_true",
+        help="Automatically answer 'yes' to all prompts",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
+    global NON_INTERACTIVE
+    global ASSUME_YES
+    NON_INTERACTIVE = args.non_interactive
+    ASSUME_YES = args.assume_yes
+
+    if NON_INTERACTIVE and ASSUME_YES:
+        print("Error: --non-interactive and --assume-yes cannot be used together.")
+        return 2
 
     try:
         if args.action in {"major", "minor", "patch"}:

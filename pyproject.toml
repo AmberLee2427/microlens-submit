@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microlens-submit"
-version = "0.16.4"
+version = "0.16.5"
 authors = [
   { name="Amber Malpas", email="malpas.1@osu.edu" },
   {name = "Roman Science Platform Team", email = "roman-science-platform@stsci.edu"}

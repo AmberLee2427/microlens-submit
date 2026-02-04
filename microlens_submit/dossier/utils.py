@@ -6,7 +6,11 @@ generation package, including hardware formatting, GitHub URL parsing,
 and other helper functions.
 """
 
+import hashlib
+import shutil
+from pathlib import Path
 from typing import Any, Dict, Optional
+from urllib.parse import quote, urlparse
 
 
 def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
@@ -109,3 +113,62 @@ def extract_github_repo_name(repo_url: str) -> str:
             return f"{parts[-2]}/{parts[-1]}"
 
     return None
+
+
+def resolve_dossier_asset_path(
+    path_value: Optional[str],
+    project_root: Path,
+    output_dir: Path,
+    *,
+    subdir: str,
+    prefix: Optional[str] = None,
+) -> str:
+    """Resolve and copy a local asset into the dossier assets folder.
+
+    If the input path is a URL, it is returned unchanged. If it is a local
+    filesystem path, it is resolved relative to the project root, copied into
+    the dossier assets folder, and returned as a URL-encoded relative path.
+
+    Args:
+        path_value: The original path or URL string.
+        project_root: Root directory of the submission project.
+        output_dir: Dossier output directory containing the HTML files.
+        subdir: Subdirectory under assets/ for the copied file.
+        prefix: Optional prefix for the copied file name to avoid collisions.
+
+    Returns:
+        str: A URL or a relative path suitable for HTML src/href attributes.
+    """
+    if not path_value:
+        return ""
+
+    parsed = urlparse(path_value)
+    if parsed.scheme in {"http", "https", "data"}:
+        return path_value
+
+    if parsed.scheme == "file":
+        source_path = Path(parsed.path)
+    else:
+        source_path = Path(path_value).expanduser()
+
+    if not source_path.is_absolute():
+        source_path = (project_root / source_path).resolve()
+    else:
+        source_path = source_path.resolve()
+
+    if not source_path.exists():
+        return path_value
+
+    assets_dir = output_dir / "assets" / subdir
+    assets_dir.mkdir(parents=True, exist_ok=True)
+
+    digest = hashlib.sha1(str(source_path).encode("utf-8")).hexdigest()[:8]
+    safe_prefix = prefix or "asset"
+    dest_name = f"{safe_prefix}_{digest}_{source_path.name}"
+    dest_path = assets_dir / dest_name
+
+    if not dest_path.exists():
+        shutil.copy2(source_path, dest_path)
+
+    rel_path = dest_path.relative_to(output_dir).as_posix()
+    return quote(rel_path)

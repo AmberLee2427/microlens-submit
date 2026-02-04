@@ -12,6 +12,7 @@ from pathlib import Path
 from .. import __version__
 from ..models import Event, Submission
 from .solution_page import generate_solution_page
+from .utils import resolve_dossier_asset_path
 
 
 def generate_event_page(event: Event, submission: Submission, output_dir: Path) -> None:
@@ -50,7 +51,17 @@ def generate_event_page(event: Event, submission: Submission, output_dir: Path) 
         to individual solution pages.
     """
     # Prepare output directory (already created)
-    html = _generate_event_page_content(event, submission)
+    project_root = Path(submission.project_path)
+    event_data_link = ""
+    if hasattr(event, "event_data_path") and event.event_data_path:
+        event_data_link = resolve_dossier_asset_path(
+            event.event_data_path,
+            project_root,
+            output_dir,
+            subdir="event-data",
+            prefix=f"{event.event_id}_event_data",
+        )
+    html = _generate_event_page_content(event, submission, event_data_link=event_data_link)
     with (output_dir / f"{event.event_id}.html").open("w", encoding="utf-8") as f:
         f.write(html)
 
@@ -59,7 +70,12 @@ def generate_event_page(event: Event, submission: Submission, output_dir: Path) 
         generate_solution_page(sol, event, submission, output_dir)
 
 
-def _generate_event_page_content(event: Event, submission: Submission) -> str:
+def _generate_event_page_content(
+    event: Event,
+    submission: Submission,
+    *,
+    event_data_link: str = "",
+) -> str:
     """Generate the HTML content for an event dossier page.
 
     Creates the complete HTML content for a single event page, including
@@ -163,10 +179,10 @@ def _generate_event_page_content(event: Event, submission: Submission) -> str:
     )
     # Optional raw data link
     raw_data_html = ""
-    if hasattr(event, "event_data_path") and event.event_data_path:
+    if event_data_link:
         raw_data_html = (
             f'<p class="text-rtd-text">Raw Event Data: '
-            f'<a href="{event.event_data_path}" '
+            f'<a href="{event_data_link}" '
             f'class="text-rtd-accent hover:underline">Download Data</a></p>'
         )
     # HTML content

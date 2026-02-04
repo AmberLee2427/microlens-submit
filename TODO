@@ -19,11 +19,11 @@
 - [x] auto populate hardware info
 - [x] ".001" gets interpreted as a string
 - [x] nexus init gives hardware warning and it doesn't need to
-- [ ] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebook)
+- [ ] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebooks)
 - [x] "Experienced' tier not "Advanced"
-- [ ] validate physical parameters
+- [ ] validate physical parameters (blocked)
 - [x] "piEN (instead of piEN)" when piEN was missing
-- [ ] additional model types
+- [ ] additional model types (blocked)
 - [x] git and submission in different locations (add git_dir)
 - [x] Windows build in workflow
 - [x] Release Workflow

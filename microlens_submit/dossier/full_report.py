@@ -15,6 +15,7 @@ from ..models.solution import Solution
 from .dashboard import _generate_dashboard_content
 from .event_page import _generate_event_page_content
 from .solution_page import _generate_solution_page_content
+from .utils import resolve_dossier_asset_path
 
 
 def generate_full_dossier_report_html(submission: Submission, output_dir: Path) -> None:
@@ -63,19 +64,57 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
     all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after dashboard
 
     # Events and solutions
+    project_root = Path(submission.project_path)
     for event in submission.events.values():
-        event_html = _generate_event_page_content(event, submission)
+        event_data_link = ""
+        if hasattr(event, "event_data_path") and event.event_data_path:
+            event_data_link = resolve_dossier_asset_path(
+                event.event_data_path,
+                project_root,
+                output_dir,
+                subdir="event-data",
+                prefix=f"{event.event_id}_event_data",
+            )
+        event_html = _generate_event_page_content(event, submission, event_data_link=event_data_link)
         event_body = extract_main_content_body(event_html, section_type="event", section_id=event.event_id)
         all_html_sections.append(event_body)
         all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after event
 
         for sol in event.get_active_solutions():
-            sol_html = _generate_solution_page_content(sol, event, submission)
+            lc_plot = resolve_dossier_asset_path(
+                sol.lightcurve_plot_path,
+                project_root,
+                output_dir,
+                subdir="plots",
+                prefix=f"{event.event_id}_{sol.solution_id}_lightcurve",
+            )
+            lens_plot = resolve_dossier_asset_path(
+                sol.lens_plane_plot_path,
+                project_root,
+                output_dir,
+                subdir="plots",
+                prefix=f"{event.event_id}_{sol.solution_id}_lens",
+            )
+            posterior = resolve_dossier_asset_path(
+                sol.posterior_path,
+                project_root,
+                output_dir,
+                subdir="posteriors",
+                prefix=f"{event.event_id}_{sol.solution_id}_posterior",
+            )
+            sol_html = _generate_solution_page_content(
+                sol,
+                event,
+                submission,
+                lc_plot=lc_plot,
+                lens_plot=lens_plot,
+                posterior=posterior,
+            )
             sol_body = extract_main_content_body(
                 sol_html,
                 section_type="solution",
                 section_id=sol.solution_id,
-                project_root=Path(submission.project_path),
+                project_root=project_root,
                 solution=sol,
             )
             all_html_sections.append(sol_body)

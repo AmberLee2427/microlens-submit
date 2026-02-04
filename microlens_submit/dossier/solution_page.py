@@ -8,6 +8,7 @@ notes rendering, and evaluator-only sections.
 
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import markdown
 
@@ -15,6 +16,7 @@ from .. import __version__
 from ..models.event import Event
 from ..models.solution import Solution
 from ..models.submission import Submission
+from .utils import resolve_dossier_asset_path
 
 
 def generate_solution_page(solution: Solution, event: Event, submission: Submission, output_dir: Path) -> None:
@@ -55,12 +57,49 @@ def generate_solution_page(solution: Solution, event: Event, submission: Submiss
         Notes are rendered with syntax highlighting for code blocks.
     """
     # Prepare output directory (already created)
-    html = _generate_solution_page_content(solution, event, submission)
+    project_root = Path(submission.project_path)
+    lc_plot = resolve_dossier_asset_path(
+        solution.lightcurve_plot_path,
+        project_root,
+        output_dir,
+        subdir="plots",
+        prefix=f"{event.event_id}_{solution.solution_id}_lightcurve",
+    )
+    lens_plot = resolve_dossier_asset_path(
+        solution.lens_plane_plot_path,
+        project_root,
+        output_dir,
+        subdir="plots",
+        prefix=f"{event.event_id}_{solution.solution_id}_lens",
+    )
+    posterior = resolve_dossier_asset_path(
+        solution.posterior_path,
+        project_root,
+        output_dir,
+        subdir="posteriors",
+        prefix=f"{event.event_id}_{solution.solution_id}_posterior",
+    )
+    html = _generate_solution_page_content(
+        solution,
+        event,
+        submission,
+        lc_plot=lc_plot,
+        lens_plot=lens_plot,
+        posterior=posterior,
+    )
     with (output_dir / f"{solution.solution_id}.html").open("w", encoding="utf-8") as f:
         f.write(html)
 
 
-def _generate_solution_page_content(solution: Solution, event: Event, submission: Submission) -> str:
+def _generate_solution_page_content(
+    solution: Solution,
+    event: Event,
+    submission: Submission,
+    *,
+    lc_plot: Optional[str] = None,
+    lens_plot: Optional[str] = None,
+    posterior: Optional[str] = None,
+) -> str:
     """Generate the HTML content for a solution dossier page.
 
     Creates the complete HTML content for a single solution page, including
@@ -138,9 +177,9 @@ def _generate_solution_page_content(solution: Solution, event: Event, submission
     # Higher-order effects
     hoe_str = ", ".join(solution.higher_order_effects) if solution.higher_order_effects else "None"
     # Plot paths (relative to solution page)
-    lc_plot = solution.lightcurve_plot_path or ""
-    lens_plot = solution.lens_plane_plot_path or ""
-    posterior = solution.posterior_path or ""
+    lc_plot = lc_plot if lc_plot is not None else (solution.lightcurve_plot_path or "")
+    lens_plot = lens_plot if lens_plot is not None else (solution.lens_plane_plot_path or "")
+    posterior = posterior if posterior is not None else (solution.posterior_path or "")
     # Physical parameters table
     phys_rows = []
     phys = solution.physical_parameters or {}
