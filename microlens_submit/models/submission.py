@@ -18,6 +18,7 @@ import psutil
 from pydantic import BaseModel, Field
 
 from ..text_symbols import symbol
+from ..validate_parameters import count_model_parameters
 from .event import Event
 from .solution import Solution
 
@@ -500,14 +501,15 @@ class Submission(BaseModel):
                                 s.log_likelihood is None
                                 or s.n_data_points is None
                                 or s.n_data_points <= 0
-                                or len(s.parameters) == 0
+                                or count_model_parameters(s.parameters) == 0
                             ):
                                 can_calc = False
                                 break
                         remaining = max(1.0 - provided_sum, 0.0)
                         if can_calc:
                             bic_vals = {
-                                s.solution_id: len(s.parameters) * math.log(s.n_data_points) - 2 * s.log_likelihood
+                                s.solution_id: count_model_parameters(s.parameters) * math.log(s.n_data_points)
+                                - 2 * s.log_likelihood
                                 for s in need_calc
                             }
                             bic_min = min(bic_vals.values())

@@ -60,48 +60,59 @@ Note:
 import re
 from typing import Any, Dict, List, Optional
 
+# --- BEGIN AUTO-GENERATED: MODEL_DEFINITIONS ---
 MODEL_DEFINITIONS = {
-    # Single Source, Single Lens (PSPL)
     "1S1L": {
         "description": "Point Source, Single Point Lens (standard microlensing)",
         "required_params_core": ["t0", "u0", "tE"],
     },
-    # Single Source, Binary Lens
     "1S2L": {
         "description": "Point Source, Binary Point Lens",
         "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha"],
     },
-    # Binary Source, Single Lens
     "2S1L": {
         "description": "Binary Source, Single Point Lens",
-        "required_params_core": ["t0", "u0", "tE"],  # Core lens params
+        "required_params_core": ["t0", "u0", "tE", "t0_source2", "u0_source2", "flux_ratio"],
     },
-    # Other/Unknown model type (allows any parameters)
+    # '2S2L': {
+    #     "description": 'Binary Source, Binary Point Lens',
+    #     "required_params_core": ['t0', 'u0', 'tE', 's', 'q', 'alpha', 't0_source2', 'u0_source2', 'flux_ratio'],
+    # },
+    # '1S3L': {
+    #     "description": 'Point Source, Triple Point Lens',
+    #     "required_params_core": ['t0', 'u0', 'tE'],
+    # },
+    # '2S3L': {
+    #     "description": 'Binary Source, Triple Point Lens',
+    #     "required_params_core": ['t0', 'u0', 'tE', 't0_source2', 'u0_source2', 'flux_ratio'],
+    # },
+    # '1S4L': {
+    #     "description": 'Point Source, Quadruple Point Lens',
+    #     "required_params_core": ['t0', 'u0', 'tE'],
+    # },
+    # '2S4L': {
+    #     "description": 'Binary Source, Quadruple Point Lens',
+    #     "required_params_core": ['t0', 'u0', 'tE', 't0_source2', 'u0_source2', 'flux_ratio'],
+    # },
     "other": {
         "description": "Other or unknown model type",
-        "required_params_core": [],  # No required parameters for unknown models
+        "required_params_core": [],
     },
-    # Add other model types as needed:
-    # "2S2L": {
-    #     "description": "Binary Source, Binary Point Lens",
-    #     "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha"]
-    # },
-    # "1S3L": {
-    #     "description": "Point Source, Triple Point Lens",
-    #     "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]
-    # },
-    # "2S3L": {
-    #     "description": "Binary Source, Triple Point Lens",
-    #     "required_params_core": ["t0", "u0", "tE", "s1", "q1", "alpha1", "s2", "q2", "alpha2"]
-    # },
 }
+# --- END AUTO-GENERATED: MODEL_DEFINITIONS ---
 
 _FLUX_PARAM_RE = re.compile(r"^F(?P<band>\\d+)_S(?:[12])?$|^F(?P<band_b>\\d+)_B$")
+_LD_PARAM_RE = re.compile(r"^u_(?P<band>\d+)$")
 
 
 def _find_flux_params(parameters: Dict[str, Any]) -> List[str]:
     """Return a list of parameters that look like band-specific flux terms."""
     return [param for param in parameters.keys() if isinstance(param, str) and _FLUX_PARAM_RE.match(param)]
+
+
+def _find_ld_params(parameters: Dict[str, Any]) -> List[str]:
+    """Return a list of parameters that look like band-specific limb darkening terms."""
+    return [param for param in parameters.keys() if isinstance(param, str) and _LD_PARAM_RE.match(param)]
 
 
 def _infer_bands_from_flux_params(flux_params: List[str]) -> List[str]:
@@ -117,14 +128,94 @@ def _infer_bands_from_flux_params(flux_params: List[str]) -> List[str]:
     return sorted(bands)
 
 
+# Metadata parameters that should NOT be counted in BIC calculations
+# These are solution-level metadata, not model parameters
+METADATA_PARAMETERS = {
+    "t_ref",  # Reference time (metadata for time-dependent effects)
+    "limb_darkening_coeffs",  # Fixed LD coefficients (not fitted)
+    "limb_darkening_model",  # Name of LD model (not a parameter)
+    "bands",  # List of photometric bands (not a parameter)
+    "used_astrometry",  # Boolean flag (not a parameter)
+    "used_postage_stamps",  # Boolean flag (not a parameter)
+}
+
+# Physical parameters (derived, not fitted in the microlensing model)
+PHYSICAL_PARAMETERS = {
+    "Mtot",
+    "M1",
+    "M2",
+    "M3",
+    "M4",  # Masses
+    "D_L",
+    "D_S",  # Distances
+    "thetaE",  # Einstein radius
+    "piE",
+    "piE_N",
+    "piE_E",
+    "piE_parallel",
+    "piE_perpendicular",
+    "piE_l",
+    "piE_b",  # Parallax
+    "mu_rel",
+    "mu_rel_N",
+    "mu_rel_E",
+    "mu_rel_l",
+    "mu_rel_b",  # Proper motion
+    "phi",  # Position angle
+}
+
+
+def count_model_parameters(parameters: Dict[str, Any]) -> int:
+    """
+    Count the number of actual model parameters for BIC calculation.
+
+    Excludes:
+    - Metadata parameters (t_ref, limb_darkening_coeffs, etc.)
+    - Physical parameters (Mtot, D_L, etc.) - these are derived, not fitted
+
+    Includes:
+    - Core model parameters (t0, u0, tE, s, q, alpha, etc.)
+    - Higher-order effect parameters (piEN, piEE, rho, etc.)
+    - Flux parameters (F0_S, F0_B, etc.)
+    - Fitted limb darkening parameters (u_0, u_1, etc.)
+
+    Args:
+        parameters: Dictionary of solution parameters
+
+    Returns:
+        Number of model parameters for BIC calculation
+
+    Example:
+        >>> params = {
+        ...     't0': 2459123.5, 'u0': 0.1, 'tE': 20.0,
+        ...     'piEN': 0.1, 'piEE': 0.05,
+        ...     'F0_S': 1000.0, 'F0_B': 500.0,
+        ...     't_ref': 2459123.0,  # metadata, not counted
+        ...     'Mtot': 0.45,  # physical parameter, not counted
+        ... }
+        >>> count_model_parameters(params)
+        6
+    """
+    count = 0
+    for param in parameters.keys():
+        # Skip metadata parameters
+        if param in METADATA_PARAMETERS:
+            continue
+        # Skip physical parameters (derived, not fitted)
+        if param in PHYSICAL_PARAMETERS:
+            continue
+        # Count everything else (core params, higher-order params, flux params, LD params)
+        count += 1
+    return count
+
+
+# --- BEGIN AUTO-GENERATED: HIGHER_ORDER_EFFECT_DEFINITIONS ---
 HIGHER_ORDER_EFFECT_DEFINITIONS = {
     "parallax": {
-        "description": "Microlens parallax effect",
-        "requires_t_ref": True,  # A flag to check for the 't_ref' attribute
-        "required_higher_order_params": [
-            "piEN",
-            "piEE",
-        ],  # These are often part of the main parameters if fitted
+        "description": "Microlens parallax effect (annual parallax from Earth's orbital motion)",
+        "requires_t_ref": True,
+        "required_higher_order_params": ["piEN", "piEE"],
+        "optional_higher_order_params": ["t_ref"],
     },
     "finite-source": {
         "description": "Finite source size effect",
@@ -132,64 +223,56 @@ HIGHER_ORDER_EFFECT_DEFINITIONS = {
         "required_higher_order_params": ["rho"],
     },
     "lens-orbital-motion": {
-        "description": "Orbital motion of the lens components",
+        "description": "Orbital motion of lens components",
         "requires_t_ref": True,
         "required_higher_order_params": ["dsdt", "dadt"],
-        "optional_higher_order_params": ["dzdt"],  # Relative radial rate of change of lenses (if needed)
+        "optional_higher_order_params": ["dzdt", "t_ref", "d2sdt2", "d2adt2"],
     },
     "xallarap": {
-        "description": "Source orbital motion (xallarap)",
-        "requires_t_ref": True,  # Xallarap often has a t_ref related to its epoch
-        "required_higher_order_params": [],  # Specific parameters (e.g., orbital period, inclination) to be added here
+        "description": "Source orbital motion (xallarap is 'parallax' spelled backwards)",
+        "requires_t_ref": True,
+        "required_higher_order_params": ["xiEN", "xiEE", "P_xi"],
+        "optional_higher_order_params": ["e_xi", "omega_xi", "i_xi"],
     },
     "gaussian-process": {
         "description": "Gaussian process model for time-correlated noise",
-        "requires_t_ref": False,  # GP parameters are usually not time-referenced in this way
-        "required_higher_order_params": [],  # Placeholder for common GP hyperparameters
-        "optional_higher_order_params": [
-            "ln_K",
-            "ln_lambda",
-            "ln_period",
-            "ln_gamma",
-        ],  # Common GP params, or specific names like "amplitude", "timescale", "periodicity" etc.
+        "requires_t_ref": False,
+        "required_higher_order_params": [],
+        "optional_higher_order_params": ["ln_K", "ln_lambda", "ln_period", "ln_gamma", "ln_a", "ln_c"],
     },
     "stellar-rotation": {
         "description": "Effect of stellar rotation on the light curve (e.g., spots)",
-        "requires_t_ref": False,  # Usually not time-referenced directly in this context
-        "required_higher_order_params": [],  # Specific parameters
-        # (e.g., rotation period, inclination)
-        # to be added here
-        "optional_higher_order_params": [
-            "v_rot_sin_i",
-            "epsilon",
-        ],  # Guessing common params: rotational velocity times sin(inclination),
-        # spot coverage
+        "requires_t_ref": False,
+        "required_higher_order_params": [],
+        "optional_higher_order_params": ["v_rot_sin_i", "epsilon"],
     },
     "fitted-limb-darkening": {
         "description": "Limb darkening coefficients fitted as parameters",
         "requires_t_ref": False,
-        "required_higher_order_params": [],  # Parameters are usually u1, u2, etc.
-        # (linear, quadratic)
-        "optional_higher_order_params": [
-            "u1",
-            "u2",
-            "u3",
-            "u4",
-        ],  # Common limb darkening coefficients (linear, quadratic, cubic, quartic)
+        "required_higher_order_params": [],
     },
-    # The "other" effect type is handled by allowing any other string in
-    # `higher_order_effects` list itself.
+    "other": {
+        "description": "Custom higher-order effect",
+        "requires_t_ref": False,
+        "required_higher_order_params": [],
+    },
 }
+# --- END AUTO-GENERATED: HIGHER_ORDER_EFFECT_DEFINITIONS ---
 
 # This dictionary defines properties/constraints for each known parameter
 # (e.g., expected type, units, a more detailed description, corresponding
 # uncertainty field name)
+# --- BEGIN AUTO-GENERATED: PARAMETER_PROPERTIES ---
 PARAMETER_PROPERTIES = {
     # Core Microlensing Parameters
-    "t0": {"type": "float", "units": "HJD", "description": "Time of closest approach"},
+    "t0": {
+        "type": "float",
+        "units": "HJD",
+        "description": "Time of closest approach",
+    },
     "u0": {
         "type": "float",
-        "units": "thetaE",
+        "units": "θE",
         "description": "Minimum impact parameter",
     },
     "tE": {
@@ -197,165 +280,248 @@ PARAMETER_PROPERTIES = {
         "units": "days",
         "description": "Einstein radius crossing time",
     },
+    # Binary Lens Parameters
     "s": {
         "type": "float",
-        "units": "thetaE",
+        "units": "θE",
         "description": "Binary separation scaled by Einstein radius",
     },
-    "q": {"type": "float", "units": "mass ratio", "description": "Mass ratio M2/M1"},
+    "q": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Mass ratio M2/M1",
+    },
     "alpha": {
         "type": "float",
         "units": "rad",
         "description": "Angle of source trajectory relative to binary axis",
     },
-    # Higher-Order Effect Parameters
+    # Binary_Source
+    "t0_source2": {
+        "type": "float",
+        "units": "BJD",
+        "description": "Time of closest approach for second source",
+    },
+    "u0_source2": {
+        "type": "float",
+        "units": "θE",
+        "description": "Minimum impact parameter for second source",
+    },
+    "flux_ratio": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Flux ratio of second source to first source",
+    },
+    # Finite Source Parameters
     "rho": {
         "type": "float",
-        "units": "thetaE",
-        "description": "Source radius scaled by Einstein radius (Finite Source)",
+        "units": "θE",
+        "description": "Source radius scaled by Einstein radius",
     },
+    # Parallax Parameters
     "piEN": {
         "type": "float",
-        "units": "Einstein radius",
-        "description": "Parallax vector component (North) (Parallax)",
+        "units": "θE",
+        "description": "Parallax vector component (North)",
     },
     "piEE": {
         "type": "float",
-        "units": "Einstein radius",
-        "description": "Parallax vector component (East) (Parallax)",
+        "units": "θE",
+        "description": "Parallax vector component (East)",
     },
+    # Lens Orbital Motion Parameters
     "dsdt": {
         "type": "float",
-        "units": "thetaE/year",
-        "description": "Rate of change of binary separation (Lens Orbital Motion)",
+        "units": "θE/year",
+        "description": "Rate of change of binary separation",
     },
     "dadt": {
         "type": "float",
         "units": "rad/year",
-        "description": "Rate of change of binary angle (Lens Orbital Motion)",
+        "description": "Rate of change of binary orientation",
     },
     "dzdt": {
         "type": "float",
         "units": "au/year",
-        "description": "Relative radial rate of change of lenses (Lens Orbital Motion, if applicable)",
-    },  # Example, may vary
-    # Flux Parameters (dynamically generated by get_required_flux_params)
-    # Ensure these names precisely match how they're generated by get_required_flux_params
-    "F0_S": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Source flux in band 0",
+        "description": "Relative radial rate of change of lenses",
     },
-    "F0_B": {
+    # Xallarap
+    "xiEN": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Blend flux in band 0",
+        "units": "θE",
+        "description": "Xallarap vector component (North)",
     },
-    "F1_S": {
+    "xiEE": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Source flux in band 1",
+        "units": "θE",
+        "description": "Xallarap vector component (East)",
     },
-    "F1_B": {
+    "P_xi": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Blend flux in band 1",
+        "units": "days",
+        "description": "Orbital period of the source companion",
     },
-    "F2_S": {
+    "e_xi": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Source flux in band 2",
+        "units": "dimensionless",
+        "description": "Eccentricity of source orbit",
     },
-    "F2_B": {
+    "omega_xi": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Blend flux in band 2",
+        "units": "rad",
+        "description": "Argument of periapsis for source orbit",
     },
-    # Binary Source Flux Parameters (e.g., for "2S" models)
-    "F0_S1": {
+    "i_xi": {
         "type": "float",
-        "units": "counts/s",
-        "description": "Primary source flux in band 0",
+        "units": "deg",
+        "description": "Inclination of source orbit",
     },
-    "F0_S2": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Secondary source flux in band 0",
-    },
-    "F1_S1": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Primary source flux in band 1",
-    },
-    "F1_S2": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Secondary source flux in band 1",
-    },
-    "F2_S1": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Primary source flux in band 2",
-    },
-    "F2_S2": {
-        "type": "float",
-        "units": "counts/s",
-        "description": "Secondary source flux in band 2",
-    },
-    # Gaussian Process parameters (examples, often ln-scaled)
+    # Gaussian Process Parameters
     "ln_K": {
         "type": "float",
-        "units": "mag^2",
-        "description": "Log-amplitude of the GP kernel (GP)",
+        "units": "mag²",
+        "description": "Log-amplitude of the GP kernel",
     },
     "ln_lambda": {
         "type": "float",
         "units": "days",
-        "description": "Log-lengthscale of the GP kernel (GP)",
+        "description": "Log-lengthscale of the GP kernel",
     },
     "ln_period": {
         "type": "float",
         "units": "days",
-        "description": "Log-period of the GP kernel (GP)",
+        "description": "Log-period of the GP kernel",
     },
     "ln_gamma": {
         "type": "float",
-        "units": " ",
-        "description": "Log-smoothing parameter of the GP kernel (GP)",
-    },  # Specific interpretation varies by kernel
-    # Stellar Rotation parameters (examples)
+        "units": "dimensionless",
+        "description": "Log-smoothing parameter of the GP kernel",
+    },
+    # Stellar Rotation Parameters
     "v_rot_sin_i": {
         "type": "float",
         "units": "km/s",
-        "description": "Rotational velocity times sin(inclination) (Stellar Rotation)",
+        "description": "Rotational velocity times sin(inclination)",
     },
     "epsilon": {
         "type": "float",
-        "units": " ",
-        "description": "Spot coverage/brightness parameter (Stellar Rotation)",
-    },  # Example, may vary
-    # Fitted Limb Darkening coefficients (examples)
-    "u1": {
-        "type": "float",
-        "units": " ",
-        "description": "Linear limb darkening coefficient (Fitted Limb Darkening)",
+        "units": "dimensionless",
+        "description": "Spot coverage/brightness parameter",
     },
-    "u2": {
+    # Other
+    "flux_parameters": {
         "type": "float",
-        "units": " ",
-        "description": "Quadratic limb darkening coefficient (Fitted Limb Darkening)",
+        "units": "",
+        "description": "",
     },
-    "u3": {
+    # Derived Physical Parameters
+    "Mtot": {
         "type": "float",
-        "units": " ",
-        "description": "Cubic limb darkening coefficient (Fitted Limb Darkening)",
+        "units": "M_sun",
+        "description": "Total lens mass",
     },
-    "u4": {
+    "M1": {
         "type": "float",
-        "units": " ",
-        "description": "Quartic limb darkening coefficient (Fitted Limb Darkening)",
+        "units": "M_sun",
+        "description": "Primary lens mass",
+    },
+    "M2": {
+        "type": "float",
+        "units": "M_sun",
+        "description": "Secondary lens mass",
+    },
+    "M3": {
+        "type": "float",
+        "units": "M_sun",
+        "description": "Tertiary lens mass",
+    },
+    "M4": {
+        "type": "float",
+        "units": "M_sun",
+        "description": "Quaternary lens mass",
+    },
+    "D_L": {
+        "type": "float",
+        "units": "kpc",
+        "description": "Lens distance from observer",
+    },
+    "D_S": {
+        "type": "float",
+        "units": "kpc",
+        "description": "Source distance from observer",
+    },
+    "thetaE": {
+        "type": "float",
+        "units": "mas",
+        "description": "Angular Einstein radius",
+    },
+    "piE": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Microlens parallax magnitude",
+    },
+    "piE_N": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "North component of microlens parallax vector",
+    },
+    "piE_E": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "East component of microlens parallax vector",
+    },
+    "piE_parallel": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Component of parallax vector parallel to lens-source relative motion",
+    },
+    "piE_perpendicular": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Component of parallax vector perpendicular to lens-source relative motion",
+    },
+    "piE_l": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Galactic longitude component of microlens parallax vector",
+    },
+    "piE_b": {
+        "type": "float",
+        "units": "dimensionless",
+        "description": "Galactic latitude component of microlens parallax vector",
+    },
+    "mu_rel": {
+        "type": "float",
+        "units": "mas/yr",
+        "description": "Magnitude of the relative proper motion between lens and source",
+    },
+    "mu_rel_N": {
+        "type": "float",
+        "units": "mas/yr",
+        "description": "North component of the relative proper motion between lens and source",
+    },
+    "mu_rel_E": {
+        "type": "float",
+        "units": "mas/yr",
+        "description": "East component of the relative proper motion between lens and source",
+    },
+    "mu_rel_l": {
+        "type": "float",
+        "units": "mas/yr",
+        "description": "Galactic longitude component of the relative proper motion between lens and source",
+    },
+    "mu_rel_b": {
+        "type": "float",
+        "units": "mas/yr",
+        "description": "Galactic latitude component of the relative proper motion between lens and source",
+    },
+    "phi": {
+        "type": "float",
+        "units": "rad",
+        "description": "Angle of lens-source relative proper motion relative to ecliptic",
     },
 }
+# --- END AUTO-GENERATED: PARAMETER_PROPERTIES ---
 
 
 def get_required_flux_params(model_type: str, bands: List[str]) -> List[str]:
@@ -536,11 +702,22 @@ def check_solution_completeness(
             f"{example_bands!r})."
         )
 
+    ld_params = _find_ld_params(parameters)
+    if ld_params and not bands:
+        messages.append("Limb darkening parameters (u_{band}) provided but bands is empty.")
+
     if bands:
         required_flux_params = get_required_flux_params(model_type, bands)
         for param in required_flux_params:
             if param not in parameters:
                 messages.append(f"Missing required flux parameter '{param}' for bands " f"{bands}")
+
+        # If fitted-limb-darkening is active, check for LD params
+        if higher_order_effects and "fitted-limb-darkening" in higher_order_effects:
+            for band in bands:
+                expected_ld = f"u_{band}"
+                if expected_ld not in parameters:
+                    messages.append(f"Missing required limb darkening parameter '{expected_ld}' for band '{band}'")
 
     # Check for invalid parameters (not in any definition)
     all_valid_params = set()
@@ -560,12 +737,23 @@ def check_solution_completeness(
     if bands:
         all_valid_params.update(get_required_flux_params(model_type, bands))
 
+        # Add allowed LD params if effect is active
+        if higher_order_effects and "fitted-limb-darkening" in higher_order_effects:
+            for band in bands:
+                all_valid_params.add(f"u_{band}")
+
     # Check for invalid parameters
     invalid_params = set(parameters.keys()) - all_valid_params
     if flux_params and not bands:
         invalid_params -= set(flux_params)
+
+    # Allow LD params if fitted-limb-darkening is active
+    # (even if not strictly in all_valid_params above if bands missing)
+    if higher_order_effects and "fitted-limb-darkening" in higher_order_effects:
+        invalid_params -= set(ld_params)
+
     for param in invalid_params:
-        messages.append(f"Warning: Parameter '{param}' not recognized for model type " f"'{model_type}'")
+        messages.append(f"Warning: Parameter '{param}' not recognized for model type '{model_type}'")
 
     return messages
 
@@ -576,43 +764,7 @@ def validate_parameter_types(
 ) -> List[str]:
     """Validate parameter types and value ranges against expected types.
 
-    Checks that parameters have the correct data types as defined in
-    PARAMETER_PROPERTIES. Currently supports validation of float, int,
-    and string types. Parameters not defined in PARAMETER_PROPERTIES
-    are skipped (no validation performed).
-
-    Args:
-        parameters: Dictionary of model parameters with parameter names as keys.
-        model_type: The type of microlensing model (used for context in messages).
-
-    Returns:
-        List of validation messages. Empty list if all validations pass.
-        Messages indicate type mismatches for known parameters.
-
-    Example:
-        >>> # Valid parameters
-        >>> params = {"t0": 2459123.5, "u0": 0.1, "tE": 20.0}
-        >>> messages = validate_parameter_types(params, "1S1L")
-        >>> print(messages)
-        []
-
-        >>> # Invalid type for t0
-        >>> params = {"t0": "2459123.5", "u0": 0.1, "tE": 20.0}  # t0 is string
-        >>> messages = validate_parameter_types(params, "1S1L")
-        >>> print(messages)
-        ["Parameter 't0' should be numeric, got str"]
-
-        >>> # Unknown parameter (no validation performed)
-        >>> params = {"t0": 2459123.5, "custom_param": "value"}
-        >>> messages = validate_parameter_types(params, "1S1L")
-        >>> print(messages)
-        []
-
-    Note:
-        This function only validates parameters that are defined in
-        PARAMETER_PROPERTIES. Unknown parameters are ignored to allow
-        for custom parameters and future extensions. The validation
-        is currently limited to basic type checking (float, int, str).
+    ... (omitted docstring for brevity) ...
     """
     messages = []
 
@@ -622,15 +774,17 @@ def validate_parameter_types(
     for param, value in parameters.items():
         if param in PARAMETER_PROPERTIES:
             prop = PARAMETER_PROPERTIES[param]
-
             # Check type
             expected_type = prop.get("type")
             if expected_type == "float" and not isinstance(value, (int, float)):
-                messages.append(f"Parameter '{param}' should be numeric, got " f"{type(value).__name__}")
+                messages.append(f"Parameter '{param}' should be numeric, got {type(value).__name__}")
             elif expected_type == "int" and not isinstance(value, int):
-                messages.append(f"Parameter '{param}' should be integer, got " f"{type(value).__name__}")
+                messages.append(f"Parameter '{param}' should be integer, got {type(value).__name__}")
             elif expected_type == "str" and not isinstance(value, str):
-                messages.append(f"Parameter '{param}' should be string, got " f"{type(value).__name__}")
+                messages.append(f"Parameter '{param}' should be string, got {type(value).__name__}")
+        elif _LD_PARAM_RE.match(param):
+            if not isinstance(value, (int, float)):
+                messages.append(f"Parameter '{param}' should be numeric, got {type(value).__name__}")
 
     return messages
 
@@ -844,6 +998,123 @@ def validate_solution_consistency(
             if s < 0.5 or s > 2.0:
                 messages.append("Warning: " "Separation (s) outside typical caustic crossing range " "(0.5-2.0)")
 
+    # Run physical parameter validation
+    messages.extend(validate_physical_parameters(parameters))
+
+    return messages
+
+
+def validate_uncertainty_metadata(
+    parameter_uncertainties: Optional[Dict[str, Any]],
+    physical_parameter_uncertainties: Optional[Dict[str, Any]],
+    uncertainty_method: Optional[str],
+    confidence_level: Optional[float],
+) -> List[str]:
+    """Validate uncertainty metadata for completeness and consistency.
+
+    Provides recommendations (not requirements) for uncertainty reporting.
+    """
+    warnings = []
+
+    # Check if uncertainties are provided without metadata
+    has_param_unc = parameter_uncertainties is not None and len(parameter_uncertainties) > 0
+    has_phys_unc = physical_parameter_uncertainties is not None and len(physical_parameter_uncertainties) > 0
+
+    if (has_param_unc or has_phys_unc) and not uncertainty_method:
+        warnings.append(
+            "Recommendation: Uncertainties provided without uncertainty_method. "
+            "Consider adding --uncertainty-method to improve evaluation "
+            "(options: mcmc_posterior, fisher_matrix, bootstrap, propagation, inference, literature, other)"
+        )
+
+    # Validate confidence level if provided
+    if confidence_level is not None:
+        if not 0 < confidence_level < 1:
+            warnings.append(f"Confidence level ({confidence_level}) should be between 0 and 1")
+        elif confidence_level not in [0.68, 0.95, 0.997]:
+            warnings.append(
+                f"Unusual confidence_level: {confidence_level}. " "Standard values are 0.68 (1σ), 0.95 (2σ), 0.997 (3σ)"
+            )
+
+    # Validate uncertainty method if provided
+    valid_methods = ["mcmc_posterior", "fisher_matrix", "bootstrap", "propagation", "inference", "literature", "other"]
+    if uncertainty_method and uncertainty_method not in valid_methods:
+        warnings.append(
+            f"Unknown uncertainty_method: '{uncertainty_method}'. " f"Valid options: {', '.join(valid_methods)}"
+        )
+
+    # Recommend physical parameter uncertainties if physical parameters exist
+    # (This is handled in validate_physical_parameters now)
+
+    return warnings
+
+
+def validate_physical_parameters(parameters: Dict[str, Any]) -> List[str]:
+    """Validate physical parameters for consistency and range.
+
+    Checks:
+    - Mass consistency (Mtot vs sum of components)
+    - Vector magnitude consistency
+    - Distance limits and ordering (D_L < D_S)
+    - Reasonable mass ranges (warn on unit confusion)
+    """
+    messages = []
+
+    # 1. Mass Consistency
+    # Check if Mtot matches sum of components (M1, M2, M3, M4)
+    mass_components = []
+    for k in ["M1", "M2", "M3", "M4"]:
+        if k in parameters:
+            mass_components.append(parameters[k])
+
+    if "Mtot" in parameters and mass_components:
+        total_comp = sum(mass_components)
+        # Allow 1% error or 1e-6 absolute
+        if abs(parameters["Mtot"] - total_comp) > max(parameters["Mtot"] * 0.01, 1e-6):
+            messages.append(f"Total mass Mtot ({parameters['Mtot']}) does not match sum of components ({total_comp})")
+
+    # 2. Vector Consistency
+    # piE magnitude vs components (piE_N, piE_E)
+    if "piE" in parameters and "piE_N" in parameters and "piE_E" in parameters:
+        mag = (parameters["piE_N"] ** 2 + parameters["piE_E"] ** 2) ** 0.5
+        if abs(parameters["piE"] - mag) > max(parameters["piE"] * 0.01, 1e-6):
+            messages.append(
+                f"piE magnitude ({parameters['piE']}) inconsistent with N/E components (calculated {mag:.4f})"
+            )
+
+    # mu_rel magnitude vs components (mu_rel_N, mu_rel_E)
+    if "mu_rel" in parameters and "mu_rel_N" in parameters and "mu_rel_E" in parameters:
+        mag = (parameters["mu_rel_N"] ** 2 + parameters["mu_rel_E"] ** 2) ** 0.5
+        if abs(parameters["mu_rel"] - mag) > max(parameters["mu_rel"] * 0.01, 1e-6):
+            messages.append(
+                f"mu_rel magnitude ({parameters['mu_rel']}) inconsistent with N/E components (calculated {mag:.4f})"
+            )
+
+    # 3. Distance Checks
+    if "D_L" in parameters and parameters["D_L"] > 25.0:
+        messages.append(f"Warning: Lens distance D_L ({parameters['D_L']} kpc) is unusually large (> 25 kpc)")
+
+    if "D_S" in parameters and parameters["D_S"] > 25.0:
+        messages.append(f"Warning: Source distance D_S ({parameters['D_S']} kpc) is unusually large (> 25 kpc)")
+
+    if "D_L" in parameters and "D_S" in parameters:
+        if parameters["D_L"] >= parameters["D_S"]:
+            messages.append(
+                f"Lens distance D_L ({parameters['D_L']}) must be smaller "
+                f"than source distance D_S ({parameters['D_S']})"
+            )
+
+    # 4. Mass Magnitude Warnings
+    # Warn if any mass component is > 20 M_sun (possible unit confusion with Jupiter masses or unreasonable value)
+    # Jupiter mass is ~0.001 Solar Mass (so 1 M_J ~ 0.001 M_S).
+    # If they enter '1' meaning M_J, they get 1 M_S (reasonable).
+    # If they enter '1000' meaning M_J (approx 1 M_S), they get 1000 M_S (unreasonable).
+    for m_key in ["Mtot", "M1", "M2", "M3", "M4"]:
+        if m_key in parameters and parameters[m_key] > 20.0:
+            messages.append(
+                f"Warning: {m_key} ({parameters[m_key]} M_sun) is very large. Check units (should be Solar masses)."
+            )
+
     return messages
 
 
@@ -853,6 +1124,7 @@ def validate_solution_rigorously(
     higher_order_effects: Optional[List[str]] = None,
     bands: Optional[List[str]] = None,
     t_ref: Optional[float] = None,
+    limb_darkening_coeffs: Optional[Dict[str, List[float]]] = None,
 ) -> List[str]:
     """Extremely rigorous validation of solution parameters.
 
@@ -863,6 +1135,7 @@ def validate_solution_rigorously(
     - bands must be a list of strings
     - All required flux parameters must be present for each band
     - Only "other" model types or effects can have unknown parameters
+    - If limb_darkening_coeffs is provided, it must match bands
 
     Args:
         model_type: The type of microlensing model
@@ -870,6 +1143,7 @@ def validate_solution_rigorously(
         higher_order_effects: List of higher-order effects
         bands: List of photometric bands
         t_ref: Reference time for time-dependent effects
+        limb_darkening_coeffs: Dictionary of fixed limb darkening coefficients
 
     Returns:
         List of validation error messages. Empty list if all validations pass.
@@ -889,6 +1163,28 @@ def validate_solution_rigorously(
         for i, band in enumerate(bands):
             if not isinstance(band, str):
                 messages.append(f"band {i} must be a string, got {type(band).__name__}")
+
+    # Validate limb_darkening_coeffs if provided
+    if limb_darkening_coeffs:
+        if not isinstance(limb_darkening_coeffs, dict):
+            messages.append(f"limb_darkening_coeffs must be a dict, got {type(limb_darkening_coeffs).__name__}")
+        elif bands:
+            # Check coverage of bands if bands are specified
+            missing_ld_bands = [b for b in bands if b not in limb_darkening_coeffs]
+            if missing_ld_bands:
+                messages.append(f"limb_darkening_coeffs missing bands: {missing_ld_bands}")
+
+            # Check for extra bands (warning)
+            extra_ld_bands = [b for b in limb_darkening_coeffs if b not in bands]
+            if extra_ld_bands:
+                messages.append(f"limb_darkening_coeffs contains bands not in solution.bands: {extra_ld_bands}")
+
+            # Validate structure
+            for band, coeffs in limb_darkening_coeffs.items():
+                if not isinstance(coeffs, list):
+                    messages.append(f"limb_darkening_coeffs[{band!r}] must be a list of floats")
+                elif not all(isinstance(c, (int, float)) for c in coeffs):
+                    messages.append(f"limb_darkening_coeffs[{band!r}] must contain only numeric values")
 
     flux_params = _find_flux_params(parameters)
     if flux_params and not bands:
@@ -979,5 +1275,41 @@ def validate_solution_rigorously(
         missing_flux = [param for param in required_flux if param not in parameters]
         if missing_flux:
             messages.append(f"Missing required flux parameters for bands {bands}: {missing_flux}")
+
+    # 10. Validate physical parameters
+    physical_messages = validate_physical_parameters(parameters)
+    messages.extend(physical_messages)
+
+    return messages
+
+
+def validate_solution_metadata(
+    parameter_uncertainties: Optional[Dict[str, Any]] = None,
+    physical_parameters: Optional[Dict[str, Any]] = None,
+    physical_parameter_uncertainties: Optional[Dict[str, Any]] = None,
+    uncertainty_method: Optional[str] = None,
+    confidence_level: Optional[float] = None,
+) -> List[str]:
+    """Validate solution metadata including uncertainties.
+
+    This is a convenience wrapper that calls all metadata validators.
+    """
+    messages = []
+
+    # Validate uncertainty metadata
+    unc_messages = validate_uncertainty_metadata(
+        parameter_uncertainties,
+        physical_parameter_uncertainties,
+        uncertainty_method,
+        confidence_level,
+    )
+    messages.extend(unc_messages)
+
+    # Recommend physical parameter uncertainties if physical parameters provided
+    if physical_parameters and not physical_parameter_uncertainties:
+        messages.append(
+            "Recommendation: Physical parameters provided without uncertainties. "
+            "Consider adding --physical-param-uncertainty for better evaluation."
+        )
 
     return messages

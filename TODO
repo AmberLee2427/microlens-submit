@@ -19,16 +19,17 @@
 - [x] auto populate hardware info
 - [x] ".001" gets interpreted as a string
 - [x] nexus init gives hardware warning and it doesn't need to
-- [ ] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebooks)
+- [x] nexus dosiers (with submission in /teams/*) not displaying images (problem in AAS workshop notebooks)
 - [x] "Experienced' tier not "Advanced"
-- [ ] validate physical parameters (blocked)
+- [x] validate physical parameters
 - [x] "piEN (instead of piEN)" when piEN was missing
-- [ ] additional model types (blocked)
+- [x] additional model types
 - [x] git and submission in different locations (add git_dir)
 - [x] Windows build in workflow
 - [x] Release Workflow
 - [x] Wheel build CI
 - [x] Unhelpful error when band not supoplied but a flux value is
+- [ ] What the fuck do we do about uncertainties?
 
 
 ## Conda Forge

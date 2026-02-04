@@ -12,6 +12,7 @@ from rich.table import Table
 from microlens_submit.error_messages import enhance_validation_messages
 from microlens_submit.text_symbols import symbol
 from microlens_submit.utils import load
+from microlens_submit.validate_parameters import count_model_parameters
 
 console = Console()
 
@@ -196,13 +197,17 @@ def compare_solutions(
         need_calc = [s for s in solutions if s.relative_probability is None]
         if need_calc:
             can_calc = all(
-                s.log_likelihood is not None and s.n_data_points and s.n_data_points > 0 and len(s.parameters) > 0
+                s.log_likelihood is not None
+                and s.n_data_points
+                and s.n_data_points > 0
+                and count_model_parameters(s.parameters) > 0
                 for s in need_calc
             )
             remaining = max(1.0 - provided_sum, 0.0)
             if can_calc:
                 bic_vals = {
-                    s.solution_id: len(s.parameters) * math.log(s.n_data_points) - 2 * s.log_likelihood
+                    s.solution_id: count_model_parameters(s.parameters) * math.log(s.n_data_points)
+                    - 2 * s.log_likelihood
                     for s in need_calc
                 }
                 bic_min = min(bic_vals.values())
@@ -219,7 +224,7 @@ def compare_solutions(
 
     rows = []
     for sol in solutions:
-        k = len(sol.parameters)
+        k = count_model_parameters(sol.parameters)
         bic = k * math.log(sol.n_data_points) - 2 * sol.log_likelihood
         rp = sol.relative_probability if sol.relative_probability is not None else rel_prob_map.get(sol.solution_id)
         rows.append(

@@ -134,6 +134,43 @@ Extended Example
     >>> solution2.cpu_hours = 15.2
     >>> solution2.relative_probability = 0.2
     >>>
+    >>> # Add uncertainties with metadata
+    >>> solution2.parameter_uncertainties = {
+    ...     "t0": 0.01,
+    ...     "u0": [0.005, 0.008],  # asymmetric uncertainties
+    ...     "tE": 0.5,
+    ...     "piEN": 0.02,
+    ...     "piEE": 0.01
+    ... }
+    >>> solution2.uncertainty_method = "mcmc_posterior"
+    >>> solution2.confidence_level = 0.68  # 1-sigma confidence level
+    >>>
+    >>> # Add physical parameters with uncertainties
+    >>> solution2.physical_parameters = {
+    ...     "Mtot": 0.45,
+    ...     "D_L": 5.2,
+    ...     "D_S": 8.1,
+    ...     "thetaE": 0.52
+    ... }
+    >>> solution2.physical_parameter_uncertainties = {
+    ...     "Mtot": 0.08,
+    ...     "D_L": 0.3,
+    ...     "D_S": 0.5,
+    ...     "thetaE": 0.02
+    ... }
+    >>>
+    >>> # Add physical parameters (e.g. from pyLIMA / pyLIMASS)
+    >>> solution2.physical_parameters = {
+    ...     "Mtot": 0.5,  # Solar masses
+    ...     "D_L": 4.0,   # kpc
+    ...     "thetaE": 0.5, # mas
+    ...     "piE": 0.15    # magnitude
+    ... }
+    >>> solution2.parameter_uncertainties.update({
+    ...     "Mtot": [0.45, 0.55],
+    ...     "D_L": 0.5
+    ... })
+    >>>
     >>> # Save the submission
     >>> submission.save("./my_submission")
     >>>

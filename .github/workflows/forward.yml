@@ -16,11 +16,11 @@ jobs:
           script: |
             const originalIssue = context.payload.issue;
             const body = originalIssue.body;
-            
+
             if (body.includes('Repost: Yes')) {
               // Forward to org repo
               const cleanBody = body.replace(/Repost:\s*(Yes|No)\s*\n?/gi, '').trim();
-              
+
               const newIssue = await github.rest.issues.create({
                 owner: 'rges-pit',
                 repo: 'microlens-submit',
@@ -28,7 +28,7 @@ jobs:
                 body: cleanBody + '\n\n---\n*Originally submitted via help form*',
                 labels: ['type:help', 'source:web-form']
               });
-              
+
               // Comment with forward link
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -36,7 +36,7 @@ jobs:
                 issue_number: originalIssue.number,
                 body: `✅ Forwarded to: ${newIssue.data.html_url}`
               });
-              
+
             } else if (body.includes('Repost: No')) {
               // Just add a comment explaining why it's being closed
               await github.rest.issues.createComment({
@@ -46,7 +46,7 @@ jobs:
                 body: '❌ Not forwarded as requested. Closing help form issue.'
               });
             }
-            
+
             // Close the original issue in both cases
             await github.rest.issues.update({
               owner: context.repo.owner,

@@ -1,0 +1,1159 @@
+# Microlens-Submit Parameter Specification
+# =========================================
+# Version: 0.17.0
+# Last Updated: 2026-02-04
+#
+# This is the SINGLE SOURCE OF TRUTH for parameter definitions.
+# All validation logic and documentation should be generated from this file.
+#
+# SYNC SYSTEM:
+#   - Run `python spec/generate_from_spec.py` to regenerate:
+#       * microlens_submit/validate_parameters.py (partial sections)
+#       * docs/submission_manual.rst (parameter tables)
+#   - CI will check for drift via `python spec/check_spec_drift.py`
+#
+# EDITING GUIDELINES:
+#   - For collaborators: edit this file, then run the sync script
+#   - For agents: read this file for authoritative parameter definitions
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# METADATA
+# -----------------------------------------------------------------------------
+meta:
+  version: "0.16.5"
+  description: "Microlensing data challenge submission parameter specification"
+  maintainers:
+    - "AmberLee2427"
+    - "RGES-PIT Data Challenge Team"
+
+# -----------------------------------------------------------------------------
+# TIER DEFINITIONS
+# -----------------------------------------------------------------------------
+# Defines which tiers exist and their event validation rules.
+# The `None` tier skips event validation entirely.
+
+tiers:
+  beginner:
+    description: "Beginner challenge tier with limited event set"
+    event_prefix: "rmdc26_"
+    event_range: [0, 253]
+    allowed_model_types: ["1S1L", "1S2L", "2S1L", "2S2L"]
+    allowed_higher_order_effects: ["parallax", "finite-source"]
+    notes: "Designed for participants new to microlensing fitting"
+
+  experienced:
+    description: "Experienced challenge tier with full event set"
+    event_prefix: "rmdc26_"
+    event_range: [0, 3000]
+    allowed_model_types: ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "1S4L", "2S4L", "other"]
+    allowed_higher_order_effects: "all"
+    notes: "Full challenge with all model types and effects"
+
+  test:
+    description: "Testing tier for development"
+    event_list:
+      - "evt"
+      - "test-event"
+      - "EVENT001"
+      - "EVENT002"
+      - "EVENT003"
+      - "EVENT004"
+      - "EVENT005"
+      - "EVENT006"
+      - "EVENT007"
+    allowed_model_types: "all"
+    allowed_higher_order_effects: "all"
+    notes: "For testing and development only"
+
+  2018-test:
+    description: "2018 test events tier"
+    event_prefix: "ulwdc1_"
+    event_range: [0, 293]
+    event_format: "{prefix}{index:03d}"  # 3-digit zero-padded
+    event_list:  # Additional explicit events
+      - "2018-EVENT-001"
+      - "2018-EVENT-002"
+    allowed_model_types: "all"
+    allowed_higher_order_effects: "all"
+    notes: "Legacy tier for 2018 data challenge compatibility"
+
+  "None":
+    description: "No validation tier (skips event validation)"
+    event_list: []
+    allowed_model_types: "all"
+    allowed_higher_order_effects: "all"
+    notes: "Use for custom events or testing without validation"
+
+# -----------------------------------------------------------------------------
+# MODEL TYPE DEFINITIONS
+# -----------------------------------------------------------------------------
+# Each model type defines:
+#   - description: human-readable explanation
+#   - notation: Source/Lens count notation
+#   - required_params: parameters that MUST be provided
+#   - notes: additional context for users/agents
+
+model_types:
+  1S1L:
+    description: "Point Source, Single Point Lens (standard microlensing)"
+    notation: "1 Source, 1 Lens"
+    required_params:
+      - t0
+      - u0
+      - tE
+    optional_params:
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "The simplest microlensing model; a single background star lensed by a single foreground object"
+
+  1S2L:
+    description: "Point Source, Binary Point Lens"
+    notation: "1 Source, 2 Lenses"
+    required_params:
+      - t0
+      - u0
+      - tE
+      - s
+      - q
+      - alpha
+    optional_params:
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Binary lens system; can include planet-star or binary star configurations"
+
+  2S1L:
+    description: "Binary Source, Single Point Lens"
+    notation: "2 Sources, 1 Lens"
+    required_params:
+      - t0
+      - u0
+      - tE
+      - t0_source2
+      - u0_source2
+      - flux_ratio  # Ratio of source fluxes (F_S2 / F_S1)
+    optional_params:
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Single lens magnifying a binary source; useful for stellar binary modeling"
+
+  2S2L:
+    description: "Binary Source, Binary Point Lens"
+    notation: "2 Sources, 2 Lenses"
+    status: "planned"  # Not yet fully implemented
+    required_params:
+      - t0
+      - u0
+      - tE
+      - s
+      - q
+      - alpha
+      - t0_source2
+      - u0_source2
+      - flux_ratio  # Ratio of source fluxes (F_S2 / F_S1)
+    optional_params:
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Complex model with binary lens and binary source; currently not fully validated"
+
+  1S3L:
+    description: "Point Source, Triple Point Lens"
+    notation: "1 Source, 3 Lenses"
+    status: "planned"
+    required_params:
+      - t0 # Time of closest approach to primary lens (used as reference time for all other parameters if t_ref not provided)
+      - u0
+      - tE
+    optional_params:
+      - s01 # Separation between primary and secondary lenses
+      - q01 # Mass ratio of secondary to primary lens
+      - alpha01 # Angle of primary-secondary axis relative to ecliptic
+      - s02 # Separation between primary and tertiary lenses
+      - q02 # Mass ratio of tertiary to primary lens
+      - alpha02 # Angle of primary-tertiary axis relative to ecliptic
+      - s12 # Separation between secondary and tertiary lenses
+      - q12 # Mass ratio of tertiary to secondary lens
+      - alpha12 # Angle of secondary-tertiary axis relative to ecliptic
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - M3    # Tertiary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Triple lens system; e.g., star with two planets."
+
+  2S3L:
+    description: "Binary Source, Triple Point Lens"
+    notation: "2 Sources, 3 Lenses"
+    status: "planned"
+    required_params:
+      - t0
+      - u0
+      - tE
+      - t0_source2
+      - u0_source2
+      - flux_ratio  # Ratio of source fluxes (F_S2 / F_S1)
+    optional_params:
+      - s01 # Separation between primary and secondary lenses
+      - q01 # Mass ratio of secondary to primary lens
+      - alpha01 # Angle of primary-secondary axis relative to ecliptic
+      - s02 # Separation between primary and tertiary lenses
+      - q02 # Mass ratio of tertiary to primary lens
+      - alpha02 # Angle of primary-tertiary axis relative to ecliptic
+      - s12 # Separation between secondary and tertiary lenses
+      - q12 # Mass ratio of tertiary to secondary lens
+      - alpha12 # Angle of secondary-tertiary axis relative to ecliptic
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - M3    # Tertiary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Most complex standard model type"
+
+  1S4L:
+    description: "Point Source, Quadruple Point Lens"
+    notation: "1 Source, 4 Lenses"
+    status: "planned"
+    required_params:
+      - t0
+      - u0
+      - tE
+    optional_params:
+      - s01
+      - q01
+      - alpha01
+      - s02
+      - q02
+      - alpha02
+      - s03
+      - q03
+      - alpha03
+      - s12
+      - q12
+      - alpha12
+      - s13
+      - q13
+      - alpha13
+      - s23
+      - q23
+      - alpha23
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - M3    # Tertiary lens mass
+      - M4    # Quaternary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+      - phi # Angle of lens-source relative proper motion relative to ecliptic
+    notes: "Quadruple lens system; e.g., binary star with two planets."
+
+  2S4L:
+    description: "Binary Source, Quadruple Point Lens"
+    notation: "2 Sources, 4 Lenses"
+    status: "planned"
+    required_params:
+      - t0
+      - u0
+      - tE
+      - t0_source2
+      - u0_source2
+      - flux_ratio  # Ratio of source fluxes (F_S2 / F_S1)
+    optional_params:
+      - s01
+      - q01
+      - alpha01
+      - s02
+      - q02
+      - alpha02
+      - s03
+      - q03
+      - alpha03
+      - s12
+      - q12
+      - alpha12
+      - s13
+      - q13
+      - alpha13
+      - s23
+      - q23
+      - alpha23
+      - Mtot  # Total lens mass
+      - M1    # Primary lens mass
+      - M2    # Secondary lens mass
+      - M3    # Tertiary lens mass
+      - M4    # Quaternary lens mass
+      - D_L   # Lens distance
+      - D_S   # Source distance
+      - thetaE # Angular Einstein radius
+      - piE  # Microlens parallax magnitude
+      - piE_N  # North component of microlens parallax vector
+      - piE_E  # East component of microlens parallax vector
+      - piE_parallel  # Component of parallax vector parallel to lens-source relative motion
+      - piE_perpendicular  # Component of parallax vector perpendicular to lens-source relative motion
+      - piE_l # Galactic longitude component of microlens parallax vector
+      - piE_b # Galactic latitude component of microlens parallax vector
+      - mu_rel  # Magnitude of the relative proper motion between lens and source
+      - mu_rel_N  # North component of the relative proper motion between lens and source
+      - mu_rel_E  # East component of the relative proper motion between lens and source
+      - mu_rel_l  # Galactic longitude component of the relative proper motion between lens and source
+      - mu_rel_b  # Galactic latitude component of the relative proper motion between lens and source
+    notes: "Most complex generated model type"
+
+  other:
+    description: "Other or unknown model type"
+    notation: "Custom"
+    required_params: []
+    notes: "For custom models not covered by standard types; validation is relaxed"
+
+# -----------------------------------------------------------------------------
+# HIGHER-ORDER EFFECT DEFINITIONS
+# -----------------------------------------------------------------------------
+# Effects that modify the basic microlensing model.
+# Each effect can require:
+#   - requires_t_ref: whether a reference time is needed
+#   - required_params: parameters that MUST be provided when effect is active
+#   - optional_params: parameters that MAY be provided
+
+higher_order_effects:
+  parallax:
+    description: "Microlens parallax effect (annual parallax from Earth's orbital motion)"
+    requires_t_ref: true
+    required_params:
+      - piEN
+      - piEE
+    optional_params:
+      - t_ref  # Reference time for parallax parameters (assumed as t0 if not provided)
+    notes: "Models the parallax due to Earth's motion; provides constraints on lens mass and distance"
+
+  finite-source:
+    description: "Finite source size effect"
+    requires_t_ref: false
+    required_params:
+      - rho
+    optional_params: []
+    notes: "Accounts for the finite angular size of the source star"
+
+  lens-orbital-motion:
+    description: "Orbital motion of lens components"
+    requires_t_ref: true
+    required_params:
+      - dsdt
+      - dadt
+    optional_params:
+      - dzdt  # Relative radial rate of change (if needed)
+      - t_ref  # Reference time for orbital motion parameters
+      - d2sdt2  # Second derivative of separation (optional)
+      - d2adt2  # Second derivative of angle (optional)
+    notes: "Time-varying lens separation and orientation due to orbital motion"
+
+  xallarap:
+    description: "Source orbital motion (xallarap is 'parallax' spelled backwards)"
+    requires_t_ref: true
+    required_params:
+      - xiEN
+      - xiEE
+      - P_xi
+    optional_params:
+      - e_xi
+      - omega_xi
+      - i_xi
+    notes: "Parallax-like effect from source orbital motion"
+
+  gaussian-process:
+    description: "Gaussian process model for time-correlated noise"
+    requires_t_ref: false
+    required_params: []
+    optional_params:
+      - ln_K        # Log-amplitude of GP kernel
+      - ln_lambda   # Log-lengthscale of GP kernel
+      - ln_period   # Log-period of GP kernel
+      - ln_gamma    # Log-smoothing parameter
+      - ln_a        # Additional kernel-specific parameters
+      - ln_c        # Additional kernel-specific parameters
+    notes: "GP hyperparameters vary by kernel type; only include those you fit"
+
+  stellar-rotation:
+    description: "Effect of stellar rotation on the light curve (e.g., spots)"
+    requires_t_ref: false
+    required_params: []
+    optional_params:
+      - v_rot_sin_i  # Rotational velocity × sin(inclination)
+      - epsilon      # Spot coverage/brightness parameter
+    notes: "For modeling spot-induced variability"
+
+  fitted-limb-darkening:
+    description: "Limb darkening coefficients fitted as parameters"
+    requires_t_ref: false
+    required_params: []
+    optional_params: []
+    notes: "Uses band-specific linear coefficients u_{band} (e.g. u_0, u_1). Only linear LD is supported."
+
+  other:
+    description: "Custom higher-order effect"
+    requires_t_ref: false
+    required_params: []
+    optional_params: []
+    notes: "For effects not in the standard list; validation is relaxed"
+
+# -----------------------------------------------------------------------------
+# PARAMETER DEFINITIONS
+# -----------------------------------------------------------------------------
+# Comprehensive definitions for all known parameters.
+# This is the master list for type checking, units, and documentation.
+
+parameters:
+  # ---------------------------------------------------------------------------
+  # CORE MICROLENSING PARAMETERS
+  # ---------------------------------------------------------------------------
+  t0:
+    description: "Time of closest approach"
+    type: float
+    units: "HJD"
+    category: core
+    notes: "Heliocentric Julian Date of peak magnification"
+
+  u0:
+    description: "Minimum impact parameter"
+    type: float
+    units: "θE"
+    category: core
+    notes: "Closest angular separation in Einstein radius units; can be negative for trajectory orientation"
+
+  tE:
+    description: "Einstein radius crossing time"
+    type: float
+    units: "days"
+    category: core
+    constraints:
+      positive: true
+    notes: "Time for source to cross one Einstein radius"
+
+  # ---------------------------------------------------------------------------
+  # BINARY LENS PARAMETERS
+  # ---------------------------------------------------------------------------
+  s:
+    description: "Binary separation scaled by Einstein radius"
+    type: float
+    units: "θE"
+    category: binary_lens
+    constraints:
+      positive: true
+    notes: "Projected separation between lens components"
+
+  q:
+    description: "Mass ratio M2/M1"
+    type: float
+    units: "dimensionless"
+    category: binary_lens
+    constraints:
+      range: [0, 1]
+    notes: "Ratio of secondary to primary lens mass; convention is q ≤ 1"
+
+  alpha:
+    description: "Angle of source trajectory relative to binary axis"
+    type: float
+    units: "rad"
+    category: binary_lens
+    notes: "Source trajectory angle; often in radians but some codes use degrees"
+
+  # ---------------------------------------------------------------------------
+  # BINARY SOURCE PARAMETERS
+  # ---------------------------------------------------------------------------
+  t0_source2:
+    description: "Time of closest approach for second source"
+    type: float
+    units: "BJD"
+    category: binary_source
+    notes: "Barycentric Julian Date of peak magnification for second source"
+
+  u0_source2:
+    description: "Minimum impact parameter for second source"
+    type: float
+    units: "θE"
+    category: binary_source
+    notes: "Closest angular separation for second source in Einstein radius units"
+
+  flux_ratio:
+    description: "Flux ratio of second source to first source"
+    type: float
+    units: "dimensionless"
+    category: binary_source
+    constraints:
+      positive: true
+    notes: "Ratio of fluxes F_S2 / F_S1; must be positive"
+
+  # ---------------------------------------------------------------------------
+  # TRIPLE LENS PARAMETERS (for 1S3L, 2S3L)
+  # ---------------------------------------------------------------------------
+  s01:
+    description: "First binary separation (primary-secondary)"
+    type: float
+    units: "θE"
+    category: triple_lens
+    status: planned
+
+  q01:
+    description: "First mass ratio (M2/M1)"
+    type: float
+    units: "dimensionless"
+    category: triple_lens
+    status: planned
+
+  alpha01:
+    description: "First trajectory angle"
+    type: float
+    units: "rad"
+    category: triple_lens
+    status: planned
+
+  s02:
+    description: "Second binary separation (primary-tertiary)"
+    type: float
+    units: "θE"
+    category: triple_lens
+    status: planned
+
+  q02:
+    description: "Second mass ratio (M3/M1)"
+    type: float
+    units: "dimensionless"
+    category: triple_lens
+    status: planned
+
+  alpha02:
+    description: "Second trajectory angle"
+    type: float
+    units: "rad"
+    category: triple_lens
+    status: planned
+
+  s12:
+    description: "Third binary separation (secondary-tertiary)"
+    type: float
+    units: "θE"
+    category: triple_lens
+    status: planned
+
+  q12:
+    description: "Third mass ratio (M3/M2)"
+    type: float
+    units: "dimensionless"
+    category: triple_lens
+    status: planned
+
+  alpha12:
+    description: "Third trajectory angle"
+    type: float
+    units: "rad"
+    category: triple_lens
+    status: planned
+
+  # ---------------------------------------------------------------------------
+  # QUADRUPLE LENS PARAMETERS (for 1S4L, 2S4L)
+  # ---------------------------------------------------------------------------
+  s03:
+    description: "Third binary separation (primary-quaternary)"
+    type: float
+    units: "θE"
+    category: quadruple_lens
+    status: planned
+
+  q03:
+    description: "Third mass ratio (M4/M1)"
+    type: float
+    units: "dimensionless"
+    category: quadruple_lens
+    status: planned
+
+  alpha03:
+    description: "Third trajectory angle"
+    type: float
+    units: "rad"
+    category: quadruple_lens
+    status: planned
+
+  s13:
+    description: "Fourth binary separation (primary-quaternary)"
+    type: float
+    units: "θE"
+    category: quadruple_lens
+    status: planned
+
+  q13:
+    description: "Fourth mass ratio (M4/M2)"
+    type: float
+    units: "dimensionless"
+    category: quadruple_lens
+    status: planned
+
+  alpha13:
+    description: "Fourth trajectory angle"
+    type: float
+    units: "rad"
+    category: quadruple_lens
+    status: planned
+
+  s23:
+    description: "Fifth binary separation (secondary-quaternary)"
+    type: float
+    units: "θE"
+    category: quadruple_lens
+    status: planned
+
+  q23:
+    description: "Fifth mass ratio (M4/M3)"
+    type: float
+    units: "dimensionless"
+    category: quadruple_lens
+    status: planned
+
+  alpha23:
+    description: "Fifth trajectory angle"
+    type: float
+    units: "rad"
+    category: quadruple_lens
+    status: planned
+
+  # ---------------------------------------------------------------------------
+  # HIGHER-ORDER EFFECT PARAMETERS
+  # ---------------------------------------------------------------------------
+  rho:
+    description: "Source radius scaled by Einstein radius"
+    type: float
+    units: "θE"
+    category: finite_source
+    constraints:
+      positive: true
+    notes: "ρ = θ*/θE where θ* is the angular source radius"
+
+  piEN:
+    description: "Parallax vector component (North)"
+    type: float
+    units: "θE"
+    category: parallax
+    notes: "North component of the parallax vector in the geocentric frame"
+
+  piEE:
+    description: "Parallax vector component (East)"
+    type: float
+    units: "θE"
+    category: parallax
+    notes: "East component of the parallax vector in the geocentric frame"
+
+  dsdt:
+    description: "Rate of change of binary separation"
+    type: float
+    units: "θE/year"
+    category: lens_orbital_motion
+    notes: "Time derivative of separation parameter s"
+
+  dadt:
+    description: "Rate of change of binary orientation"
+    type: float
+    units: "rad/year"
+    category: lens_orbital_motion
+    notes: "Time derivative of angle parameter alpha"
+
+  dzdt:
+    description: "Relative radial rate of change of lenses"
+    type: float
+    units: "au/year"
+    category: lens_orbital_motion
+    notes: "Optional; radial velocity component if 3D orbit is fitted"
+
+  # ---------------------------------------------------------------------------
+  # XALLARAP PARAMETERS
+  # ---------------------------------------------------------------------------
+  xiEN:
+    description: "Xallarap vector component (North)"
+    type: float
+    units: "θE"
+    category: xallarap
+    notes: "North component of the source orbital motion vector"
+
+  xiEE:
+    description: "Xallarap vector component (East)"
+    type: float
+    units: "θE"
+    category: xallarap
+    notes: "East component of the source orbital motion vector"
+
+  P_xi:
+    description: "Orbital period of the source companion"
+    type: float
+    units: "days"
+    category: xallarap
+    constraints:
+      positive: true
+    notes: "Period of the source binary system"
+
+  e_xi:
+    description: "Eccentricity of source orbit"
+    type: float
+    units: "dimensionless"
+    category: xallarap
+    constraints:
+      range: [0, 1]
+
+  omega_xi:
+    description: "Argument of periapsis for source orbit"
+    type: float
+    units: "rad"
+    category: xallarap
+
+  i_xi:
+    description: "Inclination of source orbit"
+    type: float
+    units: "deg"
+    category: xallarap
+    notes: "Inclination angle of the source binary orbit"
+
+  # ---------------------------------------------------------------------------
+  # GAUSSIAN PROCESS PARAMETERS
+  # ---------------------------------------------------------------------------
+  ln_K:
+    description: "Log-amplitude of the GP kernel"
+    type: float
+    units: "mag²"
+    category: gaussian_process
+    notes: "Natural log of kernel amplitude (variance)"
+
+  ln_lambda:
+    description: "Log-lengthscale of the GP kernel"
+    type: float
+    units: "days"
+    category: gaussian_process
+    notes: "Natural log of correlation timescale"
+
+  ln_period:
+    description: "Log-period of the GP kernel"
+    type: float
+    units: "days"
+    category: gaussian_process
+    notes: "Natural log of periodic component (if periodic kernel)"
+
+  ln_gamma:
+    description: "Log-smoothing parameter of the GP kernel"
+    type: float
+    units: "dimensionless"
+    category: gaussian_process
+    notes: "Kernel-specific smoothing; interpretation varies"
+
+  # ---------------------------------------------------------------------------
+  # STELLAR ROTATION PARAMETERS
+  # ---------------------------------------------------------------------------
+  v_rot_sin_i:
+    description: "Rotational velocity times sin(inclination)"
+    type: float
+    units: "km/s"
+    category: stellar_rotation
+    notes: "Projected rotational velocity"
+
+  epsilon:
+    description: "Spot coverage/brightness parameter"
+    type: float
+    units: "dimensionless"
+    category: stellar_rotation
+    notes: "Amplitude of spot-induced variability"
+
+  # ---------------------------------------------------------------------------
+  # LIMB DARKENING PARAMETERS
+  # ---------------------------------------------------------------------------
+  # u1, u2, u3, u4 removed in favor of band-specific u_{band}
+
+# -----------------------------------------------------------------------------
+# FLUX PARAMETER PATTERNS
+# -----------------------------------------------------------------------------
+# Flux parameters are dynamically generated based on model type and bands.
+# This section defines the patterns and rules.
+
+flux_parameters:
+  patterns:
+    single_source:
+      source: "F{band}_S"
+      blend: "F{band}_B"
+      description: "For 1S models: F{band}_S (source) and F{band}_B (blend)"
+
+    binary_source:
+      source1: "F{band}_S1"
+      source2: "F{band}_S2"
+      blend: "F{band}_B"
+      description: "For 2S models: F{band}_S1, F{band}_S2 (sources) and F{band}_B (blend)"
+
+  rules:
+    - "Band identifiers are strings (e.g., '0', '1', '2')"
+    - "All flux parameters are required for each specified band"
+    - "Flux units are typically counts/s but may vary by dataset"
+
+  examples:
+    - model_type: "1S1L"
+      bands: ["0", "1"]
+      required: ["F0_S", "F0_B", "F1_S", "F1_B"]
+
+    - model_type: "2S1L"
+      bands: ["0"]
+      required: ["F0_S1", "F0_S2", "F0_B"]
+
+# ---------------------------------------------------------------------------
+# PHYSICAL PARAMETER DEFINITIONS
+# ---------------------------------------------------------------------------
+# Comprehensive definitions for physical parameters derived from model fits.
+
+physical_parameters:
+
+  Mtot:
+    description: "Total lens mass"
+    type: float
+    units: "M_sun"
+    category: physical
+    notes: "Sum of all lens component masses"
+
+  M1:
+    description: "Primary lens mass"
+    type: float
+    units: "M_sun"
+    category: physical
+    notes: "Mass of the primary lens component"
+
+  M2:
+    description: "Secondary lens mass"
+    type: float
+    units: "M_sun"
+    category: physical
+    notes: "Mass of the secondary lens component"
+
+  M3:
+    description: "Tertiary lens mass"
+    type: float
+    units: "M_sun"
+    category: physical
+    notes: "Mass of the tertiary lens component"
+
+  M4:
+    description: "Quaternary lens mass"
+    type: float
+    units: "M_sun"
+    category: physical
+    notes: "Mass of the quaternary lens component"
+
+  D_L:
+    description: "Lens distance from observer"
+    type: float
+    units: "kpc"
+    category: physical
+    notes: "Distance to the lensing object"
+
+  D_S:
+    description: "Source distance from observer"
+    type: float
+    units: "kpc"
+    category: physical
+    notes: "Distance to the source star"
+
+  thetaE:
+    description: "Angular Einstein radius"
+    type: float
+    units: "mas"
+    category: physical
+    notes: "Angular radius of the Einstein ring"
+
+  piE:
+    description: "Microlens parallax magnitude"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "Magnitude of the microlens parallax vector"
+
+  piE_N:
+    description: "North component of microlens parallax vector"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "North component of the microlens parallax vector"
+  piE_E:
+    description: "East component of microlens parallax vector"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "East component of the microlens parallax vector"
+
+  piE_parallel:
+    description: "Component of parallax vector parallel to lens-source relative motion"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "Parallel component of the microlens parallax vector"
+  piE_perpendicular:
+    description: "Component of parallax vector perpendicular to lens-source relative motion"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "Perpendicular component of the microlens parallax vector"
+
+  piE_l:
+    description: "Galactic longitude component of microlens parallax vector"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "Galactic longitude component of the microlens parallax vector"
+  piE_b:
+    description: "Galactic latitude component of microlens parallax vector"
+    type: float
+    units: "dimensionless"
+    category: physical
+    notes: "Galactic latitude component of the microlens parallax vector"
+
+  mu_rel:
+    description: "Magnitude of the relative proper motion between lens and source"
+    type: float
+    units: "mas/yr"
+    category: physical
+    notes: "Total relative proper motion"
+
+  mu_rel_N:
+    description: "North component of the relative proper motion between lens and source"
+    type: float
+    units: "mas/yr"
+    category: physical
+    notes: "North component of the relative proper motion"
+  mu_rel_E:
+    description: "East component of the relative proper motion between lens and source"
+    type: float
+    units: "mas/yr"
+    category: physical
+    notes: "East component of the relative proper motion"
+
+  mu_rel_l:
+    description: "Galactic longitude component of the relative proper motion between lens and source"
+    type: float
+    units: "mas/yr"
+    category: physical
+    notes: "Galactic longitude component of the relative proper motion"
+  mu_rel_b:
+    description: "Galactic latitude component of the relative proper motion between lens and source"
+    type: float
+    units: "mas/yr"
+    category: physical
+    notes: "Galactic latitude component of the relative proper motion"
+
+  phi:
+    description: "Angle of lens-source relative proper motion relative to ecliptic"
+    type: float
+    units: "rad"
+    category: physical
+    notes: "Angle measured from ecliptic north through east"
+
+# -----------------------------------------------------------------------------
+# SOLUTION METADATA FIELDS
+# -----------------------------------------------------------------------------
+# Fields that are part of a solution but not model parameters.
+# These are NOT counted in BIC calculations.
+
+solution_metadata:
+  t_ref:
+    type: float
+    units: "BJD"
+    description: "Reference time for time-dependent effects"
+    when_required: "When higher-order effects with requires_t_ref=true are used"
+
+  bands:
+    type: "list[str]"
+    description: "Photometric bands used in the fit"
+    example: ["0", "1", "2"]
+
+  limb_darkening_model:
+    type: str
+    description: "Name of the limb darkening model employed"
+    examples: ["linear", "quadratic", "square-root", "claret"]
+
+  limb_darkening_coeffs:
+    type: "dict[str, list[float]]"
+    description: "Fixed limb darkening coefficients (not fitted)"
+    notes: "Dictionary mapping band names to lists of coefficients (e.g. {'I': [0.5, 0.2]}). Required if limb_darkening_model is set."
+
+  limb_darkening_parameters:
+    pattern: "u_{band}"
+    description: "Linear limb darkening coefficient for band {band}"
+    constraint: "Linear only"
+    examples:
+      - bands: ["0", "1"]
+        params: ["u_0", "u_1"]
+
+  uncertainty_method:
+    type: string
+    required: false
+    description: "Method used to derive parameter uncertainties"
+    allowed_values: ["mcmc_posterior", "fisher_matrix", "bootstrap", "propagation", "inference", "literature", "other"]
+    notes: "Helps evaluators interpret uncertainties correctly"
+
+  confidence_level:
+    type: float
+    required: false
+    default: 0.68
+    description: "Confidence level for uncertainties (0.68 = 1σ, 0.95 = 2σ, 0.997 = 3σ)"
+    notes: "Applies to all uncertainties in the solution"
+
+  physical_parameter_uncertainties:
+    type: dict
+    required: false
+    description: "Uncertainties for physical parameters (symmetric or asymmetric)"
+    notes: "Same format as parameter_uncertainties: single value or [lower, upper] pair"
+
+  relative_probability:
+    type: float
+    description: "Relative probability of this solution"
+    constraints:
+      range: [0, 1]
+
+  used_astrometry:
+    type: bool
+    default: false
+    description: "Whether astrometric data was used"
+
+  used_postage_stamps:
+    type: bool
+    default: false
+    description: "Whether postage-stamp images were used"
+
+# -----------------------------------------------------------------------------
+# VALIDATION RULES
+# -----------------------------------------------------------------------------
+# Additional validation rules beyond simple presence/type checks.
+
+validation_rules:
+  parameter_constraints:
+    tE:
+      must_be_positive: true
+      error: "Einstein crossing time (tE) must be positive"
+
+    q:
+      range: [0, 1]
+      error: "Mass ratio (q) should be between 0 and 1"
+
+    s:
+      must_be_positive: true
+      warning_range: [0.5, 2.0]  # Warning, not error
+      warning: "Separation (s) outside typical caustic crossing range (0.5-2.0)"
+
+    relative_probability:
+      range: [0, 1]
+      error: "Relative probability should be between 0 and 1"
+
+  uncertainty_validation:
+    format: "Single value (symmetric) or [lower, upper] pair (asymmetric)"
+    must_be_positive: true
+    warn_if_relative_exceeds: 0.5  # 50%
+    warn_if_relative_below: 0.001  # 0.1%
+
+  t_ref_validation:
+    required_when: "Any higher-order effect with requires_t_ref=true is used"
+    forbidden_when: "No effect requires t_ref (warning only)"

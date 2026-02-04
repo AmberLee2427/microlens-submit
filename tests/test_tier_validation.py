@@ -65,7 +65,7 @@ def test_validate_event_id():
 
     # Test invalid events
     assert not validate_event_id("INVALID_EVENT", "beginner")
-    assert not validate_event_id("rmdc26_2001", "experienced")
+    assert not validate_event_id("rmdc26_3001", "experienced")
 
     # Test None tier and invalid tiers (should always return True)
     assert validate_event_id("ANY_EVENT", "None")
@@ -89,7 +89,7 @@ def test_get_event_validation_error():
     assert "Beginner challenge tier" in error
     assert "rmdc26_0000" in error  # Should list valid events
 
-    error = get_event_validation_error("rmdc26_2001", "experienced")
+    error = get_event_validation_error("rmdc26_3001", "experienced")
     assert isinstance(error, str)
     assert "rmdc26_2001" in error
     assert "experienced" in error

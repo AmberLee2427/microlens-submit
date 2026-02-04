@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use microlens-submit, please cite it as below."
 title: "microlens-submit"
-version: "0.16.5"
+version: "0.17.0"
 authors:
   - family-names: Malpas
     given-names: Amber
 url: "https://github.com/AmberLee2427/microlens-submit"
-doi: "10.5281/zenodo.18246117"
+doi: "10.5281/zenodo.18488304"

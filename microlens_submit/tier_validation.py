@@ -38,21 +38,21 @@ Note:
 from typing import Dict, List, Optional, Set
 
 # Tier definitions with their associated event lists
+# --- BEGIN AUTO-GENERATED: TIER_DEFINITIONS ---
 TIER_DEFINITIONS = {
     "beginner": {
         "description": "Beginner challenge tier with limited event set",
         "event_prefix": "rmdc26_",
-        "event_range": [0, 200],
+        "event_range": [0, 253],
     },
     "experienced": {
         "description": "Experienced challenge tier with full event set",
         "event_prefix": "rmdc26_",
-        "event_range": [0, 2000],
+        "event_range": [0, 3000],
     },
     "test": {
         "description": "Testing tier for development",
         "event_list": [
-            # Add test events here
             "evt",
             "test-event",
             "EVENT001",
@@ -68,17 +68,14 @@ TIER_DEFINITIONS = {
         "description": "2018 test events tier",
         "event_prefix": "ulwdc1_",
         "event_range": [0, 293],
-        "event_list": [
-            # Add 2018 test events here
-            "2018-EVENT-001",
-            "2018-EVENT-002",
-        ],
+        "event_list": ["2018-EVENT-001", "2018-EVENT-002"],
     },
     "None": {
         "description": "No validation tier (skips event validation)",
-        "event_list": [],  # Empty list means no validation
+        "event_list": [],
     },
 }
+# --- END AUTO-GENERATED: TIER_DEFINITIONS ---
 
 # Cache for event lists to avoid repeated list creation
 _EVENT_LIST_CACHE: Dict[str, Set[str]] = {}

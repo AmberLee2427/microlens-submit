@@ -53,6 +53,7 @@ CHANGELOG_PATH = PROJECT_ROOT / "CHANGELOG.md"
 RELEASE_NOTES_PATH = PROJECT_ROOT / "RELEASE_NOTES.md"
 ZENODO_INFO_PATH = PROJECT_ROOT / "zenodo_draft.json"
 CONDA_RECIPE_PATH = PROJECT_ROOT / "conda" / "recipe" / "meta.yaml"
+PARAMETER_SPEC_PATH = PROJECT_ROOT / "spec" / "parameter_spec.yaml"
 
 if load_dotenv:
     load_dotenv(PROJECT_ROOT / ".env")
@@ -68,6 +69,7 @@ INIT_PATTERN = re.compile(r'__version__\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 DOCS_PATTERN = re.compile(r'release\s*=\s*"(?P<version>\d+\.\d+\.\d+)"')
 CITATION_PATTERN = re.compile(r'version:\s*"(?P<version>\d+\.\d+\.\d+)"')
 CONDA_RECIPE_PATTERN = re.compile(r'{%\s*set\s+version\s*=\s*"(?P<version>\d+\.\d+\.\d+)"\s*%}')
+PARAMETER_SPEC_VERSION_PATTERN = re.compile(r"^#\s*Version:\s*(?P<version>\d+\.\d+\.\d+)\s*$", re.MULTILINE)
 
 
 def is_git_repository() -> bool:
@@ -204,6 +206,44 @@ def update_conda_recipe(new_version: str) -> None:
         CONDA_RECIPE_PATH,
     )
     write_text(CONDA_RECIPE_PATH, new_content)
+
+
+def update_parameter_spec(new_version: str) -> None:
+    """Update version and date in parameter_spec.yaml."""
+    if not PARAMETER_SPEC_PATH.exists():
+        return
+    content = read_text(PARAMETER_SPEC_PATH)
+
+    # Update version
+    new_content, count = PARAMETER_SPEC_VERSION_PATTERN.subn(f"# Version: {new_version}", content, count=1)
+    if count == 0:
+        raise ValueError(f"Failed to update version in {PARAMETER_SPEC_PATH}")
+
+    # Update date (format: YYYY-MM-DD)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    date_pattern = re.compile(r"^#\s*Last Updated:\s*\d{4}-\d{2}-\d{2}\s*$", re.MULTILINE)
+    new_content, count = date_pattern.subn(f"# Last Updated: {today}", new_content, count=1)
+    if count == 0:
+        raise ValueError(f"Failed to update date in {PARAMETER_SPEC_PATH}")
+
+    write_text(PARAMETER_SPEC_PATH, new_content)
+
+    # Run drift check after updating
+    print("Running parameter spec drift check...")
+    try:
+        result = subprocess.run(
+            ["python", "spec/check_spec_drift.py"], cwd=PROJECT_ROOT, capture_output=True, text=True, check=False
+        )
+        if result.returncode != 0:
+            print("⚠️  Parameter spec drift check failed:")
+            print(result.stdout)
+            print(result.stderr)
+            print("Fix drift before continuing with release.")
+            raise ValueError("Parameter spec drift check failed")
+        else:
+            print("✓ Parameter spec drift check passed")
+    except FileNotFoundError:
+        print("⚠️  Could not run drift check (spec/check_spec_drift.py not found)")
 
 
 def update_citation_doi(doi: str) -> None:
@@ -617,6 +657,7 @@ def handle_bump(bump_type: str) -> str:
     update_docs_conf(new_version)
     update_citation(new_version)
     update_conda_recipe(new_version)
+    update_parameter_spec(new_version)
     ensure_changelog_entry(new_version)
 
     return new_version
@@ -641,6 +682,7 @@ def handle_release(dry_run: bool) -> None:
         DOCS_CONF_PATH,
         CITATION_PATH,
         CONDA_RECIPE_PATH,
+        PARAMETER_SPEC_PATH,
         CHANGELOG_PATH,
         RELEASE_NOTES_PATH,
     ]

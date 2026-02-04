@@ -134,7 +134,10 @@ class Solution(BaseModel):
     limb_darkening_model: Optional[str] = None
     limb_darkening_coeffs: Optional[dict] = None
     parameter_uncertainties: Optional[dict] = None
+    uncertainty_method: Optional[str] = None
+    confidence_level: Optional[float] = 0.68
     physical_parameters: Optional[dict] = None
+    physical_parameter_uncertainties: Optional[dict] = None
     log_likelihood: Optional[float] = None
     relative_probability: Optional[float] = None
     n_data_points: Optional[int] = None
@@ -155,6 +158,7 @@ class Solution(BaseModel):
             higher_order_effects = values.get("higher_order_effects", [])
             bands = values.get("bands", [])
             t_ref = values.get("t_ref")
+            limb_darkening_coeffs = values.get("limb_darkening_coeffs")
 
             # Only check for totally broken objects (e.g., wrong types)
             basic_errors = []
@@ -176,6 +180,7 @@ class Solution(BaseModel):
                 higher_order_effects=higher_order_effects,
                 bands=bands,
                 t_ref=t_ref,
+                limb_darkening_coeffs=limb_darkening_coeffs,
             )
             if validation_warnings:
                 warnings.warn(f"Solution created with potential issues: {'; '.join(validation_warnings)}", UserWarning)
@@ -387,6 +392,18 @@ class Solution(BaseModel):
             relative_probability=self.relative_probability,
         )
         messages.extend(consistency_messages)
+
+        # Check solution metadata (uncertainties, etc.)
+        from ..validate_parameters import validate_solution_metadata
+
+        metadata_messages = validate_solution_metadata(
+            parameter_uncertainties=self.parameter_uncertainties,
+            physical_parameters=self.physical_parameters,
+            physical_parameter_uncertainties=self.physical_parameter_uncertainties,
+            uncertainty_method=self.uncertainty_method,
+            confidence_level=self.confidence_level,
+        )
+        messages.extend(metadata_messages)
 
         return messages
 

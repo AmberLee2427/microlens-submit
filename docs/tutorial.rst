@@ -98,6 +98,10 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    **Optional Metadata:**
    - Log-likelihood and data points for statistical analysis
    - Compute information for resource tracking
+   - Physical parameters (--physical-param Mtot=0.5)
+   - Parameter uncertainties (--param-uncertainty t0=[1.1,1.3])
+   - Physical parameter uncertainties (--physical-param-uncertainty Mtot=0.08)
+   - Uncertainty metadata (--uncertainty-method mcmc_posterior --confidence-level 0.68)
    - Plot paths for visualization files
    - Notes for documentation
    - Higher-order effects for advanced models
@@ -363,6 +367,51 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    Uncertainties can be single values (symmetric) or [lower, upper] arrays (asymmetric).
    Both JSON and YAML formats are supported with the same structure.
+
+   **Uncertainty Metadata:**
+
+   **Recommended:** Include metadata about how uncertainties were derived to help evaluators
+   interpret your results correctly. This is especially important for automated evaluation
+   of physical parameters:
+
+   .. code-block:: bash
+
+     # Add solution with MCMC uncertainties
+     microlens-submit add-solution EVENT123 1S2L \
+          --params-file params.json \
+          --param-uncertainty t0=0.01 \
+          --param-uncertainty u0=[0.005,0.008] \
+          --uncertainty-method mcmc_posterior \
+          --confidence-level 0.68
+
+     # Add physical parameters with propagated uncertainties
+     microlens-submit add-solution EVENT456 1S1L \
+          --params-file params.json \
+          --physical-param Mtot=0.45 \
+          --physical-param D_L=5.2 \
+          --physical-param-uncertainty Mtot=0.08 \
+          --physical-param-uncertainty D_L=0.3 \
+          --uncertainty-method propagation \
+          --confidence-level 0.68
+
+   **Available uncertainty methods:**
+   - ``mcmc_posterior``: From MCMC posterior distributions
+   - ``fisher_matrix``: From Fisher information matrix
+   - ``bootstrap``: From bootstrap resampling
+   - ``propagation``: From error propagation of fitted parameters
+   - ``inference``: From Bayesian inference
+   - ``literature``: From published values or external constraints
+   - ``other``: Custom or unspecified method
+
+   **Confidence levels:**
+   - ``0.68``: 1-sigma confidence interval (default)
+   - ``0.95``: 2-sigma confidence interval
+   - ``0.997``: 3-sigma confidence interval
+   - Custom values between 0 and 1
+
+   **Note:** While uncertainties are optional, providing them along with the method and
+   confidence level is **strongly recommended** for solutions you want evaluated. This
+   helps distinguish high-confidence fits from preliminary results.
 
 3. **Bulk Importing Solutions from CSV**
 

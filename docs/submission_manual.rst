@@ -72,25 +72,98 @@ Required Columns
 Model Types (Required in model_tags)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``1S1L``: Point Source, Single Point Lens (standard microlensing)
-- ``1S2L``: Point Source, Binary Point Lens
-- ``2S1L``: Binary Source, Single Point Lens
-- ``2S2L``: Binary Source, Binary Point Lens
-- ``1S3L``: Point Source, Triple Point Lens
-- ``2S3L``: Binary Source, Triple Point Lens
-- ``other``: Custom model type
+.. BEGIN AUTO-GENERATED: MODEL_TYPES_TABLE
+.. list-table:: Model Types
+   :widths: 15 25 40 20
+   :header-rows: 1
+
+   * - Model Type
+     - Notation
+     - Required Parameters
+     - Status
+   * - ``1S1L``
+     - 1 Source, 1 Lens
+     - ``t0``, ``u0``, ``tE``
+     - Active
+   * - ``1S2L``
+     - 1 Source, 2 Lenses
+     - ``t0``, ``u0``, ``tE``, ``s``, ``q``, ``alpha``
+     - Active
+   * - ``2S1L``
+     - 2 Sources, 1 Lens
+     - ``t0``, ``u0``, ``tE``, ``t0_source2``, ``u0_source2``, ``flux_ratio``
+     - Active
+   * - ``2S2L``
+     - 2 Sources, 2 Lenses
+     - ``t0``, ``u0``, ``tE``, ``s``, ``q``, ``alpha``, ``t0_source2``, ``u0_source2``, ``flux_ratio``
+     - Planned
+   * - ``1S3L``
+     - 1 Source, 3 Lenses
+     - ``t0``, ``u0``, ``tE``
+     - Planned
+   * - ``2S3L``
+     - 2 Sources, 3 Lenses
+     - ``t0``, ``u0``, ``tE``, ``t0_source2``, ``u0_source2``, ``flux_ratio``
+     - Planned
+   * - ``1S4L``
+     - 1 Source, 4 Lenses
+     - ``t0``, ``u0``, ``tE``
+     - Planned
+   * - ``2S4L``
+     - 2 Sources, 4 Lenses
+     - ``t0``, ``u0``, ``tE``, ``t0_source2``, ``u0_source2``, ``flux_ratio``
+     - Planned
+   * - ``other``
+     - Custom
+     - (none)
+     - Active
+.. END AUTO-GENERATED: MODEL_TYPES_TABLE
 
 Higher-Order Effects (Optional in model_tags)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``parallax``: Microlens parallax effect
-- ``finite-source``: Finite source size effect
-- ``lens-orbital-motion``: Orbital motion of lens components
-- ``xallarap``: Source orbital motion
-- ``gaussian-process``: Gaussian process noise modeling
-- ``stellar-rotation``: Stellar rotation effects
-- ``fitted-limb-darkening``: Fitted limb darkening coefficients
-- ``other``: Custom higher-order effect
+.. BEGIN AUTO-GENERATED: HIGHER_ORDER_EFFECTS_TABLE
+.. list-table:: Higher-Order Effects
+   :widths: 20 10 30 40
+   :header-rows: 1
+
+   * - Effect
+     - t_ref
+     - Required Parameters
+     - Description
+   * - ``parallax``
+     - Yes
+     - ``piEN``, ``piEE``
+     - Microlens parallax effect (annual parallax from Earth's orbital motion)
+   * - ``finite-source``
+     - No
+     - ``rho``
+     - Finite source size effect
+   * - ``lens-orbital-motion``
+     - Yes
+     - ``dsdt``, ``dadt``
+     - Orbital motion of lens components
+   * - ``xallarap``
+     - Yes
+     - ``xiEN``, ``xiEE``, ``P_xi``
+     - Source orbital motion (xallarap is 'parallax' spelled backwards)
+   * - ``gaussian-process``
+     - No
+     - (none)
+     - Gaussian process model for time-correlated noise
+   * - ``stellar-rotation``
+     - No
+     - (none)
+     - Effect of stellar rotation on the light curve (e.g., spots)
+   * - ``fitted-limb-darkening``
+     - No
+     - (none)
+     - Limb darkening coefficients fitted as parameters
+   * - ``other``
+     - No
+     - (none)
+     - Custom higher-order effect
+.. END AUTO-GENERATED: HIGHER_ORDER_EFFECTS_TABLE
 
 Parameter Columns
 ~~~~~~~~~~~~~~~~
@@ -100,83 +173,152 @@ You can include model parameters as individual columns. The tool will automatica
 Core Parameters (Required based on model type)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. list-table:: Core Model Parameters
-   :widths: 20 15 15 40 10
+.. BEGIN AUTO-GENERATED: CORE_PARAMETERS_TABLE
+.. list-table:: Parameter Reference
+   :widths: 15 10 15 45 15
    :header-rows: 1
 
    * - Parameter
      - Type
      - Units
      - Description
-     - Required for
+     - Category
    * - ``t0``
      - float
      - HJD
      - Time of closest approach
-     - All models
+     - Core
    * - ``u0``
      - float
      - θE
      - Minimum impact parameter
-     - All models
+     - Core
    * - ``tE``
      - float
      - days
      - Einstein radius crossing time
-     - All models
+     - Core
    * - ``s``
      - float
      - θE
      - Binary separation scaled by Einstein radius
-     - 1S2L, 2S2L
+     - Binary Lens
    * - ``q``
      - float
-     - mass ratio
+     - dimensionless
      - Mass ratio M2/M1
-     - 1S2L, 2S2L
+     - Binary Lens
    * - ``alpha``
      - float
      - rad
      - Angle of source trajectory relative to binary axis
-     - 1S2L, 2S2L
+     - Binary Lens
+.. END AUTO-GENERATED: CORE_PARAMETERS_TABLE
 
 Higher-Order Effect Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. list-table:: Higher-Order Effect Parameters
-   :widths: 20 15 20 40 20
+.. BEGIN AUTO-GENERATED: HIGHER_ORDER_PARAMETERS_TABLE
+.. list-table:: Parameter Reference
+   :widths: 15 10 15 45 15
    :header-rows: 1
 
    * - Parameter
      - Type
      - Units
      - Description
-     - Required for Effect
+     - Category
    * - ``rho``
      - float
      - θE
      - Source radius scaled by Einstein radius
-     - ``finite-source``
+     - Finite Source
    * - ``piEN``
      - float
      - θE
      - Parallax vector component (North)
-     - ``parallax``
+     - Parallax
    * - ``piEE``
      - float
      - θE
      - Parallax vector component (East)
-     - ``parallax``
+     - Parallax
    * - ``dsdt``
      - float
      - θE/year
      - Rate of change of binary separation
-     - ``lens-orbital-motion``
+     - Lens Orbital Motion
    * - ``dadt``
      - float
      - rad/year
      - Rate of change of binary orientation
-     - ``lens-orbital-motion``
+     - Lens Orbital Motion
+   * - ``dzdt``
+     - float
+     - au/year
+     - Relative radial rate of change of lenses
+     - Lens Orbital Motion
+   * - ``xiEN``
+     - float
+     - θE
+     - Xallarap vector component (North)
+     - Xallarap
+   * - ``xiEE``
+     - float
+     - θE
+     - Xallarap vector component (East)
+     - Xallarap
+   * - ``P_xi``
+     - float
+     - days
+     - Orbital period of the source companion
+     - Xallarap
+   * - ``e_xi``
+     - float
+     - dimensionless
+     - Eccentricity of source orbit
+     - Xallarap
+   * - ``omega_xi``
+     - float
+     - rad
+     - Argument of periapsis for source orbit
+     - Xallarap
+   * - ``i_xi``
+     - float
+     - deg
+     - Inclination of source orbit
+     - Xallarap
+   * - ``ln_K``
+     - float
+     - mag²
+     - Log-amplitude of the GP kernel
+     - Gaussian Process
+   * - ``ln_lambda``
+     - float
+     - days
+     - Log-lengthscale of the GP kernel
+     - Gaussian Process
+   * - ``ln_period``
+     - float
+     - days
+     - Log-period of the GP kernel
+     - Gaussian Process
+   * - ``ln_gamma``
+     - float
+     - dimensionless
+     - Log-smoothing parameter of the GP kernel
+     - Gaussian Process
+   * - ``v_rot_sin_i``
+     - float
+     - km/s
+     - Rotational velocity times sin(inclination)
+     - Stellar Rotation
+   * - ``epsilon``
+     - float
+     - dimensionless
+     - Spot coverage/brightness parameter
+     - Stellar Rotation
+.. END AUTO-GENERATED: HIGHER_ORDER_PARAMETERS_TABLE
 
 Flux Parameters (Required if using bands)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

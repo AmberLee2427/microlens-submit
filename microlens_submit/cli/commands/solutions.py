@@ -187,7 +187,31 @@ def add_solution(
     physical_param: Optional[List[str]] = typer.Option(
         None,
         "--physical-param",
-        help=("Physical parameters (M_L, D_L, M_planet, a, etc.) " "derived from model parameters [ADVANCED]"),
+        help=("Physical parameters (Mtot, D_L, thetaE, etc.) " "derived from model parameters [ADVANCED]"),
+    ),
+    physical_param_uncertainty: Optional[List[str]] = typer.Option(
+        None,
+        "--physical-param-uncertainty",
+        help=(
+            "Physical parameter uncertainties as key=value. "
+            "Can be single value (symmetric) or [lower,upper] (asymmetric) [ADVANCED]"
+        ),
+    ),
+    uncertainty_method: Optional[str] = typer.Option(
+        None,
+        "--uncertainty-method",
+        help=(
+            "Method used to derive uncertainties [ADVANCED]. "
+            "Options: mcmc_posterior, fisher_matrix, bootstrap, propagation, inference, literature, other"
+        ),
+    ),
+    confidence_level: Optional[float] = typer.Option(
+        None,
+        "--confidence-level",
+        help=(
+            "Confidence level for uncertainties (default: 0.68 = 1σ) [ADVANCED]. "
+            "Standard values: 0.68 (1σ), 0.95 (2σ), 0.997 (3σ)"
+        ),
     ),
     relative_probability: Optional[float] = typer.Option(
         None,
@@ -281,6 +305,10 @@ def add_solution(
     sol.limb_darkening_coeffs = _parse_pairs(limb_darkening_coeff)
     sol.parameter_uncertainties = _parse_pairs(parameter_uncertainty) or uncertainties
     sol.physical_parameters = _parse_pairs(physical_param)
+    sol.physical_parameter_uncertainties = _parse_pairs(physical_param_uncertainty)
+    sol.uncertainty_method = uncertainty_method
+    if confidence_level is not None:
+        sol.confidence_level = confidence_level
     sol.log_likelihood = log_likelihood
     sol.relative_probability = relative_probability
     sol.n_data_points = n_data_points
