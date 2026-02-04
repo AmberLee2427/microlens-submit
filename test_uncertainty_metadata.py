@@ -38,8 +38,9 @@ try:
     sub.save()
     sub2 = load(tmpdir)
 
-    # Verify
-    sol2 = sub2.get_event("rmdc26_2001").solutions[0]
+    # Verify - get the first (and only) solution from the dict
+    event2 = sub2.get_event("rmdc26_2001")
+    sol2 = list(event2.solutions.values())[0]
 
     print("\n✓ All tests passed!")
     print("\nUncertainty metadata:")
