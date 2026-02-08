@@ -7,9 +7,15 @@ and other helper functions.
 """
 
 import os
+import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import quote, urlparse
+
+try:  # Prefer stdlib importlib.resources when available (Python >= 3.9)
+    import importlib.resources as importlib_resources
+except ImportError:  # pragma: no cover - fallback for Python < 3.9
+    import importlib_resources
 
 
 def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
@@ -112,6 +118,36 @@ def extract_github_repo_name(repo_url: str) -> str:
             return f"{parts[-2]}/{parts[-1]}"
 
     return None
+
+
+def copy_dossier_assets(output_dir: Path) -> None:
+    """Copy dossier logo assets into the output directory.
+
+    Ensures the RGES-PIT and GitHub logos are available for dossier HTML pages,
+    including partial (event/solution) dossiers.
+
+    Args:
+        output_dir: Dossier output directory containing the HTML files.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    assets_dir = output_dir / "assets"
+    assets_dir.mkdir(exist_ok=True)
+
+    def _get_asset_path(filename: str) -> Path:
+        try:
+            # Python 3.9+ or importlib_resources >= 3.1
+            return importlib_resources.files("microlens_submit").joinpath("assets", filename)
+        except AttributeError:
+            # Python 3.8 fallback
+            with importlib_resources.path("microlens_submit", "assets") as p:
+                return p / filename
+
+    for filename in ("rges-pit_logo.png", "github-desktop_logo.png"):
+        try:
+            asset_path = _get_asset_path(filename)
+            shutil.copy2(asset_path, assets_dir / filename)
+        except (FileNotFoundError, ModuleNotFoundError, AttributeError):
+            continue
 
 
 def resolve_dossier_asset_path(

@@ -58,7 +58,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    :maxdepth: 2
    :caption: Contents:
 
-   tutorial
+   cli_tutorial
    usage_examples
    api
    submission_manual
@@ -66,7 +66,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
 **Additional Resources**
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-- **Tutorial**: Complete step-by-step guide to using microlens-submit
+- **CLI Tutorial**: Complete step-by-step guide to using microlens-submit
 - **API Reference**: Detailed documentation of the Python API
 - **Submission Manual**: Complete specification for manual submission format and CSV import
 - **Jupyter Notebooks**: Interactive tutorials in the docs directory

@@ -101,7 +101,7 @@ MODEL_DEFINITIONS = {
 }
 # --- END AUTO-GENERATED: MODEL_DEFINITIONS ---
 
-_FLUX_PARAM_RE = re.compile(r"^F(?P<band>\\d+)_S(?:[12])?$|^F(?P<band_b>\\d+)_B$")
+_FLUX_PARAM_RE = re.compile(r"^F(?P<band>\d+)_S(?:[12])?$|^F(?P<band_b>\d+)_B$")
 _LD_PARAM_RE = re.compile(r"^u_(?P<band>\d+)$")
 
 

@@ -132,7 +132,7 @@ submission.save()
 
 Updated three documentation files:
 
-**`docs/tutorial.rst`:**
+**`docs/cli_tutorial.rst`:**
 - Added "Uncertainty Metadata" section with CLI examples
 - Lists all available uncertainty methods
 - Explains confidence level options
@@ -289,7 +289,7 @@ submission.save()
 - `microlens_submit/cli/commands/solutions.py`: Added CLI options
 
 ### Documentation
-- `docs/tutorial.rst`: Added uncertainty metadata section
+- `docs/cli_tutorial.rst`: Added uncertainty metadata section
 - `docs/usage_examples.rst`: Added comprehensive examples
 - `Nexus_Workflow.ipynb`: Added pyLIMASS physical parameter example
 

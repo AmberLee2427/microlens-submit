@@ -62,6 +62,7 @@ TIER_DEFINITIONS = {
             "EVENT005",
             "EVENT006",
             "EVENT007",
+            "data_challenge_0_129_335",
         ],
     },
     "2018-test": {

@@ -9,6 +9,7 @@ from rich.panel import Panel
 
 from microlens_submit.dossier import generate_dashboard_html, generate_event_page, generate_solution_page
 from microlens_submit.dossier.full_report import generate_full_dossier_report_html
+from microlens_submit.dossier.utils import copy_dossier_assets
 from microlens_submit.utils import load
 
 console = Console()
@@ -57,6 +58,9 @@ def generate_dossier(
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "assets").mkdir(exist_ok=True)
 
+        # Copy shared assets for the dossier
+        copy_dossier_assets(output_dir)
+
         # Generate only the specific solution page
         event = sub.events[containing_event_id]
         console.print(
@@ -84,6 +88,7 @@ def generate_dossier(
         (output_dir / "assets").mkdir(exist_ok=True)
 
         event = sub.events[event_id]
+        copy_dossier_assets(output_dir)
         console.print(Panel(f"Generating dossier for event {event_id}...", style="cyan"))
         generate_event_page(event, sub, output_dir)
         if open:

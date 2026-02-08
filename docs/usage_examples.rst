@@ -185,6 +185,29 @@ Extended Example
     >>> from microlens_submit.dossier import generate_dashboard_html
     >>> generate_dashboard_html(submission, Path("./my_submission/dossier"))
 
+Inspecting Solutions and Resolving Duplicate Aliases (Python API)
+---------------------------------------------------------------
+
+If you re-run a notebook or script, you might accidentally reuse an alias.
+Aliases must be unique within each event. The example below shows how to
+inspect existing aliases, rename one, and optionally deactivate a duplicate.
+
+.. code-block:: python
+
+    >>> from microlens_submit import load
+    >>> submission = load("./my_project")
+    >>> event = submission.get_event("EVENT123")
+    >>> # Inspect aliases and IDs
+    >>> for sol in event.solutions.values():
+    ...     print(sol.solution_id, sol.alias)
+    >>> # Rename a duplicate alias
+    >>> sol = event.get_solution("<solution_id>")
+    >>> sol.alias = "new_alias"
+    >>> submission.save()
+    >>> # Deactivate if it's a true duplicate
+    >>> sol.deactivate()
+    >>> submission.save()
+
 Dossier Generation Examples
 ---------------------------
 

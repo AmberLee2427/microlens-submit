@@ -42,7 +42,38 @@
 
 ## v1.0.0 debug
 - [x] undo image bug fuck up
-- [ ] fix image asset bug in dossiers
-- [ ] add `data_challenge_0_129_335` to `test` tier allowed event list
-- [ ] "Invalid parameter 'F0_S' for model type '1S1L'; Invalid parameter 'F0_B' for model type '1S1L'"
-- [ ]
+- [x] fix image asset bug in dossiers
+- [x] add `data_challenge_0_129_335` to `test` tier allowed event list
+- [x] "Invalid parameter 'F0_S' for model type '1S1L'; Invalid parameter 'F0_B' for model type '1S1L'"
+- [x] need a more graceful resolution to alias duplicates
+  > ⚠️  Save completed with validation warnings:
+  > Event 'data_challenge_0_129_335' is not valid for tier 'test' (Testing tier for development). Valid events for this tier: ['EVENT001', 'EVENT002', 'EVENT003', 'EVENT004', 'EVENT005', 'EVENT006', 'EVENT007', 'evt', 'test-event']
+  > Duplicate alias 'Preliminary PSPL - Band 0' found in event 'data_challenge_0_129_335'. Alias must be unique within each event.
+  > 💡 Fix validation errors before exporting for submission
+  > 💾 Submission saved locally (incomplete - not ready for submission)
+  > ❌ Save failed due to alias validation errors:
+  > Duplicate alias 'Preliminary PSPL - Band 0' found in event 'data_challenge_0_129_335'. Alias must be unique within each event.
+  > 💡 Solutions with duplicate aliases remain in memory but are not saved
+  > Use different aliases or remove aliases to resolve conflicts
+  > ---------------------------------------------------------------------------
+  > ValueError                                Traceback (most recent call last)
+  > Cell In[14], line 33
+  >   16 solution.set_notes(f"""
+  >   17 # Preliminary Fit Analysis
+  >   18
+  > (...)     29 This solution is marked as inactive as it represents a preliminary analysis.
+  >   30 """)
+  >   32 # Save everything
+  > ---> 33 submission.save()
+  >   35 print(f"✅ Solution '{solution.alias}' ({solution.solution_id}) created and saved!")
+  >   36 print(f"   - Posteriors saved to: {posterior_path}")
+  >
+  > File /opt/conda/envs/rges-pit-dc/lib/python3.11/site-packages/microlens_submit/models/submission.py:428, in Submission.save(self, force)
+  >  426     print(f"{symbol('hint')} Solutions with duplicate aliases remain in memory but are not saved")
+  >  427     print("   Use different aliases or remove aliases to resolve conflicts")
+  > --> 428     raise ValueError("Alias validation failed:\n" + "\n".join(alias_errors))
+  >  430 unsaved_count = sum(1 for event in self.events.values() for sol in event.solutions.values() if not sol.saved)
+  >  431 project = Path(self.project_path)
+  >
+  > ValueError: Alias validation failed:
+  > Duplicate alias 'Preliminary PSPL - Band 0' found in event 'data_challenge_0_129_335'. Alias must be unique within each event.

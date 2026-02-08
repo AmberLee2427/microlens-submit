@@ -6,19 +6,13 @@ for submission review and documentation. The dashboard provides an overview
 of the submission including event summaries, solution statistics, and metadata.
 """
 
-import shutil
 import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-try:  # Prefer stdlib importlib.resources when available (Python >= 3.9)
-    import importlib.resources as importlib_resources
-except ImportError:  # pragma: no cover - fallback for Python < 3.9
-    import importlib_resources
-
 from .. import __version__
 from ..models.submission import Submission
-from .utils import extract_github_repo_name, format_hardware_info
+from .utils import copy_dossier_assets, extract_github_repo_name, format_hardware_info
 
 
 def generate_dashboard_html(submission: Submission, output_dir: Path, open: bool = False) -> None:
@@ -82,26 +76,7 @@ def generate_dashboard_html(submission: Submission, output_dir: Path, open: bool
     with index_path.open("w", encoding="utf-8") as f:
         f.write(html_content)
 
-    # Copy logos using importlib_resources for robust package data access
-    def _get_asset_path(package, filename):
-        try:
-            # Python 3.9+ or importlib_resources >= 3.1
-            return importlib_resources.files(package).joinpath(filename)
-        except AttributeError:
-            # Python 3.8 fallback
-            with importlib_resources.path(package, filename) as p:
-                return p
-
-    try:
-        logo_path = _get_asset_path("microlens_submit.assets", "rges-pit_logo.png")
-        shutil.copy2(logo_path, output_dir / "assets" / "rges-pit_logo.png")
-    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-        pass
-    try:
-        github_logo_path = _get_asset_path("microlens_submit.assets", "github-desktop_logo.png")
-        shutil.copy2(github_logo_path, output_dir / "assets" / "github-desktop_logo.png")
-    except (FileNotFoundError, ModuleNotFoundError, AttributeError):
-        pass
+    copy_dossier_assets(output_dir)
 
     # After generating index.html, generate event pages
     # Import here to avoid circular imports

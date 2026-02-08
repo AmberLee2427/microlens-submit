@@ -324,15 +324,18 @@ class Submission(BaseModel):
     def _validate_alias_uniqueness(self) -> List[str]:
         errors = []
         for event_id, event in self.events.items():
-            seen_aliases = set()
+            alias_map: Dict[str, List[str]] = {}
             for solution in event.solutions.values():
                 if solution.alias:
-                    if solution.alias in seen_aliases:
-                        errors.append(
-                            f"Duplicate alias '{solution.alias}' found in event '{event_id}'. "
-                            f"Alias must be unique within each event."
-                        )
-                    seen_aliases.add(solution.alias)
+                    alias_map.setdefault(solution.alias, []).append(solution.solution_id)
+            for alias, solution_ids in alias_map.items():
+                if len(solution_ids) > 1:
+                    errors.append(
+                        f"Duplicate alias '{alias}' found in event '{event_id}' for solutions {solution_ids}. "
+                        "Aliases must be unique within each event. "
+                        "Tip: rename with solution.alias = 'new_alias' (or CLI --alias) and re-save. "
+                        "See docs/api.rst (Solution Aliases) for examples."
+                    )
         return errors
 
     def get_solution_by_alias(self, event_id: str, alias: str) -> Optional[Solution]:

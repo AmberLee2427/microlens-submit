@@ -1,5 +1,5 @@
-Getting Started: A Step-by-Step Tutorial
-=======================================
+CLI Tutorial: A Step-by-Step Guide
+==================================
 
 This comprehensive guide walks you through the complete workflow using the ``microlens-submit`` CLI, from initial project setup to final submission export.
 

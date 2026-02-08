@@ -1,7 +1,7 @@
 # Microlens-Submit Parameter Specification
 # =========================================
-# Version: 0.17.0
-# Last Updated: 2026-02-04
+# Version: 0.17.2
+# Last Updated: 2026-02-08
 #
 # This is the SINGLE SOURCE OF TRUTH for parameter definitions.
 # All validation logic and documentation should be generated from this file.
@@ -63,6 +63,7 @@ tiers:
       - "EVENT005"
       - "EVENT006"
       - "EVENT007"
+      - "data_challenge_0_129_335"
     allowed_model_types: "all"
     allowed_higher_order_effects: "all"
     notes: "For testing and development only"
