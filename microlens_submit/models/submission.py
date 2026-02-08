@@ -5,6 +5,7 @@ This module contains the Submission class, which represents the top-level
 container for a microlensing challenge submission project.
 """
 
+import base64
 import json
 import logging
 import math
@@ -575,6 +576,135 @@ class Submission(BaseModel):
                                 file_path,
                                 arcname=f"{sol_dir_arc}/{Path(path).name}",
                             )
+
+    def notebook_display_dashboard(self, output_dir: Optional[str] = None) -> str:
+        """Return dashboard HTML with local assets inlined for Jupyter display.
+
+        This is a convenience helper for JupyterLab/JupyterHub, where relative
+        file URLs are often blocked. It reads the generated dossier HTML and
+        replaces local asset image paths with base64 data URIs.
+
+        Args:
+            output_dir: Optional dossier output directory. Defaults to
+                <project_path>/dossier.
+
+        Returns:
+            str: HTML content suitable for display with IPython.display.HTML.
+        """
+        from microlens_submit.dossier import generate_dashboard_html
+
+        dossier_dir = Path(output_dir) if output_dir else Path(self.project_path) / "dossier"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
+        index_path = dossier_dir / "index.html"
+        if not index_path.exists():
+            generate_dashboard_html(self, dossier_dir)
+        html = index_path.read_text(encoding="utf-8")
+
+        return self._inline_dossier_assets(html, dossier_dir)
+
+    def notebook_display_event(self, event_id: str, output_dir: Optional[str] = None) -> str:
+        """Return event dossier HTML with local assets inlined for Jupyter display.
+
+        Args:
+            event_id: Event identifier to render.
+            output_dir: Optional dossier output directory. Defaults to
+                <project_path>/dossier.
+
+        Returns:
+            str: HTML content suitable for display with IPython.display.HTML.
+        """
+        from microlens_submit.dossier import generate_event_page
+        from microlens_submit.dossier.utils import copy_dossier_assets
+
+        dossier_dir = Path(output_dir) if output_dir else Path(self.project_path) / "dossier"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
+        copy_dossier_assets(dossier_dir)
+        event_path = dossier_dir / f"{event_id}.html"
+        if not event_path.exists():
+            event = self.get_event(event_id)
+            generate_event_page(event, self, dossier_dir)
+        html = event_path.read_text(encoding="utf-8")
+
+        return self._inline_dossier_assets(html, dossier_dir)
+
+    def notebook_display_solution(self, solution_id: str, output_dir: Optional[str] = None) -> str:
+        """Return solution dossier HTML with local assets inlined for Jupyter display.
+
+        Args:
+            solution_id: Solution identifier to render.
+            output_dir: Optional dossier output directory. Defaults to
+                <project_path>/dossier.
+
+        Returns:
+            str: HTML content suitable for display with IPython.display.HTML.
+        """
+        from microlens_submit.dossier import generate_solution_page
+        from microlens_submit.dossier.utils import copy_dossier_assets
+
+        dossier_dir = Path(output_dir) if output_dir else Path(self.project_path) / "dossier"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
+        copy_dossier_assets(dossier_dir)
+        solution_path = dossier_dir / f"{solution_id}.html"
+        if not solution_path.exists():
+            event = None
+            for ev in self.events.values():
+                if solution_id in ev.solutions:
+                    event = ev
+                    break
+            if event is None:
+                raise ValueError(f"Solution {solution_id} not found in submission")
+            solution = event.solutions[solution_id]
+            generate_solution_page(solution, event, self, dossier_dir)
+        html = solution_path.read_text(encoding="utf-8")
+
+        return self._inline_dossier_assets(html, dossier_dir)
+
+    def notebook_display_full_dossier(self, output_dir: Optional[str] = None) -> str:
+        """Return full dossier HTML with local assets inlined for Jupyter display.
+
+        Args:
+            output_dir: Optional dossier output directory. Defaults to
+                <project_path>/dossier.
+
+        Returns:
+            str: HTML content suitable for display with IPython.display.HTML.
+        """
+        from microlens_submit.dossier.full_report import generate_full_dossier_report_html
+        from microlens_submit.dossier.utils import copy_dossier_assets
+
+        dossier_dir = Path(output_dir) if output_dir else Path(self.project_path) / "dossier"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
+        copy_dossier_assets(dossier_dir)
+        full_path = dossier_dir / "full_dossier_report.html"
+        if not full_path.exists():
+            generate_full_dossier_report_html(self, dossier_dir)
+        html = full_path.read_text(encoding="utf-8")
+
+        return self._inline_dossier_assets(html, dossier_dir)
+
+    def _inline_dossier_assets(self, html: str, dossier_dir: Path) -> str:
+        assets_dir = dossier_dir / "assets"
+        if not assets_dir.exists():
+            return html
+        for img_path in assets_dir.glob("*.png"):
+            data = base64.b64encode(img_path.read_bytes()).decode("utf-8")
+            html = html.replace(
+                f'src="assets/{img_path.name}"',
+                f'src="data:image/png;base64,{data}"',
+            )
+            html = html.replace(
+                f'src="./assets/{img_path.name}"',
+                f'src="data:image/png;base64,{data}"',
+            )
+            html = html.replace(
+                f"src='assets/{img_path.name}'",
+                f"src='data:image/png;base64,{data}'",
+            )
+            html = html.replace(
+                f"src='./assets/{img_path.name}'",
+                f"src='data:image/png;base64,{data}'",
+            )
+        return html
 
     def remove_event(self, event_id: str, force: bool = False) -> bool:
         if event_id not in self.events:

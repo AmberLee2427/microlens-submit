@@ -208,6 +208,29 @@ inspect existing aliases, rename one, and optionally deactivate a duplicate.
     >>> sol.deactivate()
     >>> submission.save()
 
+Solution-Level Hardware Overrides (Python API)
+---------------------------------------------
+
+If a solution is produced on a different server, you can attach hardware
+metadata directly to the solution without changing submission-wide info.
+
+.. code-block:: python
+
+    >>> from microlens_submit import load
+    >>> submission = load("./my_project")
+    >>> event = submission.get_event("EVENT123")
+    >>> sol = next(iter(event.solutions.values()))
+    >>> # Autofill from current environment
+    >>> sol.autofill_hardware_info()
+    >>> submission.save()
+    >>> # Manual override
+    >>> sol.hardware_info = {
+    ...     "cpu_details": "Xeon",
+    ...     "memory_gb": 128,
+    ...     "nexus_image": "roman-science-platform:latest",
+    ... }
+    >>> submission.save()
+
 Dossier Generation Examples
 ---------------------------
 

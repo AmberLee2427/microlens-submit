@@ -519,6 +519,22 @@ def edit_solution(
     clear_n_data_points: bool = typer.Option(False, help="Clear n_data_points"),
     clear_parameter_uncertainties: bool = typer.Option(False, help="Clear parameter uncertainties"),
     clear_physical_parameters: bool = typer.Option(False, help="Clear physical parameters"),
+    hardware_info_json: Optional[str] = typer.Option(
+        None,
+        "--hardware-info-json",
+        help='Solution-level hardware_info override as JSON (e.g., \'{"cpu_details": "Xeon"}\')',
+    ),
+    autofill_hardware_info: bool = typer.Option(
+        False,
+        "--autofill-hardware-info",
+        help="Autofill solution-level hardware_info from current environment",
+    ),
+    autofill_nexus_info: bool = typer.Option(
+        False,
+        "--autofill-nexus-info",
+        help="Alias for --autofill-hardware-info",
+    ),
+    clear_hardware_info: bool = typer.Option(False, help="Clear solution-level hardware_info"),
     cpu_hours: Optional[float] = typer.Option(None, help="CPU hours used"),
     wall_time_hours: Optional[float] = typer.Option(None, help="Wall time hours used"),
     param: Optional[List[str]] = typer.Option(
@@ -623,6 +639,22 @@ def edit_solution(
         if target_solution.physical_parameters:
             changes.append("Clear physical_parameters")
             target_solution.physical_parameters = None
+    if clear_hardware_info:
+        if target_solution.hardware_info is not None:
+            changes.append("Clear hardware_info")
+            target_solution.hardware_info = None
+    if hardware_info_json is not None:
+        try:
+            parsed = json.loads(hardware_info_json)
+        except json.JSONDecodeError as exc:
+            raise typer.BadParameter(f"Invalid JSON for --hardware-info-json: {exc}")
+        if not isinstance(parsed, dict):
+            raise typer.BadParameter("--hardware-info-json must be a JSON object")
+        changes.append("Update hardware_info")
+        target_solution.hardware_info = parsed
+    if autofill_hardware_info or autofill_nexus_info:
+        target_solution.autofill_hardware_info()
+        changes.append("Autofill hardware_info")
     if cpu_hours is not None or wall_time_hours is not None:
         old_cpu = target_solution.compute_info.get("cpu_hours")
         old_wall = target_solution.compute_info.get("wall_time_hours")

@@ -301,6 +301,24 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
      microlens-submit edit-solution <solution_id> --alias "updated_best_fit"
 
+   **Solution-level hardware overrides (optional):**
+
+   If a solution was produced on a different server or environment, you can
+   attach per-solution hardware info without changing the submission-wide
+   metadata.
+
+   .. code-block:: bash
+
+   # Autofill from the current environment
+   microlens-submit edit-solution <solution_id> --autofill-hardware-info
+
+   # Manual JSON override
+   microlens-submit edit-solution <solution_id> \
+      --hardware-info-json '{"cpu_details": "Xeon", "memory_gb": 128, "nexus_image": "roman-science-platform:latest"}'
+
+   # Clear the solution-level override
+   microlens-submit edit-solution <solution_id> --clear-hardware-info
+
     **How to inspect solutions and resolve duplicate aliases:**
 
     If you re-run a notebook or script, you might accidentally reuse an alias.

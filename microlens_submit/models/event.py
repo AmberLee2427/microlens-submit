@@ -67,7 +67,13 @@ class Event(BaseModel):
     solutions: Dict[str, Solution] = Field(default_factory=dict)
     submission: Optional["Submission"] = Field(default=None, exclude=True)
 
-    def add_solution(self, model_type: str, parameters: dict, alias: Optional[str] = None) -> Solution:
+    def add_solution(
+        self,
+        model_type: str,
+        parameters: dict,
+        alias: Optional[str] = None,
+        bands: Optional[List[str]] = None,
+    ) -> Solution:
         """Create and attach a new solution to this event.
 
         Parameters are stored as provided and the new solution is returned for
@@ -80,6 +86,7 @@ class Event(BaseModel):
                 When provided, this alias is used as the primary identifier in dossier displays,
                 with the UUID shown as a secondary identifier. The combination of event_id and
                 alias must be unique within the project.
+            bands: Optional list of photometric bands used in the fit (e.g., ["0", "1"]).
 
         Returns:
             Solution: The newly created solution instance.
@@ -118,6 +125,7 @@ class Event(BaseModel):
             model_type=model_type,
             parameters=parameters,
             alias=alias,
+            bands=bands or [],
         )
         self.solutions[solution_id] = sol
 

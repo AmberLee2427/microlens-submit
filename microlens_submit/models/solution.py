@@ -6,12 +6,15 @@ microlensing model fit with parameters and metadata.
 """
 
 import logging
+import os
+import platform
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Literal, Optional
 
+import psutil
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -40,6 +43,7 @@ class Solution(BaseModel):
             during validation or save operations.
         compute_info: Metadata about the computing environment, populated by
             :meth:`set_compute_info`.
+        hardware_info: Optional solution-specific hardware metadata override.
         posterior_path: Optional path to a file containing posterior samples.
         lightcurve_plot_path: Optional path to the lightcurve plot file.
         lens_plane_plot_path: Optional path to the lens plane plot file.
@@ -125,6 +129,7 @@ class Solution(BaseModel):
     is_active: bool = True
     alias: Optional[str] = None
     compute_info: dict = Field(default_factory=dict)
+    hardware_info: Optional[dict] = None
     posterior_path: Optional[str] = None
     lightcurve_plot_path: Optional[str] = None
     lens_plane_plot_path: Optional[str] = None
@@ -277,6 +282,70 @@ class Solution(BaseModel):
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.warning("Could not capture git info: %s", e)
             self.compute_info["git_info"] = None
+
+    def autofill_hardware_info(self) -> None:
+        """Populate solution-level hardware metadata from the current environment.
+
+        This mirrors Submission.autofill_nexus_info() but stores the metadata
+        on the solution itself. It is optional and can be used when solutions
+        are produced on different servers or environments.
+        """
+        if self.hardware_info is None:
+            self.hardware_info = {}
+        try:
+            self.hardware_info.setdefault("platform", platform.platform())
+            self.hardware_info.setdefault("os", platform.system())
+        except Exception as exc:
+            logging.debug("Failed to read platform info: %s", exc)
+        try:
+            image = os.environ.get("JUPYTER_IMAGE_SPEC")
+            if image:
+                self.hardware_info["nexus_image"] = image
+        except Exception as exc:
+            logging.debug("Failed to read JUPYTER_IMAGE_SPEC: %s", exc)
+        try:
+            server_name = os.environ.get("JUPYTERHUB_SERVER_NAME")
+            if server_name:
+                self.hardware_info["server_name"] = server_name
+        except Exception as exc:
+            logging.debug("Failed to read JUPYTERHUB_SERVER_NAME: %s", exc)
+        try:
+            with open("/proc/cpuinfo", "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.lower().startswith("model name"):
+                        self.hardware_info["cpu_details"] = line.split(":", 1)[1].strip()
+                        break
+        except OSError as exc:
+            logging.debug("Failed to read /proc/cpuinfo: %s", exc)
+        try:
+            with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("MemTotal"):
+                        mem_kb = int(line.split(":", 1)[1].strip().split()[0])
+                        self.hardware_info["memory_gb"] = round(mem_kb / 1024**2, 2)
+                        break
+        except OSError as exc:
+            logging.debug("Failed to read /proc/meminfo: %s", exc)
+        try:
+            if "memory_gb" not in self.hardware_info:
+                mem_bytes = psutil.virtual_memory().total
+                self.hardware_info["memory_gb"] = round(mem_bytes / 1024**3, 2)
+        except Exception as exc:
+            logging.debug("Failed to read memory via psutil: %s", exc)
+        try:
+            if "cpu_details" not in self.hardware_info:
+                cpu = platform.processor() or platform.machine()
+                freq = psutil.cpu_freq()
+                if freq and cpu:
+                    self.hardware_info["cpu_details"] = f"{cpu} ({freq.max:.0f} MHz max)"
+                elif cpu:
+                    self.hardware_info["cpu_details"] = cpu
+        except Exception as exc:
+            logging.debug("Failed to read CPU via psutil: %s", exc)
+
+    def autofill_nexus_info(self) -> None:
+        """Alias for autofill_hardware_info() for Nexus users."""
+        self.autofill_hardware_info()
 
     def deactivate(self) -> None:
         """Mark this solution as inactive.

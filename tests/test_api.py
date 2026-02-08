@@ -143,6 +143,20 @@ def test_compute_info_hours(tmp_path):
     assert new_sol.compute_info["wall_time_hours"] == 2.0
 
 
+def test_add_solution_accepts_bands(tmp_path):
+    """Ensure the Python API can set bands during solution creation."""
+    project = tmp_path / "proj"
+    sub = load(str(project))
+    sub.team_name = "Test Team"
+    sub.tier = "test"
+    sub.repo_url = "https://github.com/test/team"
+    sub.hardware_info = {"cpu": "test"}
+
+    evt = sub.get_event("test-event")
+    sol = evt.add_solution("1S1L", {"t0": 1.0, "u0": 0.1, "tE": 2.0}, bands=["0", "1"])
+    assert sol.bands == ["0", "1"]
+
+
 def test_deactivate_and_export(tmp_path):
     """Test that deactivated solutions are excluded from exports.
 
