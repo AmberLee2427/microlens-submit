@@ -1,21 +1,20 @@
-# microlens-submit v0.17.2 Release Notes
+# microlens-submit v0.17.3 Release Notes
 
 **Release Date:** 2026-02-08
 
 ## Changelog
 
-## [0.17.2] - 2026-02-08
+## [0.17.3] - 2026-02-08
 
 ### Added
-- Renamed CLI-focused tutorial file (`docs/cli_tutorial.rst`) and updated docs index references.
-- Added a Python API example for inspecting solutions and resolving duplicate aliases in usage examples.
+- Solution-level hardware metadata overrides and autofill helpers.
+- Notebook display helpers for dashboard, event, solution, and full dossier pages.
+- Python API support for setting `bands` during `event.add_solution()`.
+- Tests covering notebook display helpers and `bands` in the Python API.
 
 ### Changed
-- Dossier asset linking now resolves local plot/posterior paths without copying into the dossier output (reverted to v<0.17.0 behaviour).
-- Duplicate-alias validation now reports the conflicting solution IDs with guidance for renaming.
+- CLI `edit-solution` now supports solution-level hardware overrides (JSON), autofill, and clearing.
+- Notebook display helpers inline local assets for JupyterHub/JupyterLab display.
 
 ### Fixed
-- Fixed dossier logo asset loading to use packaged assets reliably across environments (e.g., Roman Nexus).
-- Ensured event/solution-only dossier generation copies shared logo assets.
-- Fixed flux-parameter detection so `F0_S`/`F0_B` are recognized for banded flux terms.
-- Added `data_challenge_0_129_335` to the `test` tier event list (runtime and spec).
+- Asset inlining now handles single-quoted `src` attributes in dossier HTML.
