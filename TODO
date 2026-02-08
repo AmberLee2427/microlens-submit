@@ -29,7 +29,8 @@
 - [x] Release Workflow
 - [x] Wheel build CI
 - [x] Unhelpful error when band not supoplied but a flux value is
-- [ ] What the fuck do we do about uncertainties?
+- [x] What the fuck do we do about uncertainties?
+  - meta data and the same single value or paired values options
 
 
 ## Conda Forge
@@ -38,3 +39,10 @@
 - [ ] related to do's from other projects:
   - [ ] MulensModel feedstock
   - [ ] VBMicrolensing feedstock
+
+## v1.0.0 debug
+- [x] undo image bug fuck up
+- [ ] fix image asset bug in dossiers
+- [ ] add `data_challenge_0_129_335` to `test` tier allowed event list
+- [ ] "Invalid parameter 'F0_S' for model type '1S1L'; Invalid parameter 'F0_B' for model type '1S1L'"
+- [ ]

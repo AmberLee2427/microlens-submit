@@ -6,8 +6,7 @@ generation package, including hardware formatting, GitHub URL parsing,
 and other helper functions.
 """
 
-import hashlib
-import shutil
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import quote, urlparse
@@ -123,11 +122,11 @@ def resolve_dossier_asset_path(
     subdir: str,
     prefix: Optional[str] = None,
 ) -> str:
-    """Resolve and copy a local asset into the dossier assets folder.
+    """Resolve a local asset path for dossier HTML without copying.
 
     If the input path is a URL, it is returned unchanged. If it is a local
-    filesystem path, it is resolved relative to the project root, copied into
-    the dossier assets folder, and returned as a URL-encoded relative path.
+    filesystem path, it is resolved relative to the project root and returned
+    as a URL-encoded path relative to the dossier output directory.
 
     Args:
         path_value: The original path or URL string.
@@ -159,16 +158,8 @@ def resolve_dossier_asset_path(
     if not source_path.exists():
         return path_value
 
-    assets_dir = output_dir / "assets" / subdir
-    assets_dir.mkdir(parents=True, exist_ok=True)
-
-    digest = hashlib.sha1(str(source_path).encode("utf-8")).hexdigest()[:8]
-    safe_prefix = prefix or "asset"
-    dest_name = f"{safe_prefix}_{digest}_{source_path.name}"
-    dest_path = assets_dir / dest_name
-
-    if not dest_path.exists():
-        shutil.copy2(source_path, dest_path)
-
-    rel_path = dest_path.relative_to(output_dir).as_posix()
+    try:
+        rel_path = Path(os.path.relpath(source_path, output_dir)).as_posix()
+    except ValueError:
+        rel_path = source_path.as_posix()
     return quote(rel_path)
