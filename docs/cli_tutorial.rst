@@ -939,7 +939,7 @@ Manage multiple events and solutions efficiently:
 
 **Reproducibility:**
 
-- **Always use ``--cpu-hours`` and ``--wall-time-hours``** to record computational details
+- **Always use** ``--cpu-hours`` **and** ``--wall-time-hours`` **to record computational details**
 - **Include version information** for key dependencies in your notes
 - **Use descriptive notes** for each solution explaining your methodology
 - **Record your analysis pipeline** with code snippets and parameter choices
@@ -973,7 +973,7 @@ Manage multiple events and solutions efficiently:
 **Workflow Management:**
 
 - **Save frequently** with regular validation checks
-- **Use `deactivate()` instead of deleting solutions** to preserve analysis history
+- **Use** ``deactivate()`` **instead of deleting solutions** to preserve analysis history
 - **Keep multiple solutions** for comparison and model selection
 - **Use meaningful aliases** for easier solution identification
 - **Organize your project structure** with clear file naming conventions
