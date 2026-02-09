@@ -498,6 +498,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    See `tests/data/test_import.csv` in the repository for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
 
    **Basic CSV format:**
+
    .. code-block:: csv
 
       # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
@@ -877,7 +878,7 @@ Manage multiple events and solutions efficiently:
    tree -I '*.pyc|__pycache__'
 
 **Troubleshooting**
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 **Common Issues and Solutions:**
 
