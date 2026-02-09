@@ -50,9 +50,9 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Options:**
 
-      - ``--team-name``: Your team's name (required)
-      - ``--tier``: Challenge tier ("beginner" or "experienced")
-      - Project path: Where to create the project directory
+   - ``--team-name``: Your team's name (required)
+   - ``--tier``: Challenge tier ("beginner" or "experienced")
+   - Project path: Where to create the project directory
 
 2. **Record repository and hardware info**
 
@@ -93,21 +93,21 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Required Parameters:**
 
-      - Event ID: Unique identifier for the microlensing event
-      - Model type: Microlensing model (1S1L, 1S2L, 2S1L, etc.)
-      - Model parameters: Specific to the model type
+   - Event ID: Unique identifier for the microlensing event
+   - Model type: Microlensing model (1S1L, 1S2L, 2S1L, etc.)
+   - Model parameters: Specific to the model type
 
    **Optional Metadata:**
 
-      - Log-likelihood and data points for statistical analysis
-      - Compute information for resource tracking
-      - Physical parameters (``--physical-param Mtot=0.5``)
-      - Parameter uncertainties (``--param-uncertainty t0=[1.1,1.3]``)
-      - Physical parameter uncertainties (``--physical-param-uncertainty Mtot=0.08``)
-      - Uncertainty metadata (``--uncertainty-method mcmc_posterior --confidence-level 0.68``)
-      - Plot paths for visualization files
-      - Notes for documentation
-      - Higher-order effects for advanced models
+   - Log-likelihood and data points for statistical analysis
+   - Compute information for resource tracking
+   - Physical parameters (``--physical-param Mtot=0.5``)
+   - Parameter uncertainties (``--param-uncertainty t0=[1.1,1.3]``)
+   - Physical parameter uncertainties (``--physical-param-uncertainty Mtot=0.08``)
+   - Uncertainty metadata (``--uncertainty-method mcmc_posterior --confidence-level 0.68``)
+   - Plot paths for visualization files
+   - Notes for documentation
+   - Higher-order effects for advanced models
 
    **Note:**
    The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
@@ -128,6 +128,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      microlens-submit notes <solution_id>
 
    **Tip:**
+
    - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
    - The notes file is included in the exported zip and rendered in the HTML dossier.
 
@@ -202,15 +203,15 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       This solution represents a **binary lens** with a planetary companion (q = 0.001).
 
       ## Fitting Strategy
-      - **Sampling Method:** MCMC with 1000 walkers
-      - **Chain Length:** 50,000 steps per walker
-      - **Burn-in:** First 10,000 steps discarded
-      - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
+        - **Sampling Method:** MCMC with 1000 walkers
+        - **Chain Length:** 50,000 steps per walker
+        - **Burn-in:** First 10,000 steps discarded
+        - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
 
       ## Key Findings
-      1. **Planetary Signal:** Clear detection of a planetary companion
-      2. **Caustic Crossing:** Source crosses the planetary caustic
-      3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
+        1. **Planetary Signal:** Clear detection of a planetary companion
+        2. **Caustic Crossing:** Source crosses the planetary caustic
+        3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
 
       ## Physical Parameters
       | Parameter | Value | Units |
@@ -221,8 +222,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       | a | 2.8 ± 0.4 | AU |
 
       ## Model Comparison
-      - **Single Lens:** Δχ² = 156.7 (rejected)
-      - **Binary Lens:** Best fit with ΔBIC = 23.4
+        - **Single Lens:** Δχ² = 156.7 (rejected)
+        - **Binary Lens:** Best fit with ΔBIC = 23.4
 
       ## Code Reference
       ```python
@@ -248,14 +249,14 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Markdown Features Supported:**
 
-      - **Headers** (##, ###, etc.) for section organization
-      - **Bold** and *italic* text for emphasis
-      - **Lists** (numbered and bulleted) for structured information
-      - **Tables** for parameter comparisons and data presentation
-      - **Code blocks** for algorithm snippets and examples
-      - **Links** to external references and documentation
-      - **Images** (if referenced files exist in your project)
-      - **Mathematical expressions** using LaTeX syntax
+   - **Headers** (``##``, ``###``, etc.) for section organization
+   - **Bold** and *italic* text for emphasis
+   - **Lists** (numbered and bulleted) for structured information
+   - **Tables** for parameter comparisons and data presentation
+   - **Code blocks** for algorithm snippets and examples
+   - **Links** to external references and documentation
+   - **Images** (if referenced files exist in your project)
+   - **Mathematical expressions** using LaTeX syntax
 
    **Appending to Existing Notes:**
 
@@ -301,11 +302,11 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Alias Features:**
 
-      - Aliases must be unique within each event (e.g., you can't have two solutions with alias "best_fit" in EVENT123)
-      - Aliases are displayed as primary identifiers in dossier generation, with UUIDs as secondary
-      - In the full dossier report, solutions are titled as "Solution: <event_id> <alias>" with UUID as subtitle
-      - Aliases can be edited later using the edit-solution command
-      - Solutions without aliases fall back to UUID-based identification
+   - Aliases must be unique within each event (e.g., you can't have two solutions with alias "best_fit" in EVENT123)
+   - Aliases are displayed as primary identifiers in dossier generation, with UUIDs as secondary
+   - In the full dossier report, solutions are titled as "Solution: <event_id> <alias>" with UUID as subtitle
+   - Aliases can be edited later using the edit-solution command
+   - Solutions without aliases fall back to UUID-based identification
 
    **Edit solution aliases:**
 
@@ -467,20 +468,20 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Available uncertainty methods:**
 
-      - ``mcmc_posterior``: From MCMC posterior distributions
-      - ``fisher_matrix``: From Fisher information matrix
-      - ``bootstrap``: From bootstrap resampling
-      - ``propagation``: From error propagation of fitted parameters
-      - ``inference``: From Bayesian inference
-      - ``literature``: From published values or external constraints
-      - ``other``: Custom or unspecified method
+   - ``mcmc_posterior``: From MCMC posterior distributions
+   - ``fisher_matrix``: From Fisher information matrix
+   - ``bootstrap``: From bootstrap resampling
+   - ``propagation``: From error propagation of fitted parameters
+   - ``inference``: From Bayesian inference
+   - ``literature``: From published values or external constraints
+   - ``other``: Custom or unspecified method
 
    **Confidence levels:**
 
-      - ``0.68``: 1-sigma confidence interval (default)
-      - ``0.95``: 2-sigma confidence interval
-      - ``0.997``: 3-sigma confidence interval
-      - Custom values between 0 and 1
+   - ``0.68``: 1-sigma confidence interval (default)
+   - ``0.95``: 2-sigma confidence interval
+   - ``0.997``: 3-sigma confidence interval
+   - Custom values between 0 and 1
 
    **Note:** While uncertainties are optional, providing them along with the method and
    confidence level is **strongly recommended** for solutions you want evaluated. This
@@ -496,11 +497,11 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Features:**
 
-      - Supports individual parameter columns or a JSON parameters column
-      - Handles solution aliases, notes, and higher-order effects
-      - Duplicate handling: error (default), override, or ignore
-      - Supports dry-run and validation options
-      - File paths are resolved relative to the current working directory or with --project-path
+   - Supports individual parameter columns or a JSON parameters column
+   - Handles solution aliases, notes, and higher-order effects
+   - Duplicate handling: error (default), override, or ignore
+   - Supports dry-run and validation options
+   - File paths are resolved relative to the current working directory or with --project-path
 
    **Example CSV:**
    See ``tests/data/test_import.csv`` in the repository for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
@@ -516,10 +517,10 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **Options:**
 
-      - ``--on-duplicate [error|override|ignore]``: How to handle duplicate aliases/IDs
-      - ``--dry-run``: Preview what would be imported without saving
-      - ``--validate``: Run validation on each imported solution
-      - ``--project-path <dir>``: Set the project root for file resolution
+   - ``--on-duplicate [error|override|ignore]``: How to handle duplicate aliases/IDs
+   - ``--dry-run``: Preview what would be imported without saving
+   - ``--validate``: Run validation on each imported solution
+   - ``--project-path <dir>``: Set the project root for file resolution
 
    **Test Data:**
    The file `tests/data/test_import.csv` is used in the test suite and can be copied or adapted for your own bulk imports.
@@ -614,8 +615,8 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **CLI vs Python API:**
 
-     - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
-     - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
+   - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
+   - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
 
    **What happens if you forget --force?**
 
@@ -629,15 +630,15 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    **When to use removal vs deactivation:**
 
-     - **Use deactivate()** when you want to keep the solution data but exclude it from exports
-     - **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
-     - **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
+   - **Use deactivate()** when you want to keep the solution data but exclude it from exports
+   - **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
+   - **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
 
    **Safety features:**
 
-     - Saved solutions/events require ``--force`` to prevent accidental data loss
-     - Removal cannot be undone - use deactivate() if you're unsure
-     - Temporary files (notes in tmp/) are automatically cleaned up
+   - Saved solutions/events require ``--force`` to prevent accidental data loss
+   - Removal cannot be undone - use deactivate() if you're unsure
+   - Temporary files (notes in tmp/) are automatically cleaned up
 
 11. **Edit solution attributes (optional)**
 
@@ -671,41 +672,41 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
 12. **Export the final package**
 
-    Create the submission package for upload:
+   Create the submission package for upload:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       microlens-submit export submission.zip
+      microlens-submit export submission.zip
 
-    This creates a zip file containing all active solutions and associated files,
-    ready for submission to the challenge organizers.
+   This creates a zip file containing all active solutions and associated files,
+   ready for submission to the challenge organizers.
 
 13. **Preview your submission dossier**
 
-    Generate a human-readable HTML dashboard for review:
+   Generate a human-readable HTML dashboard for review:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       microlens-submit generate-dossier
+      microlens-submit generate-dossier
 
-    This will create a human-readable HTML dashboard at ``dossier/index.html`` inside your project directory. Open this file in your web browser to preview your submission as evaluators will see it.
+   This will create a human-readable HTML dashboard at ``dossier/index.html`` inside your project directory. Open this file in your web browser to preview your submission as evaluators will see it.
 
-    You can also serve the dossier with a simple local server:
+   You can also serve the dossier with a simple local server:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       cd dossier
-       python3 -m http.server
+      cd dossier
+      python3 -m http.server
 
-    Then open ``http://localhost:8000`` in your browser.
+   Then open ``http://localhost:8000`` in your browser.
 
-    The dossier includes:
+   The dossier includes:
       - Team and submission metadata
       - Solution summaries and statistics
       - Progress bar and compute time
-      - Event table and parameter distribution placeholders
+     - Event table and parameter distribution placeholders
 
-    **Note:** The dossier is for your review only and is not included in the exported submission zip.
+   **Note:** The dossier is for your review only and is not included in the exported submission zip.
 
 **Advanced Features**
 ~~~~~~~~~~~~~~~~~~~~~
@@ -765,11 +766,11 @@ When you have multiple solutions for the same event, it's crucial to manage them
    microlens-submit compare-solutions EVENT123
 
 This will show:
-- Model types and parameter counts
-- Log-likelihood values
-- BIC scores (calculated automatically)
-- Relative probabilities (calculated automatically)
-- Higher-order effects used
+   - Model types and parameter counts
+   - Log-likelihood values
+   - BIC scores (calculated automatically)
+   - Relative probabilities (calculated automatically)
+   - Higher-order effects used
 
 **3. Set Explicit Relative Probabilities:**
 
@@ -809,9 +810,9 @@ If you want to override the automatic BIC-based calculation:
    ## Model Comparison Results
 
    After comparing all three solutions:
-   - **Simple 1S1L:** Δχ² = 156.7 vs binary models (rejected)
-   - **Binary 1S2L (primary):** Best fit with ΔBIC = 23.4
-   - **Binary 1S2L (alternative):** ΔBIC = 11.2 vs primary
+     - **Simple 1S1L:** Δχ² = 156.7 vs binary models (rejected)
+     - **Binary 1S2L (primary):** Best fit with ΔBIC = 23.4
+     - **Binary 1S2L (alternative):** ΔBIC = 11.2 vs primary
 
    The primary binary solution is clearly preferred, with the
    alternative binary solution having some merit but lower probability."
@@ -838,11 +839,11 @@ If you want to override the automatic BIC-based calculation:
 
 **Relative Probability Guidelines:**
 
-   - **Sum to 1.0:** All active solutions in an event must have probabilities summing to 1.0
-   - **Automatic Calculation:** If you provide log-likelihood and n_data_points, BIC-based probabilities are calculated automatically
-   - **Manual Override:** You can set explicit probabilities based on your analysis
-   - **Single Solution:** If only one active solution exists, its probability should be 1.0 or None
-   - **Validation:** The system will warn you if probabilities don't sum correctly
+- **Sum to 1.0:** All active solutions in an event must have probabilities summing to 1.0
+- **Automatic Calculation:** If you provide log-likelihood and n_data_points, BIC-based probabilities are calculated automatically
+- **Manual Override:** You can set explicit probabilities based on your analysis
+- **Single Solution:** If only one active solution exists, its probability should be 1.0 or None
+- **Validation:** The system will warn you if probabilities don't sum correctly
 
 **Parameter File Management:**
 
@@ -892,32 +893,36 @@ Manage multiple events and solutions efficiently:
 **Common Issues and Solutions:**
 
 1. **Validation Errors:**
-    - Check that all required parameters are provided for your model type
-    - Ensure relative probabilities sum to 1.0 for active solutions
-    - Verify parameter types (numbers vs strings)
+
+- Check that all required parameters are provided for your model type
+- Ensure relative probabilities sum to 1.0 for active solutions
+- Verify parameter types (numbers vs strings)
 
 2. **File Path Issues:**
-    - Use relative paths from the project root
-    - Ensure referenced files exist before adding solutions
-    - Check file permissions for reading/writing
+
+- Use relative paths from the project root
+- Ensure referenced files exist before adding solutions
+- Check file permissions for reading/writing
 
 3. **Model Type Errors:**
-    - Verify model type spelling (1S1L, 1S2L, 2S1L, etc.)
-    - Check that parameters match the model type requirements
-    - Ensure higher-order effects are compatible with the model
+
+- Verify model type spelling (1S1L, 1S2L, 2S1L, etc.)
+- Check that parameters match the model type requirements
+- Ensure higher-order effects are compatible with the model
 
 4. **Export Problems:**
-    - Make sure at least one solution is active per event
-    - Check that all referenced files exist
-    - Verify the export path is writable
+
+- Make sure at least one solution is active per event
+- Check that all referenced files exist
+- Verify the export path is writable
 
 **Getting Help**
 ~~~~~~~~~~~~~~~~
 
-   - **Documentation**: This tutorial and the API reference
-   - **Jupyter Notebooks**: Interactive examples in the docs directory
-   - **GitHub Issues**: Report bugs or request features
-   - **Validation Messages**: Read the detailed error messages for guidance
+- **Documentation**: This tutorial and the API reference
+- **Jupyter Notebooks**: Interactive examples in the docs directory
+- **GitHub Issues**: Report bugs or request features
+- **Validation Messages**: Read the detailed error messages for guidance
 
 **Best Practices**
 ~~~~~~~~~~~~~~~~~~
@@ -934,11 +939,11 @@ Manage multiple events and solutions efficiently:
 
 **Reproducibility:**
 
-   - **Always use ``--cpu-hours`` and ``--wall-time-hours``** to record computational details
-   - **Include version information** for key dependencies in your notes
-   - **Use descriptive notes** for each solution explaining your methodology
-   - **Record your analysis pipeline** with code snippets and parameter choices
-   - **Document data preprocessing** steps and quality cuts applied
+- **Always use ``--cpu-hours`` and ``--wall-time-hours``** to record computational details
+- **Include version information** for key dependencies in your notes
+- **Use descriptive notes** for each solution explaining your methodology
+- **Record your analysis pipeline** with code snippets and parameter choices
+- **Document data preprocessing** steps and quality cuts applied
 
 .. code-block:: bash
 
@@ -967,11 +972,11 @@ Manage multiple events and solutions efficiently:
 
 **Workflow Management:**
 
-   - **Save frequently** with regular validation checks
-   - **Use `deactivate()` instead of deleting solutions** to preserve analysis history
-   - **Keep multiple solutions** for comparison and model selection
-   - **Use meaningful aliases** for easier solution identification
-   - **Organize your project structure** with clear file naming conventions
+- **Save frequently** with regular validation checks
+- **Use `deactivate()` instead of deleting solutions** to preserve analysis history
+- **Keep multiple solutions** for comparison and model selection
+- **Use meaningful aliases** for easier solution identification
+- **Organize your project structure** with clear file naming conventions
 
 .. code-block:: bash
 
@@ -994,11 +999,11 @@ Manage multiple events and solutions efficiently:
 
 **Data Quality:**
 
-   - **Validate your parameters** before adding solutions
-   - **Include uncertainties** when available for better statistical analysis
-   - **Record the number of data points** used in each fit
-   - **Document data quality cuts** and preprocessing steps
-   - **Check for systematic errors** and include them in your analysis
+- **Validate your parameters** before adding solutions
+- **Include uncertainties** when available for better statistical analysis
+- **Record the number of data points** used in each fit
+- **Document data quality cuts** and preprocessing steps
+- **Check for systematic errors** and include them in your analysis
 
 .. code-block:: bash
 
@@ -1012,24 +1017,24 @@ Manage multiple events and solutions efficiently:
         --notes "# High-Quality Binary Lens Fit
 
    ## Data Quality Assessment
-   - **Total data points:** 1,450 (raw)
-   - **Points used in fit:** 1,250 (after quality cuts)
-   - **Systematic error floor:** 0.02 mag applied
-   - **Band coverage:** I-band primary, V-band secondary
-   - **Temporal coverage:** 2459120-2459130 (10 days)
+     - **Total data points:** 1,450 (raw)
+     - **Points used in fit:** 1,250 (after quality cuts)
+     - **Systematic error floor:** 0.02 mag applied
+     - **Band coverage:** I-band primary, V-band secondary
+     - **Temporal coverage:** 2459120-2459130 (10 days)
 
    ## Uncertainty Analysis
-   - Parameter uncertainties from MCMC posterior distributions
-   - Asymmetric uncertainties for t0 and tE due to light curve asymmetry
-   - Systematic uncertainties included in error budget"
+     - Parameter uncertainties from MCMC posterior distributions
+     - Asymmetric uncertainties for t0 and tE due to light curve asymmetry
+     - Systematic uncertainties included in error budget"
 
 **Performance Optimization:**
 
-   - **The tool is designed for long-term projects** with efficient handling of large numbers of solutions
-   - **Export only when ready** for final submission to avoid unnecessary processing
-   - **Use bulk import** for large datasets to save time
-   - **Organize your file structure** efficiently with clear naming conventions
-   - **Monitor disk space** for large posterior files and plots
+- **The tool is designed for long-term projects** with efficient handling of large numbers of solutions
+- **Export only when ready** for final submission to avoid unnecessary processing
+- **Use bulk import** for large datasets to save time
+- **Organize your file structure** efficiently with clear naming conventions
+- **Monitor disk space** for large posterior files and plots
 
 .. code-block:: bash
 
