@@ -755,12 +755,12 @@ When you have multiple solutions for the same event, it's crucial to manage them
    # View comparison table
    microlens-submit compare-solutions EVENT123
 
-   # This will show:
-   # - Model types and parameter counts
-   # - Log-likelihood values
-   # - BIC scores (calculated automatically)
-   # - Relative probabilities (calculated automatically)
-   # - Higher-order effects used
+This will show:
+- Model types and parameter counts
+- Log-likelihood values
+- BIC scores (calculated automatically)
+- Relative probabilities (calculated automatically)
+- Higher-order effects used
 
 **3. Set Explicit Relative Probabilities:**
 
