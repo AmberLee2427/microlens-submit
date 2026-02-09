@@ -192,52 +192,56 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     microlens-submit add-solution EVENT123 1S2L \
-          --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
-          --param q=0.001 --param s=1.15 --param alpha=45.2 \
-          --alias "binary_planetary" \
-          --notes "# Binary Lens Solution for EVENT123
+      cat << 'EOF' > notes.md
+      # Binary Lens Solution for EVENT123
 
-   ## Model Overview
-   This solution represents a **binary lens** with a planetary companion (q = 0.001).
+      ## Model Overview
+      This solution represents a **binary lens** with a planetary companion (q = 0.001).
 
-   ## Fitting Strategy
-   - **Sampling Method:** MCMC with 1000 walkers
-   - **Chain Length:** 50,000 steps per walker
-   - **Burn-in:** First 10,000 steps discarded
-   - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
+      ## Fitting Strategy
+      - **Sampling Method:** MCMC with 1000 walkers
+      - **Chain Length:** 50,000 steps per walker
+      - **Burn-in:** First 10,000 steps discarded
+      - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
 
-   ## Key Findings
-   1. **Planetary Signal:** Clear detection of a planetary companion
-   2. **Caustic Crossing:** Source crosses the planetary caustic
-   3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
+      ## Key Findings
+      1. **Planetary Signal:** Clear detection of a planetary companion
+      2. **Caustic Crossing:** Source crosses the planetary caustic
+      3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
 
-   ## Physical Parameters
-   | Parameter | Value | Units |
-   |-----------|-------|-------|
-   | M_L | 0.45 ± 0.05 | M☉ |
-   | D_L | 6.2 ± 0.3 | kpc |
-   | M_planet | 1.5 ± 0.2 | M⊕ |
-   | a | 2.8 ± 0.4 | AU |
+      ## Physical Parameters
+      | Parameter | Value | Units |
+      |-----------|-------|-------|
+      | M_L | 0.45 ± 0.05 | M☉ |
+      | D_L | 6.2 ± 0.3 | kpc |
+      | M_planet | 1.5 ± 0.2 | M⊕ |
+      | a | 2.8 ± 0.4 | AU |
 
-   ## Model Comparison
-   - **Single Lens:** Δχ² = 156.7 (rejected)
-   - **Binary Lens:** Best fit with ΔBIC = 23.4
+      ## Model Comparison
+      - **Single Lens:** Δχ² = 156.7 (rejected)
+      - **Binary Lens:** Best fit with ΔBIC = 23.4
 
-   ## Code Reference
-   ```python
-   # Fitting code snippet
-   import emcee
-   sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
-   sampler.run_mcmc(initial_state, 50000)
-   ```
+      ## Code Reference
+      ```python
+      # Fitting code snippet
+      import emcee
+      sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
+      sampler.run_mcmc(initial_state, 50000)
+      ```
 
-   ## References
-   - [Gould & Loeb 1992](https://ui.adsabs.harvard.edu/abs/1992ApJ...396..104G)
-   - [Mao & Paczynski 1991](https://ui.adsabs.harvard.edu/abs/1991ApJ...374L..37M)
+      ## References
+      - [Gould & Loeb 1992](https://ui.adsabs.harvard.edu/abs/1992ApJ...396..104G)
+      - [Mao & Paczynski 1991](https://ui.adsabs.harvard.edu/abs/1991ApJ...374L..37M)
 
-   ---
-   *Last updated: 2025-01-15*"
+      ---
+      *Last updated: 2025-01-15*
+      EOF
+
+      microlens-submit add-solution EVENT123 1S2L \
+         --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
+         --param q=0.001 --param s=1.15 --param alpha=45.2 \
+         --alias "binary_planetary" \
+         --notes-file notes.md
 
    **Markdown Features Supported:**
    - **Headers** (##, ###, etc.) for section organization
@@ -255,27 +259,30 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     # Add initial notes
-     microlens-submit add-solution EVENT123 1S1L \
-          --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
-          --notes "# Initial Single Lens Fit
+      # Add initial notes
+      cat << 'EOF' > events/EVENT123/solutions/<solution_id>.md
+      # Initial Single Lens Fit
 
-   Basic point-source point-lens model as starting point."
+      Basic point-source point-lens model as starting point.
+      EOF
 
-     # Later, append additional analysis
-     microlens-submit edit-solution <solution_id> \
-          --append-notes "
+      microlens-submit add-solution EVENT123 1S1L \
+         --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
+         --notes-file events/EVENT123/solutions/<solution_id>.md
 
-   ## Follow-up Analysis
+      # Later, append additional analysis
+      cat << 'EOF' >> events/EVENT123/solutions/<solution_id>.md
+      ## Follow-up Analysis
 
-   After reviewing the residuals, we identified systematic deviations
-   that suggest a more complex model is needed. The binary lens model
-   provides a significantly better fit (Δχ² = 156.7).
+      After reviewing the residuals, we identified systematic deviations
+      that suggest a more complex model is needed. The binary lens model
+      provides a significantly better fit (Δχ² = 156.7).
 
-   ### Residual Analysis
-   - Peak deviation: 0.15 magnitudes
-   - Systematic pattern suggests caustic crossing
-   - Finite source effects may be important"
+      ### Residual Analysis
+      - Peak deviation: 0.15 magnitudes
+      - Systematic pattern suggests caustic crossing
+      - Finite source effects may be important
+      EOF
 
    **Solution Aliases:**
 
@@ -309,56 +316,56 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-   # Autofill from the current environment
-   microlens-submit edit-solution <solution_id> --autofill-hardware-info
+     # Autofill from the current environment
+     microlens-submit edit-solution <solution_id> --autofill-hardware-info
 
-   # Manual JSON override
-   microlens-submit edit-solution <solution_id> \
-      --hardware-info-json '{"cpu_details": "Xeon", "memory_gb": 128, "nexus_image": "roman-science-platform:latest"}'
+     # Manual JSON override
+     microlens-submit edit-solution <solution_id> \
+          --hardware-info-json '{"cpu_details": "Xeon", "memory_gb": 128, "nexus_image": "roman-science-platform:latest"}'
 
-   # Clear the solution-level override
-   microlens-submit edit-solution <solution_id> --clear-hardware-info
+     # Clear the solution-level override
+     microlens-submit edit-solution <solution_id> --clear-hardware-info
 
-    **How to inspect solutions and resolve duplicate aliases:**
+   **How to inspect solutions and resolve duplicate aliases:**
 
-    If you re-run a notebook or script, you might accidentally reuse an alias.
-    Aliases must be unique within each event, so the validator will complain.
-    Use the steps below to inspect what already exists and decide how to fix it.
+   If you re-run a notebook or script, you might accidentally reuse an alias.
+   Aliases must be unique within each event, so the validator will complain.
+   Use the steps below to inspect what already exists and decide how to fix it.
 
-    **1) List solutions for the event**
+   **1) List solutions for the event**
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       microlens-submit list-solutions EVENT123
+     microlens-submit list-solutions EVENT123
 
-    This shows all solution IDs and aliases for the event. Identify the
-    conflicting alias and the solution ID you want to keep.
+   This shows all solution IDs and aliases for the event. Identify the
+   conflicting alias and the solution ID you want to keep.
 
-    **2) Validate a specific solution (optional)**
+   **2) Validate a specific solution (optional)**
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       microlens-submit validate-solution <solution_id>
+     microlens-submit validate-solution <solution_id>
 
-    **3) Rename the alias for the solution you just created**
+   **3) Rename the alias for the solution you just created**
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       microlens-submit edit-solution <solution_id> --alias "new_alias"
+     microlens-submit edit-solution <solution_id> --alias "new_alias"
 
-    **4) If it’s a true duplicate, deactivate or remove the extra solution**
+   **4) If it’s a true duplicate, deactivate or remove the extra solution**
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-       # Keep it for reference but exclude from exports
-       microlens-submit deactivate <solution_id>
+     # Keep it for reference but exclude from exports
+     microlens-submit deactivate <solution_id>
 
-       # Or remove it entirely (saved solutions require --force)
-       microlens-submit remove-solution <solution_id> --force
+     # Or remove it entirely (saved solutions require --force)
+     microlens-submit remove-solution <solution_id> --force
 
-    **Tip:** If you are running a notebook multiple times, consider appending
-    a timestamp or run label to the alias (e.g., ``best_fit_v2``) to avoid
-    collisions.
+   **Tip:** If you are running a notebook multiple times, consider appending
+   a timestamp or run label to the alias (e.g., ``best_fit_v2``) to avoid
+   collisions.
 
    **Parameter File Support:**
 
