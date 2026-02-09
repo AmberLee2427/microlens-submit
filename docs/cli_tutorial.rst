@@ -698,7 +698,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
     **Note:** The dossier is for your review only and is not included in the exported submission zip.
 
 **Advanced Features**
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 **GitHub Integration:**
 
@@ -902,7 +902,7 @@ Manage multiple events and solutions efficiently:
    - Verify the export path is writable
 
 **Getting Help**
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 - **Documentation**: This tutorial and the API reference
 - **Jupyter Notebooks**: Interactive examples in the docs directory
@@ -910,7 +910,7 @@ Manage multiple events and solutions efficiently:
 - **Validation Messages**: Read the detailed error messages for guidance
 
 **Best Practices**
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 1. **Use dry-run**: Always test with ``--dry-run`` before saving
 2. **Validate regularly**: Check your submission frequently during development
@@ -920,7 +920,7 @@ Manage multiple events and solutions efficiently:
 6. **Test export**: Verify your submission package before final submission
 
 **Comprehensive Best Practices Guide**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Reproducibility:**
 
