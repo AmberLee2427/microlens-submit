@@ -1,20 +1,18 @@
-# microlens-submit v0.17.3 Release Notes
+# microlens-submit v0.17.4 Release Notes
 
-**Release Date:** 2026-02-08
+**Release Date:** 2026-02-09
 
 ## Changelog
 
-## [0.17.3] - 2026-02-08
+## [0.17.4] - 2026-02-09
 
 ### Added
-- Solution-level hardware metadata overrides and autofill helpers.
-- Notebook display helpers for dashboard, event, solution, and full dossier pages.
-- Python API support for setting `bands` during `event.add_solution()`.
-- Tests covering notebook display helpers and `bands` in the Python API.
+- Added `regenerate` flag for `notebook_display_solution()` to force HTML refresh.
 
 ### Changed
-- CLI `edit-solution` now supports solution-level hardware overrides (JSON), autofill, and clearing.
-- Notebook display helpers inline local assets for JupyterHub/JupyterLab display.
+- Dossier notebook rendering now inlines local plot images referenced by solution pages.
+- Temporary notes created without a project root now track their absolute location.
 
 ### Fixed
-- Asset inlining now handles single-quoted `src` attributes in dossier HTML.
+- Submission save now relocates temporary notes even when the tmp file lives outside the project directory.
+- Conda recipe now uses the `pypi.io` source URL to avoid PyPI source 404s during build.
