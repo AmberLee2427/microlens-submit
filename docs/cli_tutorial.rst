@@ -80,16 +80,16 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     microlens-submit add-solution EVENT123 1S1L \
-          --param t0=555.5 --param u0=0.1 --param tE=25.0 \
-          --log-likelihood -1234.56 \
-          --n-data-points 1250 \
-          --cpu-hours 15.2 \
-          --wall-time-hours 3.8 \
-          --lightcurve-plot-path plots/event123_lc.png \
-          --lens-plane-plot-path plots/event123_lens.png \
-          --notes "Initial fit" \
-          --higher-order-effect parallax,finite-source
+      microlens-submit add-solution EVENT123 1S1L \
+           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+           --log-likelihood -1234.56 \
+           --n-data-points 1250 \
+           --cpu-hours 15.2 \
+           --wall-time-hours 3.8 \
+           --lightcurve-plot-path plots/event123_lc.png \
+           --lens-plane-plot-path plots/event123_lens.png \
+           --notes "Initial fit" \
+           --higher-order-effect parallax,finite-source
 
    **Required Parameters:**
 
@@ -109,7 +109,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Notes for documentation
    - Higher-order effects for advanced models
 
-   **Note:**
+   **Notes:**
    The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
       - Use ``--notes-file <path>`` to specify an existing Markdown file (the path is stored as-is).
       - Use ``--notes <string>`` to create a canonical notes file at ``events/<event_id>/solutions/<solution_id>.md`` (the path is stored automatically).
@@ -119,13 +119,13 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     microlens-submit edit-solution <solution_id> --append-notes "More details after review."
+      microlens-submit edit-solution <solution_id> --append-notes "More details after review."
 
    Or open the notes file in your editor (using $EDITOR, nano, or vi):
 
    .. code-block:: bash
 
-     microlens-submit notes <solution_id>
+      microlens-submit notes <solution_id>
 
    **Tip:**
 
@@ -487,7 +487,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    confidence level is **strongly recommended** for solutions you want evaluated. This
    helps distinguish high-confidence fits from preliminary results.
 
-3. **Bulk Importing Solutions from CSV**
+4. **Bulk Importing Solutions from CSV**
 
    You can import multiple solutions at once from a CSV file using the bulk import command. This is especially useful for large teams or automated pipelines.
 
@@ -525,7 +525,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    **Test Data:**
    The file `tests/data/test_import.csv` is used in the test suite and can be copied or adapted for your own bulk imports.
 
-4. **Validate without saving**
+5. **Validate without saving**
 
    Test your solution before committing it to disk:
 
@@ -540,7 +540,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    displayed. This is especially useful for checking relative probability
    assignments before saving.
 
-5. **Validate existing solutions**
+6. **Validate existing solutions**
 
    Check your solutions for completeness and consistency:
 
@@ -559,7 +559,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    based on the model type and higher-order effects. They also validate that
    relative probabilities for active solutions in each event sum to 1.0.
 
-6. **Attach a posterior file (optional)**
+7. **Attach a posterior file (optional)**
 
    After generating a posterior sample (e.g., an MCMC chain), store the file
    within your project and record its relative path using the Python API::
@@ -572,7 +572,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
       >>> sub.save()
 
-7. **Add a competing solution**
+8. **Add a competing solution**
 
    Add alternative models for comparison:
 
@@ -581,7 +581,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      microlens-submit add-solution EVENT123 1S1L \
           --param t0=556.0 --param u0=0.2 --param tE=24.5
 
-8. **List your solutions**
+9. **List your solutions**
 
    Review all solutions for an event:
 
@@ -589,7 +589,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
       microlens-submit list-solutions EVENT123
 
-9. **Deactivate the less-good solution**
+10. **Deactivate the less-good solution**
 
    Mark solutions as inactive (they remain in the project but aren't exported):
 
@@ -601,7 +601,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    Use this when you want to keep the solution data for reference but don't want
    it in your final submission.
 
-10. **Remove mistakes (optional)**
+11. **Remove mistakes (optional)**
 
    Completely remove solutions or events that were created by mistake:
 
@@ -640,7 +640,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Removal cannot be undone - use deactivate() if you're unsure
    - Temporary files (notes in tmp/) are automatically cleaned up
 
-11. **Edit solution attributes (optional)**
+12. **Edit solution attributes (optional)**
 
    After creating solutions, you can modify their attributes:
 
@@ -670,7 +670,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
      # See what would change without saving
      microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
 
-12. **Export the final package**
+13. **Export the final package**
 
    Create the submission package for upload:
 
@@ -681,7 +681,7 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    This creates a zip file containing all active solutions and associated files,
    ready for submission to the challenge organizers.
 
-13. **Preview your submission dossier**
+14. **Preview your submission dossier**
 
    Generate a human-readable HTML dashboard for review:
 
