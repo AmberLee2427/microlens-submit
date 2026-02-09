@@ -1,7 +1,7 @@
 # Microlens-Submit Parameter Specification
 # =========================================
-# Version: 0.17.3
-# Last Updated: 2026-02-08
+# Version: 0.17.4
+# Last Updated: 2026-02-09
 #
 # This is the SINGLE SOURCE OF TRUTH for parameter definitions.
 # All validation logic and documentation should be generated from this file.
