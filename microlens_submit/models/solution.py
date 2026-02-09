@@ -588,10 +588,14 @@ class Solution(BaseModel):
 
         if not self.notes_path:
             # Use tmp/ for unsaved notes
-            tmp_dir = Path(project_root or ".") / "tmp"
+            root_dir = Path(project_root) if project_root is not None else Path.cwd()
+            tmp_dir = root_dir / "tmp"
             tmp_dir.mkdir(parents=True, exist_ok=True)
             tmp_path = tmp_dir / f"{self.solution_id}.md"
-            self.notes_path = str(tmp_path.relative_to(project_root or "."))
+            if project_root is not None:
+                self.notes_path = str(tmp_path.relative_to(project_root))
+            else:
+                self.notes_path = str(tmp_path.resolve())
         path = Path(self.notes_path)
         if not path.is_absolute() and project_root is not None:
             path = project_root / path

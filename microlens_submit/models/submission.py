@@ -9,11 +9,14 @@ import base64
 import json
 import logging
 import math
+import mimetypes
 import os
 import platform
+import re
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional
+from urllib.parse import unquote
 
 import psutil
 from pydantic import BaseModel, Field
@@ -439,9 +442,15 @@ class Submission(BaseModel):
             for sol in event.solutions.values():
                 if sol.notes_path:
                     notes_path = Path(sol.notes_path)
-                    if notes_path.parts and notes_path.parts[0] == "tmp":
-                        canonical = Path("events") / event.event_id / "solutions" / f"{sol.solution_id}.md"
+                    if notes_path.is_absolute():
+                        src = notes_path
+                    else:
                         src = project / notes_path
+                    is_temp = (not notes_path.is_absolute() and notes_path.parts and notes_path.parts[0] == "tmp") or (
+                        "tmp" in notes_path.parts and notes_path.name == f"{sol.solution_id}.md"
+                    )
+                    if is_temp:
+                        canonical = Path("events") / event.event_id / "solutions" / f"{sol.solution_id}.md"
                         dst = project / canonical
                         dst.parent.mkdir(parents=True, exist_ok=True)
                         if src.exists():
@@ -627,13 +636,19 @@ class Submission(BaseModel):
 
         return self._inline_dossier_assets(html, dossier_dir)
 
-    def notebook_display_solution(self, solution_id: str, output_dir: Optional[str] = None) -> str:
+    def notebook_display_solution(
+        self,
+        solution_id: str,
+        output_dir: Optional[str] = None,
+        regenerate: bool = False,
+    ) -> str:
         """Return solution dossier HTML with local assets inlined for Jupyter display.
 
         Args:
             solution_id: Solution identifier to render.
             output_dir: Optional dossier output directory. Defaults to
                 <project_path>/dossier.
+            regenerate: If True, regenerate the solution HTML even if it exists.
 
         Returns:
             str: HTML content suitable for display with IPython.display.HTML.
@@ -645,7 +660,7 @@ class Submission(BaseModel):
         dossier_dir.mkdir(parents=True, exist_ok=True)
         copy_dossier_assets(dossier_dir)
         solution_path = dossier_dir / f"{solution_id}.html"
-        if not solution_path.exists():
+        if regenerate or not solution_path.exists():
             event = None
             for ev in self.events.values():
                 if solution_id in ev.solutions:
@@ -704,6 +719,22 @@ class Submission(BaseModel):
                 f"src='./assets/{img_path.name}'",
                 f"src='data:image/png;base64,{data}'",
             )
+        # Inline any local image references (plots, posteriors) for Jupyter display
+        for match in re.finditer(r"src=['\"]([^'\"]+)['\"]", html):
+            src = match.group(1)
+            if src.startswith(("http://", "https://", "data:")):
+                continue
+            cleaned = unquote(src.split("?")[0].split("#")[0])
+            src_path = Path(cleaned)
+            if not src_path.is_absolute():
+                src_path = (dossier_dir / src_path).resolve()
+            if not src_path.exists() or not src_path.is_file():
+                continue
+            mime_type, _ = mimetypes.guess_type(src_path.name)
+            if not mime_type or not mime_type.startswith("image/"):
+                continue
+            data = base64.b64encode(src_path.read_bytes()).decode("utf-8")
+            html = html.replace(src, f"data:{mime_type};base64,{data}")
         return html
 
     def remove_event(self, event_id: str, force: bool = False) -> bool:
