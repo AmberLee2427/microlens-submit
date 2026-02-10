@@ -13,6 +13,7 @@ import mimetypes
 import os
 import platform
 import re
+import shutil
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -454,7 +455,7 @@ class Submission(BaseModel):
                         dst = project / canonical
                         dst.parent.mkdir(parents=True, exist_ok=True)
                         if src.exists():
-                            src.replace(dst)
+                            shutil.move(src, dst)
                         sol.notes_path = str(canonical)
         with (project / "submission.json").open("w", encoding="utf-8") as fh:
             fh.write(self.model_dump_json(exclude={"events", "project_path"}, indent=2))

@@ -1,6 +1,6 @@
 {% set name = "microlens-submit" %}
 {% set filename_name = name | replace("-", "_") %}
-{% set version = "0.17.5" %}
+{% set version = "0.17.6" %}
 {% set python_min = "3.10" %}
 
 # NOTE: This recipe is the source of truth for conda-forge. Edit it here in
