@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from typer.testing import CliRunner
 
 from microlens_submit.cli import app
@@ -41,9 +43,9 @@ def test_add_solution_with_paths(tmp_path):
         sub = load(".")
         event = sub.get_event("EVENT001")
         sol = next(iter(event.solutions.values()))
-        assert sol.lightcurve_plot_path == "plots/lc.png"
-        assert sol.lens_plane_plot_path == "plots/lp.png"
-        assert sol.posterior_path == "posteriors/samples.h5"
+        assert Path(sol.lightcurve_plot_path) == Path("plots/lc.png")
+        assert Path(sol.lens_plane_plot_path) == Path("plots/lp.png")
+        assert Path(sol.posterior_path) == Path("posteriors/samples.h5")
 
 
 def test_edit_solution_paths(tmp_path):
@@ -95,9 +97,9 @@ def test_edit_solution_paths(tmp_path):
         # Verify
         sub = load(".")
         sol = sub.get_event("EVENT001").solutions[sol_id]
-        assert sol.lightcurve_plot_path == "plots/new_lc.png"
-        assert sol.lens_plane_plot_path == "plots/new_lp.png"
-        assert sol.posterior_path == "posteriors/new_samples.h5"
+        assert Path(sol.lightcurve_plot_path) == Path("plots/new_lc.png")
+        assert Path(sol.lens_plane_plot_path) == Path("plots/new_lp.png")
+        assert Path(sol.posterior_path) == Path("posteriors/new_samples.h5")
 
         # 4. Clear paths
         result = runner.invoke(
