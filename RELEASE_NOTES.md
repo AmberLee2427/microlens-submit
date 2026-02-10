@@ -1,11 +1,13 @@
-# microlens-submit v0.17.7 Release Notes
+# microlens-submit v0.17.8 Release Notes
 
 **Release Date:** 2026-02-10
 
 ## Changelog
 
-## [0.17.7] - 2026-02-10
+## [0.17.8] - 2026-02-10
+
+### Changed
+- Temporarily disabled validation warning that recommends `uncertainty_method` when uncertainties are provided, to prevent it from blocking exports or confusing users while the requirement is being reconsidered.
 
 ### Fixed
-- Improved validation error messages when physical parameters (e.g. `Mtot`) are incorrectly placed in `parameter_uncertainties` instead of `physical_parameter_uncertainties`.
-- Corrected misleading example in documentation (`docs/usage_examples.rst`) that showed physical parameter uncertainties being added to the model parameter uncertainties dictionary.
+- _List bug fixes here_

@@ -1,4 +1,5 @@
 ## Beta-Test Edits
+- [ ] Resolve uncertainty metadata requirement (re-visit validation logic in `validate_parameters.py` regarding `uncertainty_method`)
 - [x] `remove_event()` function (and CLI)
 - [x] `remove_solution()` function (and CLI)
 - [x] Window 11 text editior

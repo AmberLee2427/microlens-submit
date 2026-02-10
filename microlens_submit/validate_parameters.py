@@ -1026,15 +1026,15 @@ def validate_uncertainty_metadata(
     warnings = []
 
     # Check if uncertainties are provided without metadata
-    has_param_unc = parameter_uncertainties is not None and len(parameter_uncertainties) > 0
-    has_phys_unc = physical_parameter_uncertainties is not None and len(physical_parameter_uncertainties) > 0
+    # has_param_unc = parameter_uncertainties is not None and len(parameter_uncertainties) > 0
+    # has_phys_unc = physical_parameter_uncertainties is not None and len(physical_parameter_uncertainties) > 0
 
-    if (has_param_unc or has_phys_unc) and not uncertainty_method:
-        warnings.append(
-            "Recommendation: Uncertainties provided without uncertainty_method. "
-            "Consider adding --uncertainty-method to improve evaluation "
-            "(options: mcmc_posterior, fisher_matrix, bootstrap, propagation, inference, literature, other)"
-        )
+    # if (has_param_unc or has_phys_unc) and not uncertainty_method:
+    #     warnings.append(
+    #         "Recommendation: Uncertainties provided without uncertainty_method. "
+    #         "Consider adding --uncertainty-method to improve evaluation "
+    #         "(options: mcmc_posterior, fisher_matrix, bootstrap, propagation, inference, literature, other)"
+    #     )
 
     # Validate confidence level if provided
     if confidence_level is not None:
