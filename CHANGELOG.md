@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.7] - 2026-02-10
+
+### Fixed
+- Improved validation error messages when physical parameters (e.g. `Mtot`) are incorrectly placed in `parameter_uncertainties` instead of `physical_parameter_uncertainties`.
+- Corrected misleading example in documentation (`docs/usage_examples.rst`) that showed physical parameter uncertainties being added to the model parameter uncertainties dictionary.
+
+
 ## [0.17.6] - 2026-02-10
 
 ### Fixed

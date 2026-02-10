@@ -8,7 +8,7 @@ from setuptools import find_packages, setup
 if __name__ == "__main__":
     setup(
         name="microlens-submit",
-        version="0.17.6",
+        version="0.17.7",
         packages=find_packages(include=("microlens_submit", "microlens_submit.*")),
         include_package_data=True,
         package_data={

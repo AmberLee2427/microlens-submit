@@ -790,7 +790,9 @@ def validate_parameter_types(
 
 
 def validate_parameter_uncertainties(
-    parameters: Dict[str, Any], uncertainties: Optional[Dict[str, Any]] = None
+    parameters: Dict[str, Any],
+    uncertainties: Optional[Dict[str, Any]] = None,
+    physical_parameters: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """Validate parameter uncertainties for reasonableness and consistency.
 
@@ -857,7 +859,14 @@ def validate_parameter_uncertainties(
 
     for param_name, uncertainty in uncertainties.items():
         if param_name not in parameters:
-            messages.append(f"Uncertainty provided for unknown parameter '{param_name}'")
+            # Check if it's a physical parameter
+            if physical_parameters and param_name in physical_parameters:
+                messages.append(
+                    f"Physical parameter '{param_name}' found in parameter_uncertainties. "
+                    "Move it to physical_parameter_uncertainties."
+                )
+            else:
+                messages.append(f"Uncertainty provided for unknown parameter '{param_name}'")
             continue
 
         param_value = parameters[param_name]

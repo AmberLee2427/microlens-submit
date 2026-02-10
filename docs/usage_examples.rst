@@ -166,7 +166,7 @@ Extended Example
     ...     "thetaE": 0.5, # mas
     ...     "piE": 0.15    # magnitude
     ... }
-    >>> solution2.parameter_uncertainties.update({
+    >>> solution2.physical_parameter_uncertainties.update({
     ...     "Mtot": [0.45, 0.55],
     ...     "D_L": 0.5
     ... })

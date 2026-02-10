@@ -8,7 +8,7 @@ copyright = "2025, RGES-PIT"
 author = "RGES-PIT"
 
 # The full version, including alpha/beta/rc tags
-release = "0.17.6"
+release = "0.17.7"
 
 extensions = [
     "sphinx.ext.autodoc",

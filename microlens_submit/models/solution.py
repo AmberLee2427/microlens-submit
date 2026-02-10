@@ -450,7 +450,9 @@ class Solution(BaseModel):
 
         # Check parameter uncertainties
         uncertainty_messages = validate_parameter_uncertainties(
-            parameters=self.parameters, uncertainties=self.parameter_uncertainties
+            parameters=self.parameters,
+            uncertainties=self.parameter_uncertainties,
+            physical_parameters=self.physical_parameters,
         )
         messages.extend(uncertainty_messages)
 
