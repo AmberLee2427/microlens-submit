@@ -1,20 +1,28 @@
+==================================
 CLI Tutorial: A Step-by-Step Guide
 ==================================
 
-This comprehensive guide walks you through the complete workflow using the ``microlens-submit`` CLI, from initial project setup to final submission export.
+This comprehensive guide walks you through the complete workflow using the
+``microlens-submit`` CLI, from initial project setup to final submission export.
+
+.. note:: **CLI vs Python API**
+
+   - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
+   - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
 
 **Prerequisites**
-~~~~~~~~~~~~~~~~~
+#################
 
 - Python 3.8 or higher
 - ``microlens-submit`` installed (``pip install microlens-submit``)
 - Basic familiarity with command-line interfaces
 - Understanding of microlensing parameters and models
 
-**Workflow Overview**
-~~~~~~~~~~~~~~~~~~~~~
+**Learning Objectives**
+#######################
 
-The typical workflow consists of these main steps:
+This turorial is designed to help you manage you submission project effectively,
+by using the microlens-submit CLI to do the following
 
 1. **Project Initialization**: Set up your submission project structure
 2. **Solution Addition**: Add microlensing solutions with parameters and metadata
@@ -23,231 +31,599 @@ The typical workflow consists of these main steps:
 5. **Documentation**: Add notes and generate review materials
 6. **Export**: Create the final submission package
 
+The in-depth contents of this tutorial are organized as follows:
+
+.. contents:: :depth: 4
+
+.. _prerequisites:
+
+
 **Step-by-Step Guide**
-~~~~~~~~~~~~~~~~~~~~~~
+######################
 
-If your terminal does not support ANSI escape codes, add ``--no-color`` to disable colored output.
+If your terminal does not support ANSI escape codes, add ``--no-color`` to
+disable colored output.
 
-.. note::
-   **Windows PATH tip:** If ``microlens-submit`` is not found after ``pip install``, your
-   Python Scripts folder is likely missing from PATH. Try ``py -m pip install microlens-submit``
-   and run ``py -m microlens_submit.cli --help``, or add the Scripts path shown by
-   ``py -m pip show -f microlens-submit`` to PATH.
+.. tip:: **Windows PATH tip**
+
+   If ``microlens-submit`` is not found after ``pip install``, your
+   Python Scripts folder is likely missing from PATH. Try ``py -m pip install
+   microlens-submit`` and run ``py -m microlens_submit.cli --help``, or add
+   the Scripts path shown by ``py -m pip show -f microlens-submit`` to PATH.
 
 1. **Initialize your project**
+******************************
 
-   Start by creating a new submission project with your team information:
+Start by creating a new submission project with your team information:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-      microlens-submit init --team-name "Your Team" --tier "beginner" /path/to/project
+   microlens-submit init --team-name "Your Team" \
+         --tier "beginner" /path/to/project
 
-   .. note::
-      If you need to update your team name, tier, or other top-level submission info later, you can simply re-run ``microlens-submit init`` in the same project directory. This will overwrite the ``submission.json`` metadata with your new values, but will not affect your events or solutions. It's a quick way to fix mistakes without editing the JSON file directly.
-      If you pass a project path, ``init`` creates that directory. Run subsequent commands from inside it (``cd /path/to/project``), or re-run ``init`` without a path while already inside the project directory.
+.. note::
 
-   This creates the project directory structure and initializes the submission metadata.
+   If you need to update your team name, tier, or other top-level submission
+   info later, you can simply re-run ``microlens-submit init`` in the same
+   project directory. This will overwrite the ``submission.json`` metadata
+   with your new values, but will not affect your events or solutions. It's
+   a quick way to fix mistakes without editing the JSON file directly. If you
+   pass a project path, ``init`` creates that directory. Run subsequent
+   commands from inside it (``cd /path/to/project``), or re-run ``init``
+   without a path while already inside the project directory.
 
-   **Options:**
+This creates the project directory structure and initializes the submission
+metadata.
+
+.. admonition:: **Options**
 
    - ``--team-name``: Your team's name (required)
    - ``--tier``: Challenge tier ("beginner" or "experienced")
    - Project path: Where to create the project directory
 
 2. **Record repository and hardware info**
+******************************************
 
-   Before validation and export, set your repository URL and hardware details.
-   GPU information is optional (Roman Nexus nodes are CPU-only), so omit it if
-   not applicable.
-   If you are working on Roman Nexus, you can use ``nexus-init`` instead of
-   ``init`` to auto-populate hardware info.
+Before validation and export, set your repository URL and hardware details.
+GPU information is optional (Roman Nexus nodes are CPU-only), so omit it if
+not applicable.
+If you are working on Roman Nexus, you can use ``nexus-init`` instead of
+``init`` to auto-populate hardware info.
 
-   .. code-block:: bash
+**GitHub Integration:**
 
-      microlens-submit set-repo-url https://github.com/team/microlens-analysis /path/to/project
+Set your repository URL for automatic linking in the dossier:
 
-      microlens-submit set-hardware-info \
-          --cpu-details "Intel Xeon Gold 6248" \
-          --ram-gb 128 \
-          --gpu "NVIDIA A100" \
-          --gpu-count 1 \
-          --gpu-memory-gb 40 \
-          /path/to/project
+.. code-block:: bash
+
+   microlens-submit set-repo-url https://github.com/team/microlens-analysis \
+         /path/to/project
+
+**Hardware Information:**
+
+Provide details about your compute environment for resource tracking:
+
+.. code-block:: bash
+
+   microlens-submit set-hardware-info \
+         --cpu-details "Intel Xeon Gold 6248" \
+         --ram-gb 128 \
+         --gpu "NVIDIA A100" \
+         --gpu-count 1 \
+         --gpu-memory-gb 40 \
+         /path/to/project
+
+If you don't have GPU information or are running on CPU-only hardware,
+you can omit the GPU options.
+
+If you are using Roman Nexus, you can run ``nexus-init`` instead of
+``init`` to automatically populate your hardware information based on
+the Nexus node you are using. This will set the CPU details, RAM, and
+indicate that there is no GPU.
+
+If you use different compute environments for different solutions, you
+can also set solution-level hardware overrides (see
+`Solution-level hardware overrides <solution_hardware_overrides_>`__
+for details).
 
 3. **Add your first solution**
+******************************
 
-   Add a microlensing solution with all required parameters:
+Add a microlensing solution with all required parameters:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-      microlens-submit add-solution EVENT123 1S1L \
-           --param t0=555.5 --param u0=0.1 --param tE=25.0 \
-           --log-likelihood -1234.56 \
-           --n-data-points 1250 \
-           --cpu-hours 15.2 \
-           --wall-time-hours 3.8 \
-           --lightcurve-plot-path plots/event123_lc.png \
-           --lens-plane-plot-path plots/event123_lens.png \
-           --notes "Initial fit" \
-           --higher-order-effect parallax,finite-source
+   microlens-submit add-solution EVENT123 1S1L \
+         --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+         --log-likelihood -1234.56 \
+         --n-data-points 1250 \
+         --cpu-hours 15.2 \
+         --wall-time-hours 3.8 \
+         --lightcurve-plot-path plots/event123_lc.png \
+         --lens-plane-plot-path plots/event123_lens.png \
+         --notes "Initial fit" \
+         --higher-order-effect parallax,finite-source
 
-   **Required Parameters:**
+.. admonition:: **Required Parameters**
 
-   - Event ID: Unique identifier for the microlensing event
-   - Model type: Microlensing model (1S1L, 1S2L, 2S1L, etc.)
-   - Model parameters: Specific to the model type
+   - **Event ID**: Unique identifier for the microlensing event
+   - **Model type**: Microlensing model (1S1L, 1S2L, 2S1L, etc.)
+   - **Model parameters**: Specific to the model type (see also `Parameter File Support <parameter_file_>`__)
 
-   **Optional Metadata:**
+.. admonition:: **Optional Metadata**
 
    - Log-likelihood and data points for statistical analysis
    - Compute information for resource tracking
    - Physical parameters (``--physical-param Mtot=0.5``)
    - Parameter uncertainties (``--param-uncertainty t0=[1.1,1.3]``)
    - Physical parameter uncertainties (``--physical-param-uncertainty Mtot=0.08``)
-   - Uncertainty metadata (``--uncertainty-method mcmc_posterior --confidence-level 0.68``)
+   - `Uncertainty metadata <uncertainty_metadata_>`__ (``--uncertainty-method mcmc_posterior --confidence-level 0.68``)
    - Plot paths for visualization files
-   - Notes for documentation
+   - `Notes <notes_>`__ for documentation
    - Higher-order effects for advanced models
+   - `Solution aliases <solution_aliases_>`__ for easier identification
+   - `Solution-level hardware overrides <solution_hardware_overrides_>`__ for per-solution metadata
 
-   **Notes:**
-   The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
-      - Use ``--notes-file <path>`` to specify an existing Markdown file (the path is stored as-is).
-      - Use ``--notes <string>`` to create a canonical notes file at ``events/<event_id>/solutions/<solution_id>.md`` (the path is stored automatically).
-      - If neither is provided, an empty canonical notes file is created.
+Now for a lengthy aside on some of these features that are especially important
+for documentation and evaluation. Skip to `4. <bulk_importing_solutions_>`__
+to return to the main workflow.
 
-   You can append to notes later with:
+.. _parameter_file:
 
-   .. code-block:: bash
+**Parameter File Support:**
+===========================
 
-      microlens-submit edit-solution <solution_id> --append-notes "More details after review."
+You can also load parameters from a JSON or YAML file instead of listing them on the
+command line.
 
-   Or open the notes file in your editor (using $EDITOR, nano, or vi):
+.. code-block:: bash
 
-   .. code-block:: bash
+   # Create a parameter file with uncertainties
+   cat > params.yaml << EOF
+   parameters:
+     t0: 2459123.5
+     u0: 0.15
+     tE: 20.5
+     q: 0.001
+     s: 1.15
+     alpha: 45.2
+   uncertainties:
+     t0: [0.1, 0.1]
+     u0: 0.02
+     tE: [0.3, 0.4]
+     q: 0.0001
+     s: 0.05
+     alpha: 2.0
+   EOF
 
-      microlens-submit notes <solution_id>
+Create the above ``params.yaml`` containing your values and run:
 
-   **Tip:**
+.. code-block:: bash
+
+   # Use the parameter file
+   microlens-submit add-solution EVENT123 1S2L \
+         --params-file params.yaml \
+         --lightcurve-plot-path plots/event123_lc.png \
+         --lens-plane-plot-path plots/event123_lens.png \
+         --notes "Initial fit" \
+         --higher-order-effect parallax,finite-source
+
+Use structured parameter files for complex models or to fascilitate
+integration with fitting pipelines. The file can include both
+parameters and uncertainties in JSON or YAML format (see examples below).
+This is especially useful for models with many parameters or
+when you want to include uncertainty information without
+cluttering the command line.
+
+**Parameter File Formats:**
+---------------------------
+
+**Simple format (parameters only):**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: json
+
+   {
+      "t0": 555.5,
+      "u0": 0.1,
+      "tE": 25.0
+   }
+
+Or in YAML:
+
+.. code-block:: yaml
+
+   t0: 555.5
+   u0: 0.1
+   tE: 25.0
+
+**Structured format (parameters + uncertainties):**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: json
+
+   {
+      "parameters": {
+      "t0": 555.5,
+      "u0": 0.1,
+      "tE": 25.0
+      },
+      "uncertainties": {
+      "t0": [0.1, 0.1],
+      "u0": 0.02,
+      "tE": [0.3, 0.4]
+      }
+   }
+
+Or in YAML:
+
+.. code-block:: yaml
+
+   parameters:
+      t0: 555.5
+      u0: 0.1
+      tE: 25.0
+   uncertainties:
+      t0: [0.1, 0.1]
+      u0: 0.02
+      tE: [0.3, 0.4]
+
+
+.. _uncertainty_metadata:
+
+**Uncertainty Metadata:**
+=========================
+
+Uncertainties can be single values (symmetric) or [lower, upper] arrays (asymmetric).
+Both JSON and YAML formats are supported with the same structure.
+
+.. tip::
+   Include metadata about how uncertainties were derived to help evaluators
+   interpret your results correctly. This is especially important for automated evaluation
+   of physical parameters.
+
+.. code-block:: bash
+
+   # Add solution with MCMC uncertainties
+   microlens-submit add-solution EVENT123 1S2L \
+         --params-file params.json \
+         --param-uncertainty t0=0.01 \
+         --param-uncertainty u0=[0.005,0.008] \
+         --uncertainty-method mcmc_posterior \
+         --confidence-level 0.68
+
+   # Add physical parameters with propagated uncertainties
+   microlens-submit add-solution EVENT456 1S1L \
+         --params-file params.json \
+         --physical-param Mtot=0.45 \
+         --physical-param D_L=5.2 \
+         --physical-param-uncertainty Mtot=0.08 \
+         --physical-param-uncertainty D_L=0.3 \
+         --uncertainty-method propagation \
+         --confidence-level 0.68
+
+**Available uncertainty methods:**
+
+- ``mcmc_posterior``: From MCMC posterior distributions
+- ``fisher_matrix``: From Fisher information matrix
+- ``bootstrap``: From bootstrap resampling
+- ``propagation``: From error propagation of fitted parameters
+- ``inference``: From Bayesian inference
+- ``literature``: From published values or external constraints
+- ``other``: Custom or unspecified method
+
+**Confidence levels:**
+
+- ``0.68``: 1-sigma confidence interval (default)
+- ``0.95``: 2-sigma confidence interval
+- ``0.997``: 3-sigma confidence interval
+- Custom values between 0 and 1
+
+.. note::
+
+   While uncertainties are optional, providing them along with the method and
+   confidence level is **strongly recommended** for solutions you want evaluated. This
+   helps distinguish high-confidence fits from preliminary results.
+
+.. _bulk_importing_solutions:
+
+4. **Bulk Importing Solutions from CSV**
+****************************************
+
+You can import multiple solutions at once from a CSV file using the bulk import command. This is especially useful for large teams or automated pipelines.
+
+.. code-block:: bash
+
+   microlens-submit import-solutions path/to/your_solutions.csv
+
+.. admonition:: Bulk Import Features
+
+   - Supports individual parameter columns or a JSON parameters column
+   - Handles solution aliases, notes, and higher-order effects
+   - Duplicate handling: error (default), override, or ignore
+   - Supports dry-run and validation options
+   - File paths are resolved relative to the current working directory or with --project-path
+
+.. admonition:: Options
+
+   - ``--on-duplicate [error|override|ignore]``: How to handle duplicate aliases/IDs
+   - ``--dry-run``: Preview what would be imported without saving
+   - ``--validate``: Run validation on each imported solution
+   - ``--project-path <dir>``: Set the project root for file resolution
+
+
+**Example CSVs:**
+=================
+
+See ``tests/data/test_import.csv`` in the repository for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
+
+**Basic CSV format:**
+---------------------
+
+::
+
+   # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
+   OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,"# Simple Point Lens"
+   OGLE-2023-BLG-0001,binary_1S2L,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"# Binary Lens"
+   OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,"# Finite Source"
+
+
+**Project Management Commands**
+===============================
+
+The following caommand may help you to manage multiple events and
+solutions efficiently:
+
+.. code-block:: bash
+
+   # List all events
+   cd <project_directory>
+   ls events/
+
+   # Check project status
+   microlens-submit validate-submission
+
+   # View project structure
+   tree -I '*.pyc|__pycache__'
+
+
+.. _validation-dry-run:
+
+5. **Validate without saving**
+******************************
+
+Test your solution before committing it to disk:
+
+.. code-block:: bash
+
+   microlens-submit add-solution EVENT123 1S2L \
+         --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+         --dry-run
+
+This prints the parsed input, resulting schema output, and validation results
+without writing anything to disk. Any parameter validation warnings will be
+displayed. This is especially useful for checking relative probability
+assignments before saving.
+
+.. _validation:
+
+6. **Validate existing solutions**
+**********************************
+
+Check your solutions for completeness and consistency:
+
+.. code-block:: bash
+
+   # Validate a specific solution
+   microlens-submit validate-solution <solution_id>
+
+   # Validate all solutions for an event
+   microlens-submit validate-event EVENT123
+
+   # Validate the entire submission
+   microlens-submit validate-submission
+
+These commands check parameter completeness, types, and physical consistency
+based on the model type and higher-order effects. They also validate that
+relative probabilities for active solutions in each event sum to 1.0.
+
+.. _attachments:
+
+7. **Attaching files**
+**********************
+
+You can attach files (e.g., posterior samples, plots, or markdown notes files)
+to your solutions and track their paths in the project. This allows you to
+include rich documentation and visualizations in your submission dossier.
+
+.. _posteriors:
+
+**Posterior samples**
+=====================
+
+After generating a posterior sample (e.g., an MCMC chain), store the file
+within your project and record its relative path using the Python API::
+
+   >>> sub = microlens_submit.load("/path/to/project")
+   >>> evt = sub.get_event("EVENT123")
+   >>> sol = next(iter(evt.solutions.values()))
+   >>> sol.posterior_path = "posteriors/chain.h5"
+   >>> sol.lightcurve_plot_path = "plots/event123_lc.png"
+   >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
+   >>> sub.save()
+
+.. note::
+
+   The CLI does not currently have a command for attaching arbitrary files,
+   but you can use the Python API to set any file paths you want tracked
+   in the solution JSON or edit the JSON files directly. Just make sure to
+   place the files within your project directory and save the relative paths.
+
+.. _plots:
+
+**Plots and visualizations**
+============================
+
+You can attach any plots or visualizations by saving them in your project and
+tracking their paths in the solution JSON.
+
+.. _notes:
+
+**Notes**
+=========
+
+The notes for each solution are always stored as a Markdown file, and the path is tracked in the solution JSON. You can:
+
+- Use ``--notes-file <path>`` to specify an existing Markdown file (the path is stored as-is).
+- Use ``--notes <string>`` to create a canonical notes file at ``events/<event_id>/solutions/<solution_id>.md`` (the path is stored automatically).
+- If neither is provided, an empty canonical notes file is created.
+
+You can append to notes later with
+
+.. code-block:: bash
+
+   microlens-submit edit-solution <solution_id> --append-notes "More details after review."
+
+Or open the notes file in your editor (using $EDITOR, nano, or vi) with
+
+.. code-block:: bash
+
+   microlens-submit notes <solution_id>
+
+.. tip::
 
    - Notes support full Markdown formatting (headers, lists, code, tables, links, etc.).
    - The notes file is included in the exported zip and rendered in the HTML dossier.
 
-   **Quick Notes Editing:**
+**Quick Notes Editing:**
+------------------------
 
-   The ``microlens-submit notes <solution_id>`` command is a convenient way to quickly edit solution notes:
+The ``microlens-submit notes <solution_id>`` command is a convenient way to
+quickly edit solution notes:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-     # Open notes in your default editor
-     microlens-submit notes <solution_id>
+   # Open notes in your default editor
+   microlens-submit notes <solution_id>
 
-     # This will:
-     #   - Open the notes file in your $EDITOR environment variable
-     #   - If $EDITOR is not set, it will try nano, then vi
-     #   - Save changes automatically when you exit the editor
-     #   - Validate the markdown formatting
+This will:
 
-   **Editor Configuration:**
+   - Open the notes file in your $EDITOR environment variable
+   - If $EDITOR is not set, it will try nano, then vi
+   - Save changes automatically when you exit the editor
+   - Validate the markdown formatting
 
-   You can set your preferred editor by setting the $EDITOR environment variable:
 
-   .. code-block:: bash
+**Editor Configuration:**
+-------------------------
 
-     # Set VS Code as your default editor
-     export EDITOR="code --wait"
+You can set your preferred editor by setting the $EDITOR environment variable:
 
-     # Set Vim as your default editor
-     export EDITOR="vim"
+.. code-block:: bash
 
-     # Set Emacs as your default editor
-     export EDITOR="emacs"
+   # Set VS Code as your default editor
+   export EDITOR="code --wait"
 
-     # Then use the notes command
-     microlens-submit notes <solution_id>
+   # Set Vim as your default editor
+   export EDITOR="vim"
 
-   **Windows 11 tip:**
-   If you have VS Code installed, set ``EDITOR=code`` (the CLI will add ``--wait``).
-   Otherwise, the notes command will fall back to Notepad or your default app.
+   # Set Emacs as your default editor
+   export EDITOR="emacs"
 
-   **Alternative Editing Methods:**
+   # Then use the notes command
+   microlens-submit notes <solution_id>
 
-   You can also edit notes directly or use the append method:
+.. tip:: **Windows 11 tip:**
 
-   .. code-block:: bash
+   If you have VS Code installed, set ``EDITOR=code`` (the CLI will add
+   ``--wait``). Otherwise, the notes command will fall back to Notepad or
+   your default app.
 
-     # Method 1: Direct file editing (if you know the path)
-     nano events/EVENT123/solutions/<solution_id>.md
+**Alternative Editing Methods:**
+--------------------------------
 
-     # Method 2: Append to existing notes
-     microlens-submit edit-solution <solution_id> \
-          --append-notes "Additional analysis results..."
+You can also edit notes directly or use the append method:
 
-     # Method 3: Replace notes entirely
-     microlens-submit edit-solution <solution_id> \
-          --notes "Complete replacement of notes content"
+.. code-block:: bash
 
-   **Rich Documentation with Markdown Notes:**
+   # Method 1: Direct file editing (if you know the path)
+   nano events/EVENT123/solutions/<solution_id>.md
 
-   The notes field supports **full Markdown formatting**, allowing you to create rich, structured documentation for your solutions. This is particularly valuable for creating detailed submission dossiers for evaluators.
+   # Method 2: Append to existing notes
+   microlens-submit edit-solution <solution_id> \
+         --append-notes "Additional analysis results..."
 
-   **Example: Comprehensive Solution Documentation**
+   # Method 3: Replace notes entirely
+   microlens-submit edit-solution <solution_id> \
+         --notes "Complete replacement of notes content"
 
-   Create detailed notes with markdown formatting:
+**Rich Documentation with Markdown Notes:**
+-------------------------------------------
 
-   .. code-block:: bash
+The notes field supports **full Markdown formatting**, allowing you to
+create rich, structured documentation for your solutions. This is
+particularly valuable for creating detailed submission dossiers for
+evaluators.
 
-      cat << 'EOF' > notes.md
-      # Binary Lens Solution for EVENT123
+**Example: Comprehensive Solution Documentation**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-      ## Model Overview
-      This solution represents a **binary lens** with a planetary companion (q = 0.001).
+Create detailed notes with markdown formatting:
 
-      ## Fitting Strategy
-        - **Sampling Method:** MCMC with 1000 walkers
-        - **Chain Length:** 50,000 steps per walker
-        - **Burn-in:** First 10,000 steps discarded
-        - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
+.. code-block:: bash
 
-      ## Key Findings
-        1. **Planetary Signal:** Clear detection of a planetary companion
-        2. **Caustic Crossing:** Source crosses the planetary caustic
-        3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
+   cat << 'EOF' > notes.md
+   # Binary Lens Solution for EVENT123
 
-      ## Physical Parameters
-      | Parameter | Value | Units |
-      |-----------|-------|-------|
-      | M_L | 0.45 ± 0.05 | M☉ |
-      | D_L | 6.2 ± 0.3 | kpc |
-      | M_planet | 1.5 ± 0.2 | M⊕ |
-      | a | 2.8 ± 0.4 | AU |
+   ## Model Overview
+   This solution represents a **binary lens** with a planetary companion (q = 0.001).
 
-      ## Model Comparison
-        - **Single Lens:** Δχ² = 156.7 (rejected)
-        - **Binary Lens:** Best fit with ΔBIC = 23.4
+   ## Fitting Strategy
+      - **Sampling Method:** MCMC with 1000 walkers
+      - **Chain Length:** 50,000 steps per walker
+      - **Burn-in:** First 10,000 steps discarded
+      - **Convergence:** Gelman-Rubin statistic < 1.01 for all parameters
 
-      ## Code Reference
-      ```python
-      # Fitting code snippet
-      import emcee
-      sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
-      sampler.run_mcmc(initial_state, 50000)
-      ```
+   ## Key Findings
+      1. **Planetary Signal:** Clear detection of a planetary companion
+      2. **Caustic Crossing:** Source crosses the planetary caustic
+      3. **Finite Source Effects:** ρ = 0.001 indicates significant finite source effects
 
-      ## References
+   ## Physical Parameters
+   | Parameter | Value | Units |
+   |-----------|-------|-------|
+   | M_L | 0.45 ± 0.05 | M☉ |
+   | D_L | 6.2 ± 0.3 | kpc |
+   | M_planet | 1.5 ± 0.2 | M⊕ |
+   | a | 2.8 ± 0.4 | AU |
+
+   ## Model Comparison
+      - **Single Lens:** Δχ² = 156.7 (rejected)
+      - **Binary Lens:** Best fit with ΔBIC = 23.4
+
+   ## Code Reference
+   ```python
+   # Fitting code snippet
+   import emcee
+   sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
+   sampler.run_mcmc(initial_state, 50000)
+   ```
+
+   ## References
       - [Gould & Loeb 1992](https://ui.adsabs.harvard.edu/abs/1992ApJ...396..104G)
       - [Mao & Paczynski 1991](https://ui.adsabs.harvard.edu/abs/1991ApJ...374L..37M)
 
-      ---
-      *Last updated: 2025-01-15*
-      EOF
+   ---
+   *Last updated: 2025-01-15*
+   EOF
 
-      microlens-submit add-solution EVENT123 1S2L \
+   microlens-submit add-solution EVENT123 1S2L \
          --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
          --param q=0.001 --param s=1.15 --param alpha=45.2 \
          --alias "binary_planetary" \
          --notes-file notes.md
 
-   **Markdown Features Supported:**
+.. admonition:: Markdown Features Supported
 
    - **Headers** (``##``, ``###``, etc.) for section organization
    - **Bold** and *italic* text for emphasis
@@ -258,49 +634,186 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - **Images** (if referenced files exist in your project)
    - **Mathematical expressions** using LaTeX syntax
 
-   **Appending to Existing Notes:**
+**Appending to Existing Notes:**
+--------------------------------
 
-   You can build up detailed documentation over time:
+You can build up detailed documentation over time:
 
-   .. code-block:: bash
+.. code-block:: bash
 
-      # Add initial notes
-      cat << 'EOF' > events/EVENT123/solutions/<solution_id>.md
-      # Initial Single Lens Fit
+   # Add initial notes
+   cat << 'EOF' > events/EVENT123/solutions/<solution_id>.md
+   # Initial Single Lens Fit
 
-      Basic point-source point-lens model as starting point.
-      EOF
+   Basic point-source point-lens model as starting point.
+   EOF
 
-      microlens-submit add-solution EVENT123 1S1L \
+   microlens-submit add-solution EVENT123 1S1L \
          --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
          --notes-file events/EVENT123/solutions/<solution_id>.md
 
-      # Later, append additional analysis
-      cat << 'EOF' >> events/EVENT123/solutions/<solution_id>.md
-      ## Follow-up Analysis
+   # Later, append additional analysis
+   cat << 'EOF' >> events/EVENT123/solutions/<solution_id>.md
+   ## Follow-up Analysis
 
-      After reviewing the residuals, we identified systematic deviations
-      that suggest a more complex model is needed. The binary lens model
-      provides a significantly better fit (Δχ² = 156.7).
+   After reviewing the residuals, we identified systematic deviations
+   that suggest a more complex model is needed. The binary lens model
+   provides a significantly better fit (Δχ² = 156.7).
 
-      ### Residual Analysis
-        - Peak deviation: 0.15 magnitudes
-        - Systematic pattern suggests caustic crossing
-        - Finite source effects may be important
-      EOF
+   ### Residual Analysis
+      - Peak deviation: 0.15 magnitudes
+      - Systematic pattern suggests caustic crossing
+      - Finite source effects may be important
+   EOF
 
-   **Solution Aliases:**
+8. **Manage Solutions for the Same Event**
+********************************************
 
-   You can assign human-readable aliases to your solutions for easier identification:
+When you have multiple solutions for the same event, you can manage them
+effectively using the CLI. This is important for comparing different models
+and specifying how they should be weighted in the evaluation. You are not limited
+to just one solution per event - you can add as many as you want and assign r
+elative probabilities to indicate their likelihood.
 
-   .. code-block:: bash
+**Add a competing solution**
+============================
 
-     microlens-submit add-solution EVENT123 1S1L \
-          --param t0=555.5 --param u0=0.1 --param tE=25.0 \
-          --alias "best_fit" \
-          --notes "Initial fit"
+Add alternative models for comparison:
 
-   **Alias Features:**
+.. code-block:: bash
+
+   microlens-submit add-solution EVENT123 1S1L \
+         --param t0=556.0 --param u0=0.2 --param tE=24.5
+
+**Solution Comparison:**
+========================
+
+When you have multiple solutions for the same event, you can
+compare them using the CLI. This will show you a table of all
+solutions for that event, including their model types,
+log-likelihood values, BIC scores, and relative probabilities.
+
+Compare solutions using BIC-based relative probabilities:
+
+.. code-block:: bash
+
+   microlens-submit compare-solutions EVENT123
+
+**Listing your solutions**
+--------------------------
+
+Review all solutions for an event:
+
+.. code-block:: bash
+
+   microlens-submit list-solutions EVENT123
+
+**Relative Probability Guidelines:**
+------------------------------------
+
+When assigning relative probabilities to multiple solutions for the same event, keep the following guidelines in mind:
+
+- **Sum to 1.0:** All active solutions in an event must have probabilities summing to 1.0
+- **Automatic Calculation:** If you provide log-likelihood and n_data_points, BIC-based probabilities are calculated automatically
+- **Manual Override:** You can set explicit probabilities based on your analysis
+- **Single Solution:** If only one active solution exists, its probability should be 1.0 or None
+- **Validation:** The system will warn you if probabilities don't sum correctly
+
+**Deactivate the less-good solution**
+-------------------------------------
+
+Deactivated solutions are kept in the project but excluded from exports.
+Use this when you want to keep the solution data for reference but don't want
+it in your final submission.
+
+.. code-block:: bash
+
+   microlens-submit deactivate <solution_id>
+
+**Remove mistake**
+------------------
+
+Completely remove solutions or events that were created by mistake:
+
+.. code-block:: bash
+
+   # Remove a saved solution (requires --force for safety)
+   microlens-submit remove-solution <solution_id> --force
+
+   # Remove an entire event and all its solutions (requires --force for safety)
+   microlens-submit remove-event <event_id> --force
+
+**What happens if you forget --force?**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you try to remove a saved solution or event without --force, you'll get a helpful message and nothing will be deleted. For example:
+
+.. code-block:: text
+
+   $ microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc
+   ⚠  Refusing to remove solution 12345678... without --force.
+   💡 Consider using deactivate to keep the solution, or re-run with --force to proceed.
+
+**When to use removal vs deactivation:**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **Use deactivate()** when you want to keep the solution data but exclude it from exports
+- **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
+- **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
+
+.. admonition:: Safety Features
+
+   - Saved solutions/events require ``--force`` to prevent accidental data loss
+   - Removal cannot be undone - use deactivate() if you're unsure
+   - Temporary files (notes in tmp/) are automatically cleaned up
+
+
+**Editing solution attributes**
+===============================
+
+After creating solutions, you can modify their attributes:
+
+.. code-block:: bash
+
+   # Update relative probability
+   microlens-submit edit-solution <solution_id> --relative-probability 0.7
+
+   # Append to notes
+   microlens-submit edit-solution <solution_id> --append-notes "Updated after model comparison"
+
+   # Update compute info
+   microlens-submit edit-solution <solution_id> --cpu-hours 25.5 --wall-time-hours 6.2
+
+   # Fix a parameter typo
+   microlens-submit edit-solution <solution_id> --param t0=2459123.6
+
+   # Update an uncertainty
+   microlens-submit edit-solution <solution_id> --param-uncertainty t0=[0.05,0.05]
+
+   # Add higher-order effects
+   microlens-submit edit-solution <solution_id> --higher-order-effect parallax,finite-source
+
+   # Clear an attribute
+   microlens-submit edit-solution <solution_id> --clear-relative-probability
+
+   # See what would change without saving
+   microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
+
+.. _solution_aliases:
+
+**Solution Aliases:**
+=====================
+
+You can assign human-readable aliases to your solutions for easier identification:
+
+.. code-block:: bash
+
+   microlens-submit add-solution EVENT123 1S1L \
+         --param t0=555.5 --param u0=0.1 --param tE=25.0 \
+         --alias "best_fit" \
+         --notes "Initial fit"
+
+.. admonition:: Alias Features
 
    - Aliases must be unique within each event (e.g., you can't have two solutions with alias "best_fit" in EVENT123)
    - Aliases are displayed as primary identifiers in dossier generation, with UUIDs as secondary
@@ -308,41 +821,25 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    - Aliases can be edited later using the edit-solution command
    - Solutions without aliases fall back to UUID-based identification
 
-   **Edit solution aliases:**
+**Editing solution aliases:**
+-----------------------------
 
-   .. code-block:: bash
+.. code-block:: bash
 
-     microlens-submit edit-solution <solution_id> --alias "updated_best_fit"
+   microlens-submit edit-solution <solution_id> --alias "updated_best_fit"
 
-   **Solution-level hardware overrides (optional):**
+**How to inspect solutions and resolve duplicate aliases:**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   If a solution was produced on a different server or environment, you can
-   attach per-solution hardware info without changing the submission-wide
-   metadata.
-
-   .. code-block:: bash
-
-     # Autofill from the current environment
-     microlens-submit edit-solution <solution_id> --autofill-hardware-info
-
-     # Manual JSON override
-     microlens-submit edit-solution <solution_id> \
-          --hardware-info-json '{"cpu_details": "Xeon", "memory_gb": 128, "nexus_image": "roman-science-platform:latest"}'
-
-     # Clear the solution-level override
-     microlens-submit edit-solution <solution_id> --clear-hardware-info
-
-   **How to inspect solutions and resolve duplicate aliases:**
-
-   If you re-run a notebook or script, you might accidentally reuse an alias.
-   Aliases must be unique within each event, so the validator will complain.
-   Use the steps below to inspect what already exists and decide how to fix it.
+If you re-run a notebook or script, you might accidentally reuse an alias.
+Aliases must be unique within each event, so the validator will complain.
+Use the steps below to inspect what already exists and decide how to fix it.
 
    **1) List solutions for the event**
 
    .. code-block:: bash
 
-     microlens-submit list-solutions EVENT123
+      microlens-submit list-solutions EVENT123
 
    This shows all solution IDs and aliases for the event. Identify the
    conflicting alias and the solution ID you want to keep.
@@ -351,326 +848,168 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
 
    .. code-block:: bash
 
-     microlens-submit validate-solution <solution_id>
+      microlens-submit validate-solution <solution_id>
 
    **3) Rename the alias for the solution you just created**
 
    .. code-block:: bash
 
-     microlens-submit edit-solution <solution_id> --alias "new_alias"
+      microlens-submit edit-solution <solution_id> --alias "new_alias"
 
    **4) If it’s a true duplicate, deactivate or remove the extra solution**
 
    .. code-block:: bash
 
-     # Keep it for reference but exclude from exports
-     microlens-submit deactivate <solution_id>
-
-     # Or remove it entirely (saved solutions require --force)
-     microlens-submit remove-solution <solution_id> --force
-
-   **Tip:** If you are running a notebook multiple times, consider appending
-   a timestamp or run label to the alias (e.g., ``best_fit_v2``) to avoid
-   collisions.
-
-   **Parameter File Support:**
-
-   You can also load parameters from a JSON or YAML file instead of listing them on the
-   command line. Create ``params.json`` containing your values and run:
-
-   .. code-block:: bash
-
-     microlens-submit add-solution EVENT123 1S2L \
-          --params-file params.json \
-          --lightcurve-plot-path plots/event123_lc.png \
-          --lens-plane-plot-path plots/event123_lens.png \
-          --notes "Initial fit" \
-          --higher-order-effect parallax,finite-source
-
-   **Parameter File Formats:**
-
-   **Simple format (parameters only):**
-
-   .. code-block:: json
-
-     {
-       "t0": 555.5,
-       "u0": 0.1,
-       "tE": 25.0
-     }
-
-   Or in YAML:
-
-   .. code-block:: yaml
-
-     t0: 555.5
-     u0: 0.1
-     tE: 25.0
-
-   **Structured format (parameters + uncertainties):**
-
-   .. code-block:: json
-
-     {
-       "parameters": {
-         "t0": 555.5,
-         "u0": 0.1,
-         "tE": 25.0
-       },
-       "uncertainties": {
-         "t0": [0.1, 0.1],
-         "u0": 0.02,
-         "tE": [0.3, 0.4]
-       }
-     }
-
-   Or in YAML:
-
-   .. code-block:: yaml
-
-     parameters:
-       t0: 555.5
-       u0: 0.1
-       tE: 25.0
-     uncertainties:
-       t0: [0.1, 0.1]
-       u0: 0.02
-       tE: [0.3, 0.4]
-
-   Uncertainties can be single values (symmetric) or [lower, upper] arrays (asymmetric).
-   Both JSON and YAML formats are supported with the same structure.
-
-   **Uncertainty Metadata:**
-
-   **Recommended:** Include metadata about how uncertainties were derived to help evaluators
-   interpret your results correctly. This is especially important for automated evaluation
-   of physical parameters:
-
-   .. code-block:: bash
-
-     # Add solution with MCMC uncertainties
-     microlens-submit add-solution EVENT123 1S2L \
-          --params-file params.json \
-          --param-uncertainty t0=0.01 \
-          --param-uncertainty u0=[0.005,0.008] \
-          --uncertainty-method mcmc_posterior \
-          --confidence-level 0.68
-
-     # Add physical parameters with propagated uncertainties
-     microlens-submit add-solution EVENT456 1S1L \
-          --params-file params.json \
-          --physical-param Mtot=0.45 \
-          --physical-param D_L=5.2 \
-          --physical-param-uncertainty Mtot=0.08 \
-          --physical-param-uncertainty D_L=0.3 \
-          --uncertainty-method propagation \
-          --confidence-level 0.68
-
-   **Available uncertainty methods:**
-
-   - ``mcmc_posterior``: From MCMC posterior distributions
-   - ``fisher_matrix``: From Fisher information matrix
-   - ``bootstrap``: From bootstrap resampling
-   - ``propagation``: From error propagation of fitted parameters
-   - ``inference``: From Bayesian inference
-   - ``literature``: From published values or external constraints
-   - ``other``: Custom or unspecified method
-
-   **Confidence levels:**
-
-   - ``0.68``: 1-sigma confidence interval (default)
-   - ``0.95``: 2-sigma confidence interval
-   - ``0.997``: 3-sigma confidence interval
-   - Custom values between 0 and 1
-
-   **Note:** While uncertainties are optional, providing them along with the method and
-   confidence level is **strongly recommended** for solutions you want evaluated. This
-   helps distinguish high-confidence fits from preliminary results.
-
-4. **Bulk Importing Solutions from CSV**
-
-   You can import multiple solutions at once from a CSV file using the bulk import command. This is especially useful for large teams or automated pipelines.
-
-   .. code-block:: bash
-
-      microlens-submit import-solutions path/to/your_solutions.csv
-
-   **Features:**
-
-   - Supports individual parameter columns or a JSON parameters column
-   - Handles solution aliases, notes, and higher-order effects
-   - Duplicate handling: error (default), override, or ignore
-   - Supports dry-run and validation options
-   - File paths are resolved relative to the current working directory or with --project-path
-
-   **Example CSV:**
-   See ``tests/data/test_import.csv`` in the repository for a comprehensive example covering all features and edge cases. You can use this file as a template for your own imports.
-
-   **Basic CSV format:**
-
-   .. code-block:: csv
-
-      # event_id,solution_alias,model_tags,t0,u0,tE,s,q,alpha,notes
-      OGLE-2023-BLG-0001,simple_1S1L,"[""1S1L""]",2459123.5,0.1,20.0,,,,,"# Simple Point Lens"
-      OGLE-2023-BLG-0001,binary_1S2L,"[""1S2L""]",2459123.5,0.1,20.0,1.2,0.5,45.0,"# Binary Lens"
-      OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,"# Finite Source"
-
-   **Options:**
-
-   - ``--on-duplicate [error|override|ignore]``: How to handle duplicate aliases/IDs
-   - ``--dry-run``: Preview what would be imported without saving
-   - ``--validate``: Run validation on each imported solution
-   - ``--project-path <dir>``: Set the project root for file resolution
-
-   **Test Data:**
-   The file `tests/data/test_import.csv` is used in the test suite and can be copied or adapted for your own bulk imports.
-
-5. **Validate without saving**
-
-   Test your solution before committing it to disk:
-
-   .. code-block:: bash
-
-     microlens-submit add-solution EVENT123 1S2L \
-          --param t0=555.5 --param u0=0.1 --param tE=25.0 \
-          --dry-run
-
-   This prints the parsed input, resulting schema output, and validation results
-   without writing anything to disk. Any parameter validation warnings will be
-   displayed. This is especially useful for checking relative probability
-   assignments before saving.
-
-6. **Validate existing solutions**
-
-   Check your solutions for completeness and consistency:
-
-   .. code-block:: bash
-
-      # Validate a specific solution
-      microlens-submit validate-solution <solution_id>
-
-      # Validate all solutions for an event
-      microlens-submit validate-event EVENT123
-
-      # Validate the entire submission
-      microlens-submit validate-submission
-
-   These commands check parameter completeness, types, and physical consistency
-   based on the model type and higher-order effects. They also validate that
-   relative probabilities for active solutions in each event sum to 1.0.
-
-7. **Attach a posterior file (optional)**
-
-   After generating a posterior sample (e.g., an MCMC chain), store the file
-   within your project and record its relative path using the Python API::
-
-      >>> sub = microlens_submit.load("/path/to/project")
-      >>> evt = sub.get_event("EVENT123")
-      >>> sol = next(iter(evt.solutions.values()))
-      >>> sol.posterior_path = "posteriors/chain.h5"
-      >>> sol.lightcurve_plot_path = "plots/event123_lc.png"
-      >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
-      >>> sub.save()
-
-8. **Add a competing solution**
-
-   Add alternative models for comparison:
-
-   .. code-block:: bash
-
-     microlens-submit add-solution EVENT123 1S1L \
-          --param t0=556.0 --param u0=0.2 --param tE=24.5
-
-9. **List your solutions**
-
-   Review all solutions for an event:
-
-   .. code-block:: bash
-
-      microlens-submit list-solutions EVENT123
-
-10. **Deactivate the less-good solution**
-
-   Mark solutions as inactive (they remain in the project but aren't exported):
-
-   .. code-block:: bash
-
+      # Keep it for reference but exclude from exports
       microlens-submit deactivate <solution_id>
 
-   **Note:** Deactivated solutions are kept in the project but excluded from exports.
-   Use this when you want to keep the solution data for reference but don't want
-   it in your final submission.
-
-11. **Remove mistakes (optional)**
-
-   Completely remove solutions or events that were created by mistake:
-
-   .. code-block:: bash
-
-      # Remove a saved solution (requires --force for safety)
+      # Or remove it entirely (saved solutions require --force)
       microlens-submit remove-solution <solution_id> --force
 
-      # Remove an entire event and all its solutions (requires --force for safety)
-      microlens-submit remove-event <event_id> --force
+   .. tip::
 
-   **CLI vs Python API:**
+      If you are running a notebook multiple times, consider appending
+      a timestamp or run label to the alias (e.g., ``best_fit_v2``) to avoid
+      collisions.
 
-   - The CLI always operates on saved (on-disk) solutions and events. There is no concept of an "unsaved" solution in the CLI (except when using --dry-run, which does not persist anything).
-   - In the Python API, you can create solutions/events in memory and remove them before saving. In the CLI, every change is immediately saved to disk.
+**Example Solution Comparison Workflow:**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   **What happens if you forget --force?**
+   When you have multiple solutions for the same event, it's crucial to manage them effectively and specify how they should be weighted. Here's a comprehensive workflow:
 
-   If you try to remove a saved solution or event without --force, you'll get a helpful message and nothing will be deleted. For example:
-
-   .. code-block:: text
-
-      $ microlens-submit remove-solution 12345678-1234-1234-1234-123456789abc
-      ⚠  Refusing to remove solution 12345678... without --force.
-      💡 Consider using deactivate to keep the solution, or re-run with --force to proceed.
-
-   **When to use removal vs deactivation:**
-
-   - **Use deactivate()** when you want to keep the solution data but exclude it from exports
-   - **Use remove_solution()** when you made a mistake and want to completely clean up (requires --force in the CLI)
-   - **Use remove_event()** when you created an event by accident and want to start over (requires --force in the CLI)
-
-   **Safety features:**
-
-   - Saved solutions/events require ``--force`` to prevent accidental data loss
-   - Removal cannot be undone - use deactivate() if you're unsure
-   - Temporary files (notes in tmp/) are automatically cleaned up
-
-12. **Edit solution attributes (optional)**
-
-   After creating solutions, you can modify their attributes:
+   **1. Add Multiple Solutions for Comparison:**
 
    .. code-block:: bash
 
-     # Update relative probability
-     microlens-submit edit-solution <solution_id> --relative-probability 0.7
+      # Add a simple single-lens solution
+      microlens-submit add-solution EVENT123 1S1L \
+         --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
+         --alias "simple_1S1L" \
+         --log-likelihood -1234.56 --n-data-points 1250 \
+         --notes "Initial single-lens fit using MCMC sampling"
 
-     # Append to notes
-     microlens-submit edit-solution <solution_id> --append-notes "Updated after model comparison"
+      # Add a more complex binary-lens solution
+      microlens-submit add-solution EVENT123 1S2L \
+         --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
+         --param q=0.001 --param s=1.15 --param alpha=45.2 \
+         --alias "binary_1S2L" \
+         --log-likelihood -1189.34 --n-data-points 1250 \
+         --notes "Binary-lens fit with planetary companion. MCMC with 1000 walkers."
 
-     # Update compute info
-     microlens-submit edit-solution <solution_id> --cpu-hours 25.5 --wall-time-hours 6.2
+      # Add a third alternative solution
+      microlens-submit add-solution EVENT123 1S2L \
+         --param t0=2459123.8 --param u0=0.18 --param tE=19.8 \
+         --param q=0.002 --param s=0.95 --param alpha=32.1 \
+         --alias "alternative_1S2L" \
+         --log-likelihood -1201.45 --n-data-points 1250 \
+         --notes "Alternative binary solution with different parameter space."
 
-     # Fix a parameter typo
-     microlens-submit edit-solution <solution_id> --param t0=2459123.6
+   **2. Compare Solutions with Detailed Analysis:**
 
-     # Update an uncertainty
-     microlens-submit edit-solution <solution_id> --param-uncertainty t0=[0.05,0.05]
+   .. code-block:: bash
 
-     # Add higher-order effects
-     microlens-submit edit-solution <solution_id> --higher-order-effect parallax,finite-source
+      # View comparison table
+      microlens-submit compare-solutions EVENT123
 
-     # Clear an attribute
-     microlens-submit edit-solution <solution_id> --clear-relative-probability
+   This will show:
+      - Model types and parameter counts
+      - Log-likelihood values
+      - BIC scores (calculated automatically)
+      - Relative probabilities (calculated automatically)
+      - Higher-order effects used
 
-     # See what would change without saving
-     microlens-submit edit-solution <solution_id> --relative-probability 0.8 --dry-run
+   **3. Set Explicit Relative Probabilities:**
 
-13. **Export the final package**
+   If you want to override the automatic BIC-based calculation:
+
+   .. code-block:: bash
+
+      # Set explicit probabilities based on your analysis
+      microlens-submit edit-solution <solution_id_1> --relative-probability 0.1
+      microlens-submit edit-solution <solution_id_2> --relative-probability 0.7
+      microlens-submit edit-solution <solution_id_3> --relative-probability 0.2
+
+      # Verify probabilities sum to 1.0
+      microlens-submit compare-solutions EVENT123
+
+   **4. Manage Solution States:**
+
+   .. code-block:: bash
+
+      # Deactivate the worst solution (keeps it for reference)
+      microlens-submit deactivate <solution_id_3>
+
+      # Re-activate if needed later
+      microlens-submit activate <solution_id_3>
+
+      # Remove completely if it was a mistake
+      microlens-submit remove-solution <solution_id_3> --force
+
+   **5. Update Solutions Based on Comparison:**
+
+   .. code-block:: bash
+
+      # Refine the best solution with additional analysis
+      microlens-submit edit-solution <solution_id_2> \
+         --append-notes "
+
+      ## Model Comparison Results
+
+      After comparing all three solutions:
+      - **Simple 1S1L:** Δχ² = 156.7 vs binary models (rejected)
+      - **Binary 1S2L (primary):** Best fit with ΔBIC = 23.4
+      - **Binary 1S2L (alternative):** ΔBIC = 11.2 vs primary
+
+      The primary binary solution is clearly preferred, with the
+      alternative binary solution having some merit but lower probability."
+
+   **6. Validate Your Final Solution Set:**
+
+   .. code-block:: bash
+
+      # Check that everything is valid
+      microlens-submit validate-event EVENT123
+
+      # Ensure relative probabilities sum to 1.0 for active solutions
+      microlens-submit validate-submission
+
+**Solution Comparison Best Practices:**
+=======================================
+
+1. **Start Simple:** Always begin with a single-lens model as baseline
+2. **Document Decisions:** Use notes to explain why you prefer certain solutions
+3. **Use Aliases:** Give meaningful names to solutions for easier management
+4. **Keep History:** Use deactivate() rather than remove() to preserve analysis history
+5. **Validate Regularly:** Check that relative probabilities sum to 1.0
+6. **Consider Uncertainties:** Include parameter uncertainties when available
+7. **Record Compute Time:** Track computational resources for each solution
+
+.. _solution_hardware_overrides:
+
+**Solution-level hardware overrides (optional):**
+=================================================
+
+If a solution was produced on a different server or environment, you can
+attach per-solution hardware info without changing the submission-wide
+metadata.
+
+.. code-block:: bash
+
+   # Autofill from the current environment
+   microlens-submit edit-solution <solution_id> --autofill-hardware-info
+
+   # Manual JSON override
+   microlens-submit edit-solution <solution_id> \
+         --hardware-info-json '{"cpu_details": "Xeon", "memory_gb": 128, "nexus_image": "roman-science-platform:latest"}'
+
+   # Clear the solution-level override
+   microlens-submit edit-solution <solution_id> --clear-hardware-info
+
+
+.. _export:
+
+9. **Export the final package**
+********************************
 
    Create the submission package for upload:
 
@@ -681,7 +1020,11 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
    This creates a zip file containing all active solutions and associated files,
    ready for submission to the challenge organizers.
 
-14. **Preview your submission dossier**
+
+.. _dossier:
+
+10. **Preview your submission dossier**
+***************************************
 
    Generate a human-readable HTML dashboard for review:
 
@@ -704,240 +1047,29 @@ If your terminal does not support ANSI escape codes, add ``--no-color`` to disab
       - Team and submission metadata
       - Solution summaries and statistics
       - Progress bar and compute time
-     - Event table and parameter distribution placeholders
+      - Event table and parameter distribution placeholders
 
-   **Note:** The dossier is for your review only and is not included in the exported submission zip.
+   .. note::
 
-**Advanced Features**
-~~~~~~~~~~~~~~~~~~~~~
+      The dossier is for your review only and is not included in the exported submission zip.
 
-**GitHub Integration:**
 
-Set your repository URL for automatic linking in the dossier:
-
-.. code-block:: bash
-
-   microlens-submit set-repo-url https://github.com/your-team/microlens-analysis.git
-
-**Solution Comparison:**
-
-Compare solutions using BIC-based relative probabilities:
-
-.. code-block:: bash
-
-   microlens-submit compare-solutions EVENT123
-
-**Advanced Solution Comparison Workflow:**
-
-When you have multiple solutions for the same event, it's crucial to manage them effectively and specify how they should be weighted. Here's a comprehensive workflow:
-
-**1. Add Multiple Solutions for Comparison:**
-
-.. code-block:: bash
-
-   # Add a simple single-lens solution
-   microlens-submit add-solution EVENT123 1S1L \
-        --param t0=2459123.5 --param u0=0.15 --param tE=20.5 \
-        --alias "simple_1S1L" \
-        --log-likelihood -1234.56 --n-data-points 1250 \
-        --notes "Initial single-lens fit using MCMC sampling"
-
-   # Add a more complex binary-lens solution
-   microlens-submit add-solution EVENT123 1S2L \
-        --param t0=2459123.5 --param u0=0.12 --param tE=22.1 \
-        --param q=0.001 --param s=1.15 --param alpha=45.2 \
-        --alias "binary_1S2L" \
-        --log-likelihood -1189.34 --n-data-points 1250 \
-        --notes "Binary-lens fit with planetary companion. MCMC with 1000 walkers."
-
-   # Add a third alternative solution
-   microlens-submit add-solution EVENT123 1S2L \
-        --param t0=2459123.8 --param u0=0.18 --param tE=19.8 \
-        --param q=0.002 --param s=0.95 --param alpha=32.1 \
-        --alias "alternative_1S2L" \
-        --log-likelihood -1201.45 --n-data-points 1250 \
-        --notes "Alternative binary solution with different parameter space."
-
-**2. Compare Solutions with Detailed Analysis:**
-
-.. code-block:: bash
-
-   # View comparison table
-   microlens-submit compare-solutions EVENT123
-
-This will show:
-   - Model types and parameter counts
-   - Log-likelihood values
-   - BIC scores (calculated automatically)
-   - Relative probabilities (calculated automatically)
-   - Higher-order effects used
-
-**3. Set Explicit Relative Probabilities:**
-
-If you want to override the automatic BIC-based calculation:
-
-.. code-block:: bash
-
-   # Set explicit probabilities based on your analysis
-   microlens-submit edit-solution <solution_id_1> --relative-probability 0.1
-   microlens-submit edit-solution <solution_id_2> --relative-probability 0.7
-   microlens-submit edit-solution <solution_id_3> --relative-probability 0.2
-
-   # Verify probabilities sum to 1.0
-   microlens-submit compare-solutions EVENT123
-
-**4. Manage Solution States:**
-
-.. code-block:: bash
-
-   # Deactivate the worst solution (keeps it for reference)
-   microlens-submit deactivate <solution_id_3>
-
-   # Re-activate if needed later
-   microlens-submit activate <solution_id_3>
-
-   # Remove completely if it was a mistake
-   microlens-submit remove-solution <solution_id_3> --force
-
-**5. Update Solutions Based on Comparison:**
-
-.. code-block:: bash
-
-   # Refine the best solution with additional analysis
-   microlens-submit edit-solution <solution_id_2> \
-        --append-notes "
-
-   ## Model Comparison Results
-
-   After comparing all three solutions:
-     - **Simple 1S1L:** Δχ² = 156.7 vs binary models (rejected)
-     - **Binary 1S2L (primary):** Best fit with ΔBIC = 23.4
-     - **Binary 1S2L (alternative):** ΔBIC = 11.2 vs primary
-
-   The primary binary solution is clearly preferred, with the
-   alternative binary solution having some merit but lower probability."
-
-**6. Validate Your Final Solution Set:**
-
-.. code-block:: bash
-
-   # Check that everything is valid
-   microlens-submit validate-event EVENT123
-
-   # Ensure relative probabilities sum to 1.0 for active solutions
-   microlens-submit validate-submission
-
-**Solution Comparison Best Practices:**
-
-1. **Start Simple:** Always begin with a single-lens model as baseline
-2. **Document Decisions:** Use notes to explain why you prefer certain solutions
-3. **Use Aliases:** Give meaningful names to solutions for easier management
-4. **Keep History:** Use deactivate() rather than remove() to preserve analysis history
-5. **Validate Regularly:** Check that relative probabilities sum to 1.0
-6. **Consider Uncertainties:** Include parameter uncertainties when available
-7. **Record Compute Time:** Track computational resources for each solution
-
-**Relative Probability Guidelines:**
-
-- **Sum to 1.0:** All active solutions in an event must have probabilities summing to 1.0
-- **Automatic Calculation:** If you provide log-likelihood and n_data_points, BIC-based probabilities are calculated automatically
-- **Manual Override:** You can set explicit probabilities based on your analysis
-- **Single Solution:** If only one active solution exists, its probability should be 1.0 or None
-- **Validation:** The system will warn you if probabilities don't sum correctly
-
-**Parameter File Management:**
-
-Use structured parameter files for complex models:
-
-.. code-block:: bash
-
-   # Create a parameter file with uncertainties
-   cat > params.yaml << EOF
-   parameters:
-     t0: 2459123.5
-     u0: 0.15
-     tE: 20.5
-     q: 0.001
-     s: 1.15
-     alpha: 45.2
-   uncertainties:
-     t0: [0.1, 0.1]
-     u0: 0.02
-     tE: [0.3, 0.4]
-     q: 0.0001
-     s: 0.05
-     alpha: 2.0
-   EOF
-
-   # Use the parameter file
-   microlens-submit add-solution EVENT123 1S2L --params-file params.yaml
-
-**Project Management:**
-
-Manage multiple events and solutions efficiently:
-
-.. code-block:: bash
-
-   # List all events
-   ls events/
-
-   # Check project status
-   microlens-submit validate-submission
-
-   # View project structure
-   tree -I '*.pyc|__pycache__'
-
-**Troubleshooting**
-~~~~~~~~~~~~~~~~~~~
-
-**Common Issues and Solutions:**
-
-1. **Validation Errors:**
-
-- Check that all required parameters are provided for your model type
-- Ensure relative probabilities sum to 1.0 for active solutions
-- Verify parameter types (numbers vs strings)
-
-2. **File Path Issues:**
-
-- Use relative paths from the project root
-- Ensure referenced files exist before adding solutions
-- Check file permissions for reading/writing
-
-3. **Model Type Errors:**
-
-- Verify model type spelling (1S1L, 1S2L, 2S1L, etc.)
-- Check that parameters match the model type requirements
-- Ensure higher-order effects are compatible with the model
-
-4. **Export Problems:**
-
-- Make sure at least one solution is active per event
-- Check that all referenced files exist
-- Verify the export path is writable
-
-**Getting Help**
-~~~~~~~~~~~~~~~~
-
-- **Documentation**: This tutorial and the API reference
-- **Jupyter Notebooks**: Interactive examples in the docs directory
-- **GitHub Issues**: Report bugs or request features
-- **Validation Messages**: Read the detailed error messages for guidance
-
-**Best Practices**
-~~~~~~~~~~~~~~~~~~
-
-1. **Use dry-run**: Always test with ``--dry-run`` before saving
-2. **Validate regularly**: Check your submission frequently during development
-3. **Document thoroughly**: Add detailed notes to explain your analysis
-4. **Version control**: Use git to track changes to your project
-5. **Backup regularly**: Keep copies of your project directory
-6. **Test export**: Verify your submission package before final submission
+.. _best_practices:
 
 **Comprehensive Best Practices Guide**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+######################################
+
+.. admonition:: Best Practices for Using microlens-submit
+
+   1. **Use dry-run**: Always test with ``--dry-run`` before saving
+   2. **Validate regularly**: Check your submission frequently during development
+   3. **Document thoroughly**: Add detailed notes to explain your analysis
+   4. **Version control**: Use git to track changes to your project
+   5. **Backup regularly**: Keep copies of your project directory
+   6. **Test export**: Verify your submission package before final submission
 
 **Reproducibility:**
+********************
 
 - **Always use** ``--cpu-hours`` **and** ``--wall-time-hours`` **to record computational details**
 - **Include version information** for key dependencies in your notes
@@ -971,6 +1103,7 @@ Manage multiple events and solutions efficiently:
      - Visual inspection of chain traces"
 
 **Workflow Management:**
+************************
 
 - **Save frequently** with regular validation checks
 - **Use** ``deactivate()`` **instead of deleting solutions** to preserve analysis history
@@ -998,6 +1131,7 @@ Manage multiple events and solutions efficiently:
         --append-notes "Selected over single-lens model: Δχ² = 156.7"
 
 **Data Quality:**
+*****************
 
 - **Validate your parameters** before adding solutions
 - **Include uncertainties** when available for better statistical analysis
@@ -1029,12 +1163,13 @@ Manage multiple events and solutions efficiently:
      - Systematic uncertainties included in error budget"
 
 **Performance Optimization:**
+*****************************
 
 - **The tool is designed for long-term projects** with efficient handling of large numbers of solutions
-- **Export only when ready** for final submission to avoid unnecessary processing
-- **Use bulk import** for large datasets to save time
+- **Export only when ready** for final submission to avoid unnecessary processing and data duplication. You can build dossiers and validate without exporting.
+- **Use bulk import** if you did not integrate this tool into your analysis pipeline from the start.
 - **Organize your file structure** efficiently with clear naming conventions
-- **Monitor disk space** for large posterior files and plots
+- **Monitor disk space** for large posterior files and plots. Be mindful that they will need to be duplicated into the export zip when you run the export command.
 
 .. code-block:: bash
 
@@ -1055,3 +1190,57 @@ Manage multiple events and solutions efficiently:
 
    # Export only when ready for submission
    microlens-submit export final_submission.zip
+
+
+.. _troubleshooting:
+
+**Troubleshooting**
+###################
+
+**Common Issues and Solutions:**
+
+1. **Validation Errors:**
+*************************
+
+- Check that all required parameters are provided for your model type
+- Ensure relative probabilities sum to 1.0 for active solutions
+- Verify parameter types (numbers vs strings)
+
+2. **File Path Issues:**
+************************
+
+- Use relative paths from the project root
+- Ensure referenced files exist before adding solutions
+- Check file permissions for reading/writing
+
+3. **Model Type Errors:**
+*************************
+
+- Verify model type spelling (1S1L, 1S2L, 2S1L, etc.)
+- Check that parameters match the model type requirements
+- Ensure higher-order effects are compatible with the model
+
+4. **Export Problems:**
+***********************
+
+- Make sure at least one solution is active per event
+- Check that all referenced files exist
+- Verify the export path is writable
+
+.. _help:
+
+**Getting Help**
+################
+
+- **Documentation**: This tutorial and the API reference
+- **GitHub Issues**: Report bugs or request features
+- **Validation Messages**: Read the detailed error messages for guidance
+
+.. _about_notebook:
+
+**About this Notebook**
+#######################
+
+| **Author(s):** Amber Malpas
+| **Keyword(s):** Roman, Microlensing, Data Challenge, Workflow, microlens-submit, rmdc26
+| **Last Updated:** February 2026
