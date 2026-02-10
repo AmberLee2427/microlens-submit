@@ -31,6 +31,10 @@ by using the microlens-submit CLI to do the following
 5. **Documentation**: Add notes and generate review materials
 6. **Export**: Create the final submission package
 
+
+**Tutorial Contents**
+#####################
+
 The in-depth contents of this tutorial are organized as follows:
 
 .. contents:: :depth: 4
