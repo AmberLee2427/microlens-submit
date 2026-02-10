@@ -602,12 +602,12 @@ Create detailed notes with markdown formatting:
       - **Binary Lens:** Best fit with ΔBIC = 23.4
 
    ## Code Reference
-   ```python
+   ````python
    # Fitting code snippet
    import emcee
    sampler = emcee.EnsembleSampler(nwalkers=1000, ndim=8, log_prob_fn=log_probability)
    sampler.run_mcmc(initial_state, 50000)
-   ```
+   ````
 
    ## References
       - [Gould & Loeb 1992](https://ui.adsabs.harvard.edu/abs/1992ApJ...396..104G)
