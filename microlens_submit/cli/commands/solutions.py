@@ -238,6 +238,11 @@ def add_solution(
         "--lens-plane-plot-path",
         help="Path to lens plane plot file " "(relative to project directory) [ADVANCED]",
     ),
+    posterior_path: Optional[Path] = typer.Option(
+        None,
+        "--posterior-path",
+        help="Path to posterior samples file " "(relative to project directory) [ADVANCED]",
+    ),
     alias: Optional[str] = typer.Option(
         None,
         "--alias",
@@ -316,6 +321,7 @@ def add_solution(
         sol.set_compute_info(cpu_hours=cpu_hours, wall_time_hours=wall_time_hours, git_dir=sub.git_dir)
     sol.lightcurve_plot_path = str(lightcurve_plot_path) if lightcurve_plot_path else None
     sol.lens_plane_plot_path = str(lens_plane_plot_path) if lens_plane_plot_path else None
+    sol.posterior_path = str(posterior_path) if posterior_path else None
     # Handle notes file logic
     canonical_notes_path = Path(project_path) / "events" / event_id / "solutions" / f"{sol.solution_id}.md"
     if notes_file is not None:
@@ -343,6 +349,7 @@ def add_solution(
             "wall_time_hours": wall_time_hours,
             "lightcurve_plot_path": (str(lightcurve_plot_path) if lightcurve_plot_path else None),
             "lens_plane_plot_path": (str(lens_plane_plot_path) if lens_plane_plot_path else None),
+            "posterior_path": (str(posterior_path) if posterior_path else None),
             "alias": alias,
             "notes_path": sol.notes_path,
         }
@@ -552,6 +559,24 @@ def edit_solution(
         help="Higher-order effects (replaces existing effects)",
     ),
     clear_higher_order_effects: bool = typer.Option(False, help="Clear all higher-order effects"),
+    lightcurve_plot_path: Optional[Path] = typer.Option(
+        None,
+        "--lightcurve-plot-path",
+        help="Path to lightcurve plot file (relative to project directory)",
+    ),
+    lens_plane_plot_path: Optional[Path] = typer.Option(
+        None,
+        "--lens-plane-plot-path",
+        help="Path to lens plane plot file (relative to project directory)",
+    ),
+    posterior_path: Optional[Path] = typer.Option(
+        None,
+        "--posterior-path",
+        help="Path to posterior samples file (relative to project directory)",
+    ),
+    clear_lightcurve_plot_path: bool = typer.Option(False, help="Clear lightcurve plot path"),
+    clear_lens_plane_plot_path: bool = typer.Option(False, help="Clear lens plane plot path"),
+    clear_posterior_path: bool = typer.Option(False, help="Clear posterior sample path"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -699,6 +724,40 @@ def edit_solution(
                 f"Update higher_order_effects: {target_solution.higher_order_effects} {arrow} {higher_order_effect}"
             )
             target_solution.higher_order_effects = higher_order_effect
+
+    if clear_lightcurve_plot_path:
+        if target_solution.lightcurve_plot_path:
+            changes.append(f"Clear lightcurve_plot_path: {target_solution.lightcurve_plot_path}")
+            target_solution.lightcurve_plot_path = None
+    elif lightcurve_plot_path is not None:
+        old_val = target_solution.lightcurve_plot_path
+        new_val = str(lightcurve_plot_path)
+        if old_val != new_val:
+            changes.append(f"Update lightcurve_plot_path: {old_val} {arrow} {new_val}")
+            target_solution.lightcurve_plot_path = new_val
+
+    if clear_lens_plane_plot_path:
+        if target_solution.lens_plane_plot_path:
+            changes.append(f"Clear lens_plane_plot_path: {target_solution.lens_plane_plot_path}")
+            target_solution.lens_plane_plot_path = None
+    elif lens_plane_plot_path is not None:
+        old_val = target_solution.lens_plane_plot_path
+        new_val = str(lens_plane_plot_path)
+        if old_val != new_val:
+            changes.append(f"Update lens_plane_plot_path: {old_val} {arrow} {new_val}")
+            target_solution.lens_plane_plot_path = new_val
+
+    if clear_posterior_path:
+        if target_solution.posterior_path:
+            changes.append(f"Clear posterior_path: {target_solution.posterior_path}")
+            target_solution.posterior_path = None
+    elif posterior_path is not None:
+        old_val = target_solution.posterior_path
+        new_val = str(posterior_path)
+        if old_val != new_val:
+            changes.append(f"Update posterior_path: {old_val} {arrow} {new_val}")
+            target_solution.posterior_path = new_val
+
     if dry_run:
         if changes:
             console.print(Panel(f"Changes for {solution_id} (event {target_event_id})", style="cyan"))

@@ -41,8 +41,15 @@ The in-depth contents of this tutorial are organized as follows:
 **Step-by-Step Guide**
 ######################
 
-If your terminal does not support ANSI escape codes, add ``--no-color`` to
-disable colored output.
+In this section, we will go through the complete workflow of using the
+``microlens-submit`` CLI to manage your Roman Microlensing Data Challenge
+2026 submission project. Each step includes detailed explanations, command
+examples, and tips for best practices.
+
+.. attention:: Terminal Compatibility
+
+   If your terminal does not support ANSI escape codes, add ``--no-color`` to
+   disable colored output.
 
 .. tip:: **Windows PATH tip**
 
@@ -51,7 +58,7 @@ disable colored output.
    microlens-submit`` and run ``py -m microlens_submit.cli --help``, or add
    the Scripts path shown by ``py -m pip show -f microlens-submit`` to PATH.
 
-1. **Initialize your project**
+1. **Initialize Your Project**
 ******************************
 
 Start by creating a new submission project with your team information:
@@ -81,8 +88,10 @@ metadata.
    - ``--tier``: Challenge tier ("beginner" or "experienced")
    - Project path: Where to create the project directory
 
-2. **Record repository and hardware info**
-******************************************
+.. _compute_information:
+
+2. **Record Repository and Hardware Information**
+*************************************************
 
 Before validation and export, set your repository URL and hardware details.
 GPU information is optional (Roman Nexus nodes are CPU-only), so omit it if
@@ -126,7 +135,7 @@ can also set solution-level hardware overrides (see
 `Solution-level hardware overrides <solution_hardware_overrides_>`__
 for details).
 
-3. **Add your first solution**
+3. **Add Your First Solution**
 ******************************
 
 Add a microlensing solution with all required parameters:
@@ -141,6 +150,7 @@ Add a microlensing solution with all required parameters:
          --wall-time-hours 3.8 \
          --lightcurve-plot-path plots/event123_lc.png \
          --lens-plane-plot-path plots/event123_lens.png \
+         --posterior-path posteriors/chain.h5 \
          --notes "Initial fit" \
          --higher-order-effect parallax,finite-source
 
@@ -152,13 +162,14 @@ Add a microlensing solution with all required parameters:
 
 .. admonition:: **Optional Metadata**
 
-   - Log-likelihood and data points for statistical analysis
-   - Compute information for resource tracking
+   - `Log-likelihood <solution_comparison_>`__ and data points for statistical analysis
+   - `Compute information <compute_information_>`__ for resource tracking
    - Physical parameters (``--physical-param Mtot=0.5``)
-   - Parameter uncertainties (``--param-uncertainty t0=[1.1,1.3]``)
+   - `Parameter uncertainties <uncertainty_metadata_>`__ (``--param-uncertainty t0=[1.1,1.3]``)
    - Physical parameter uncertainties (``--physical-param-uncertainty Mtot=0.08``)
    - `Uncertainty metadata <uncertainty_metadata_>`__ (``--uncertainty-method mcmc_posterior --confidence-level 0.68``)
-   - Plot paths for visualization files
+   - `Plot paths <plots_>`__ for visualization files
+   - `Posterior samples file <posteriors_>`__ (``--posterior-path``)
    - `Notes <notes_>`__ for documentation
    - Higher-order effects for advanced models
    - `Solution aliases <solution_aliases_>`__ for easier identification
@@ -218,7 +229,7 @@ cluttering the command line.
 **Parameter File Formats:**
 ---------------------------
 
-**Simple format (parameters only):**
+**Simple Format (Parameters Only):**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: json
@@ -237,7 +248,7 @@ Or in YAML:
    u0: 0.1
    tE: 25.0
 
-**Structured format (parameters + uncertainties):**
+**Structured Format (Parameters + Uncertainties):**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: json
@@ -442,30 +453,30 @@ include rich documentation and visualizations in your submission dossier.
 =====================
 
 After generating a posterior sample (e.g., an MCMC chain), store the file
-within your project and record its relative path using the Python API::
+within your project and record its relative path using the CLI:
 
-   >>> sub = microlens_submit.load("/path/to/project")
-   >>> evt = sub.get_event("EVENT123")
-   >>> sol = next(iter(evt.solutions.values()))
-   >>> sol.posterior_path = "posteriors/chain.h5"
-   >>> sol.lightcurve_plot_path = "plots/event123_lc.png"
-   >>> sol.lens_plane_plot_path = "plots/event123_lens.png"
-   >>> sub.save()
+.. code-block:: bash
 
-.. note::
+   microlens-submit edit-solution <solution_id> --posterior-path posteriors/chain.h5
 
-   The CLI does not currently have a command for attaching arbitrary files,
-   but you can use the Python API to set any file paths you want tracked
-   in the solution JSON or edit the JSON files directly. Just make sure to
-   place the files within your project directory and save the relative paths.
+.. tip::
+
+   Make sure to place the files within your project directory and use the
+   relative paths.
 
 .. _plots:
 
 **Plots and visualizations**
 ============================
 
-You can attach any plots or visualizations by saving them in your project and
-tracking their paths in the solution JSON.
+The submission packets are limited to two images per solution; the light-curve and lens-plane plots.
+You can attach any by saving them in your project and tracking their paths in the solution JSON.
+
+.. code-block:: bash
+
+   microlens-submit edit-solution <solution_id> \
+         --lightcurve-plot-path plots/event123_lc.png \
+         --lens-plane-plot-path plots/event123_lens.png
 
 .. _notes:
 
@@ -685,6 +696,8 @@ Add alternative models for comparison:
    microlens-submit add-solution EVENT123 1S1L \
          --param t0=556.0 --param u0=0.2 --param tE=24.5
 
+.. _solution_comparison:
+
 **Solution Comparison:**
 ========================
 
@@ -792,6 +805,9 @@ After creating solutions, you can modify their attributes:
 
    # Add higher-order effects
    microlens-submit edit-solution <solution_id> --higher-order-effect parallax,finite-source
+
+   # Update plot paths
+   microlens-submit edit-solution <solution_id> --lightcurve-plot-path plots/new_lc.png
 
    # Clear an attribute
    microlens-submit edit-solution <solution_id> --clear-relative-probability

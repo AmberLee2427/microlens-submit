@@ -1,24 +1,24 @@
 {
-  "version": "0.17.4",
-  "deposition_id": 18558755,
-  "conceptrecid": "18558754",
-  "doi": "10.5281/zenodo.18558755",
+  "version": "0.17.5",
+  "deposition_id": 18580965,
+  "conceptrecid": "18580964",
+  "doi": "10.5281/zenodo.18580965",
   "prereserve": {
-    "doi": "10.5281/zenodo.18558755",
-    "recid": 18558755
+    "doi": "10.5281/zenodo.18580965",
+    "recid": 18580965
   },
   "links": {
-    "self": "https://zenodo.org/api/deposit/depositions/18558755",
-    "html": "https://zenodo.org/deposit/18558755",
+    "self": "https://zenodo.org/api/deposit/depositions/18580965",
+    "html": "https://zenodo.org/deposit/18580965",
     "badge": "https://zenodo.org/badge/doi/.svg",
-    "files": "https://zenodo.org/api/deposit/depositions/18558755/files",
-    "bucket": "https://zenodo.org/api/files/0e328d7e-9757-4b97-88fe-c168a850a3e0",
-    "latest_draft": "https://zenodo.org/api/deposit/depositions/18558755",
-    "latest_draft_html": "https://zenodo.org/deposit/18558755",
-    "publish": "https://zenodo.org/api/deposit/depositions/18558755/actions/publish",
-    "edit": "https://zenodo.org/api/deposit/depositions/18558755/actions/edit",
-    "discard": "https://zenodo.org/api/deposit/depositions/18558755/actions/discard",
-    "newversion": "https://zenodo.org/api/deposit/depositions/18558755/actions/newversion"
+    "files": "https://zenodo.org/api/deposit/depositions/18580965/files",
+    "bucket": "https://zenodo.org/api/files/a460d42c-c9d0-4df2-8914-3484937f8df4",
+    "latest_draft": "https://zenodo.org/api/deposit/depositions/18580965",
+    "latest_draft_html": "https://zenodo.org/deposit/18580965",
+    "publish": "https://zenodo.org/api/deposit/depositions/18580965/actions/publish",
+    "edit": "https://zenodo.org/api/deposit/depositions/18580965/actions/edit",
+    "discard": "https://zenodo.org/api/deposit/depositions/18580965/actions/discard",
+    "newversion": "https://zenodo.org/api/deposit/depositions/18580965/actions/newversion"
   },
-  "created": "2026-02-09T17:59:48.217509+00:00"
+  "created": "2026-02-10T04:34:12.009807+00:00"
 }

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.5] - 2026-02-09
+
+### Added
+- CLI support for attaching posterior samples via `add-solution` (`--posterior-path`).
+- CLI commands to edit and clear solution file paths (`--posterior-path`, `--lightcurve-plot-path`, `--lens-plane-plot-path`) in `edit-solution`.
+
+### Changed
+- Updated CLI tutorial regarding file attachments (plots and posteriors).
+
+
 ## [0.17.4] - 2026-02-09
 
 ### Added
