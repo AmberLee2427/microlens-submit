@@ -37,11 +37,12 @@
 ## Conda Forge
 - [x] Windows installer isn't made?
 - [x] Workflow to update version in recipe and sync feedstock
-- [ ] related to do's from other projects:
-  - [ ] MulensModel feedstock
-  - [ ] VBMicrolensing feedstock
+- [x] related to do's from other projects:
+  - [x] MulensModel feedstock
+  - [x] VBMicrolensing feedstock
 
 ## v1.0.0 debug
+- [ ] Revisit Session A workflow export handoff: write an explicit `.zip` artifact name / path instead of bare `final_submission`
 - [x] undo image bug fuck up
 - [x] fix image asset bug in dossiers
 - [x] add `data_challenge_0_129_335` to `test` tier allowed event list
