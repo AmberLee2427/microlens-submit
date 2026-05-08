@@ -146,7 +146,7 @@ class Submission(BaseModel):
 
         # Validate all events
         for event_id, event in self.events.items():
-            event_messages = event.run_validation()
+            event_messages = event.run_validation(tier=self.tier)
             for msg in event_messages:
                 messages.append(f"Event {event_id}: {msg}")
 
@@ -223,9 +223,9 @@ class Submission(BaseModel):
                 # Invalid tier (fallback for other validation errors)
                 messages.append(f"Invalid tier '{self.tier}': {e}")
 
-        # Validate all events
+        # Validate all events (pass tier for tier-specific model type validation)
         for event_id, event in self.events.items():
-            event_messages = event.run_validation()
+            event_messages = event.run_validation(tier=self.tier)
             for msg in event_messages:
                 messages.append(f"Event {event_id}: {msg}")
 

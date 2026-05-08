@@ -16,9 +16,12 @@ The module defines:
 - 1S1L: Point Source, Single Point Lens (standard microlensing)
 - 1S2L: Point Source, Binary Point Lens
 - 2S1L: Binary Source, Single Point Lens
-- 2S2L: Binary Source, Binary Point Lens (commented)
-- 1S3L: Point Source, Triple Point Lens (commented)
-- 2S3L: Binary Source, Triple Point Lens (commented)
+- 2S2L: Binary Source, Binary Point Lens
+- 1S3L: Point Source, Triple Point Lens
+- 2S3L: Binary Source, Triple Point Lens
+- 1S4L: Point Source, Quadruple Point Lens
+- 2S4L: Binary Source, Quadruple Point Lens
+- other: Other or unknown model type
 
 **Supported Higher-Order Effects:**
 - parallax: Microlens parallax effect
@@ -65,38 +68,47 @@ MODEL_DEFINITIONS = {
     "1S1L": {
         "description": "Point Source, Single Point Lens (standard microlensing)",
         "required_params_core": ["t0", "u0", "tE"],
+        "status": "active",
     },
     "1S2L": {
         "description": "Point Source, Binary Point Lens",
         "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha"],
+        "status": "active",
     },
     "2S1L": {
         "description": "Binary Source, Single Point Lens",
         "required_params_core": ["t0", "u0", "tE", "t0_source2", "u0_source2", "flux_ratio"],
+        "status": "active",
     },
-    # '2S2L': {
-    #     "description": 'Binary Source, Binary Point Lens',
-    #     "required_params_core": ['t0', 'u0', 'tE', 's', 'q', 'alpha', 't0_source2', 'u0_source2', 'flux_ratio'],
-    # },
-    # '1S3L': {
-    #     "description": 'Point Source, Triple Point Lens',
-    #     "required_params_core": ['t0', 'u0', 'tE'],
-    # },
-    # '2S3L': {
-    #     "description": 'Binary Source, Triple Point Lens',
-    #     "required_params_core": ['t0', 'u0', 'tE', 't0_source2', 'u0_source2', 'flux_ratio'],
-    # },
-    # '1S4L': {
-    #     "description": 'Point Source, Quadruple Point Lens',
-    #     "required_params_core": ['t0', 'u0', 'tE'],
-    # },
-    # '2S4L': {
-    #     "description": 'Binary Source, Quadruple Point Lens',
-    #     "required_params_core": ['t0', 'u0', 'tE', 't0_source2', 'u0_source2', 'flux_ratio'],
-    # },
+    "2S2L": {
+        "description": "Binary Source, Binary Point Lens",
+        "required_params_core": ["t0", "u0", "tE", "s", "q", "alpha", "t0_source2", "u0_source2", "flux_ratio"],
+        "status": "planned",
+    },
+    "1S3L": {
+        "description": "Point Source, Triple Point Lens",
+        "required_params_core": ["t0", "u0", "tE"],
+        "status": "planned",
+    },
+    "2S3L": {
+        "description": "Binary Source, Triple Point Lens",
+        "required_params_core": ["t0", "u0", "tE", "t0_source2", "u0_source2", "flux_ratio"],
+        "status": "planned",
+    },
+    "1S4L": {
+        "description": "Point Source, Quadruple Point Lens",
+        "required_params_core": ["t0", "u0", "tE"],
+        "status": "planned",
+    },
+    "2S4L": {
+        "description": "Binary Source, Quadruple Point Lens",
+        "required_params_core": ["t0", "u0", "tE", "t0_source2", "u0_source2", "flux_ratio"],
+        "status": "planned",
+    },
     "other": {
         "description": "Other or unknown model type",
         "required_params_core": [],
+        "status": "active",
     },
 }
 # --- END AUTO-GENERATED: MODEL_DEFINITIONS ---
@@ -408,12 +420,6 @@ PARAMETER_PROPERTIES = {
         "units": "dimensionless",
         "description": "Spot coverage/brightness parameter",
     },
-    # Other
-    "flux_parameters": {
-        "type": "float",
-        "units": "",
-        "description": "",
-    },
     # Derived Physical Parameters
     "Mtot": {
         "type": "float",
@@ -652,7 +658,7 @@ def check_solution_completeness(
 
     # Validate model type
     if model_type not in MODEL_DEFINITIONS:
-        messages.append(f"Unknown model type: '{model_type}'. " f"Valid types: {list(MODEL_DEFINITIONS.keys())}")
+        messages.append(f"Unknown model type: '{model_type}'. Valid types: {list(MODEL_DEFINITIONS.keys())}")
         return messages
 
     model_def = MODEL_DEFINITIONS[model_type]
@@ -769,7 +775,7 @@ def validate_parameter_types(
     messages = []
 
     if model_type not in MODEL_DEFINITIONS:
-        return [f"Unknown model type: '{model_type}'"]
+        return [f"Unknown model type: '{model_type}'. Valid types: {list(MODEL_DEFINITIONS.keys())}"]
 
     for param, value in parameters.items():
         if param in PARAMETER_PROPERTIES:
@@ -1223,7 +1229,7 @@ def validate_solution_rigorously(
     if model_type in MODEL_DEFINITIONS:
         valid_params.update(MODEL_DEFINITIONS[model_type]["required_params_core"])
     elif model_type != "other":
-        messages.append(f"Unknown model type: '{model_type}'")
+        messages.append(f"Unknown model type: '{model_type}'. Valid types: {list(MODEL_DEFINITIONS.keys())}")
 
     # Add higher-order effect parameters
     for effect in higher_order_effects:

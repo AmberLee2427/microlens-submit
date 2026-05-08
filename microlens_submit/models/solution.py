@@ -109,7 +109,7 @@ class Solution(BaseModel):
     """
 
     solution_id: str
-    model_type: Literal["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]
+    model_type: Literal["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "1S4L", "2S4L", "other"]
     bands: List[str] = Field(default_factory=list)
     higher_order_effects: List[
         Literal[

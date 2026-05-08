@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.9] - 2026-05-08
+
+### Added
+- Added tier model-type metadata to generated tier definitions so validation can report tier-specific allowed model types from `parameter_spec.yaml`.
+- Added spec drift checks for generated model status, tier event formats, allowed model types, and allowed higher-order effects.
+
+### Changed
+- RMDC event validation now expects six-digit event IDs such as `rmdc26_000139`, with the digits supplied by the event formatter instead of hardcoded in `event_prefix`.
+- Event ID validation is now case-insensitive, so IDs like `RMDC26_000139`, `rmdc26_000139`, and `RmDc26_000139` validate equivalently.
+- Generated model definitions now include all model types declared in `parameter_spec.yaml`, preserving each model's `status` instead of commenting out planned models.
+- CLI model-type validation and typo suggestions now derive their valid model-type list from generated `MODEL_DEFINITIONS`.
+
+### Fixed
+- Fixed valid `2S2L` solutions being reported as `Unknown model type`.
+- Fixed model-type error messages so their valid-type lists stay in sync with `parameter_spec.yaml`.
+- Preserved the legacy `2018-test` three-digit `ulwdc1_293` event format while using six-digit formatting for current RMDC tiers.
+
+
 ## [0.17.8] - 2026-02-10
 
 ### Changed

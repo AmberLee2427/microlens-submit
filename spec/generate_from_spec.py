@@ -62,19 +62,12 @@ def generate_model_definitions_python(spec: dict) -> str:
     lines = ["MODEL_DEFINITIONS = {"]
 
     for model_type, model_spec in spec.get("model_types", {}).items():
-        if model_spec.get("status") == "planned":
-            # Comment out planned models
-            lines.append(f"    # {model_type!r}: {{")
-            lines.append(f'    #     "description": {model_spec.get("description", "")!r},')
-            params = model_spec.get("required_params", [])
-            lines.append(f'    #     "required_params_core": {params!r},')
-            lines.append("    # },")
-        else:
-            lines.append(f"    {model_type!r}: {{")
-            lines.append(f'        "description": {model_spec.get("description", "")!r},')
-            params = model_spec.get("required_params", [])
-            lines.append(f'        "required_params_core": {params!r},')
-            lines.append("    },")
+        lines.append(f"    {model_type!r}: {{")
+        lines.append(f'        "description": {model_spec.get("description", "")!r},')
+        params = model_spec.get("required_params", [])
+        lines.append(f'        "required_params_core": {params!r},')
+        lines.append(f'        "status": {model_spec.get("status", "active")!r},')
+        lines.append("    },")
 
     lines.append("}")
     return "\n".join(lines)
@@ -160,8 +153,17 @@ def generate_tier_definitions_python(spec: dict) -> str:
         if "event_range" in tier_spec:
             lines.append(f'        "event_range": {tier_spec["event_range"]!r},')
 
+        if "event_format" in tier_spec:
+            lines.append(f'        "event_format": {tier_spec["event_format"]!r},')
+
         if "event_list" in tier_spec:
             lines.append(f'        "event_list": {tier_spec["event_list"]!r},')
+
+        if "allowed_model_types" in tier_spec:
+            lines.append(f'        "allowed_model_types": {tier_spec["allowed_model_types"]!r},')
+
+        if "allowed_higher_order_effects" in tier_spec:
+            lines.append(f'        "allowed_higher_order_effects": {tier_spec["allowed_higher_order_effects"]!r},')
 
         lines.append("    },")
 

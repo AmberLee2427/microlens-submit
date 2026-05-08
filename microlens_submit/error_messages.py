@@ -13,29 +13,14 @@ from microlens_submit.text_symbols import symbol
 
 def get_model_type_suggestions(invalid_type: str) -> List[str]:
     """Get suggestions for model type corrections."""
-    valid_types = ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "other"]
+    from microlens_submit.validate_parameters import MODEL_DEFINITIONS
+
+    valid_types = list(MODEL_DEFINITIONS.keys())
 
     # Common typos and their corrections
-    common_typos = {
-        "1s1l": "1S1L",
-        "1s2l": "1S2L",
-        "2s1l": "2S1L",
-        "2s2l": "2S2L",
-        "1s3l": "1S3L",
-        "2s3l": "2S3L",
-        "1S1l": "1S1L",
-        "1S2l": "1S2L",
-        "2S1l": "2S1L",
-        "2S2l": "2S2L",
-        "1S3l": "1S3L",
-        "2S3l": "2S3L",
-        "1sl1": "1S1L",
-        "1sl2": "1S2L",
-        "2sl1": "2S1L",
-        "2sl2": "2S2L",
-        "1sl3": "1S3L",
-        "2sl3": "2S3L",
-    }
+    common_typos = {valid_type.lower(): valid_type for valid_type in valid_types}
+    common_typos.update({valid_type.replace("L", "l"): valid_type for valid_type in valid_types})
+    common_typos.update({valid_type.lower().replace("l", "sl"): valid_type for valid_type in valid_types})
 
     suggestions = []
 

@@ -55,9 +55,6 @@ def check_model_definitions(spec: dict, verbose: bool = False) -> list[str]:
 
     # Check all spec models are in implementation
     for model_type, model_spec in spec_models.items():
-        if model_spec.get("status") == "planned":
-            continue  # Skip planned models
-
         if model_type not in MODEL_DEFINITIONS:
             issues.append(f"Model '{model_type}' in spec but not in MODEL_DEFINITIONS")
             continue
@@ -72,6 +69,11 @@ def check_model_definitions(spec: dict, verbose: bool = False) -> list[str]:
                 f"  Spec: {sorted(spec_params)}\n"
                 f"  Impl: {sorted(impl_params)}"
             )
+
+        spec_status = model_spec.get("status", "active")
+        impl_status = impl.get("status", "active")
+        if spec_status != impl_status:
+            issues.append(f"Model '{model_type}' status differs: spec={spec_status}, impl={impl_status}")
 
     # Check for models in implementation not in spec
     for model_type in MODEL_DEFINITIONS:
@@ -205,6 +207,33 @@ def check_tier_definitions(spec: dict, verbose: bool = False) -> list[str]:
             impl_range = impl.get("event_range")
             if spec_range != impl_range:
                 issues.append(f"Tier '{tier}' event_range differs: " f"spec={spec_range}, impl={impl_range}")
+
+        # Check event_format
+        if "event_format" in tier_spec:
+            spec_format = tier_spec["event_format"]
+            impl_format = impl.get("event_format")
+            if spec_format != impl_format:
+                issues.append(f"Tier '{tier}' event_format differs: " f"spec={spec_format}, impl={impl_format}")
+
+        # Check allowed model types
+        if "allowed_model_types" in tier_spec:
+            spec_models_allowed = tier_spec["allowed_model_types"]
+            impl_models_allowed = impl.get("allowed_model_types")
+            if spec_models_allowed != impl_models_allowed:
+                issues.append(
+                    f"Tier '{tier}' allowed_model_types differs: "
+                    f"spec={spec_models_allowed}, impl={impl_models_allowed}"
+                )
+
+        # Check allowed higher-order effects
+        if "allowed_higher_order_effects" in tier_spec:
+            spec_effects_allowed = tier_spec["allowed_higher_order_effects"]
+            impl_effects_allowed = impl.get("allowed_higher_order_effects")
+            if spec_effects_allowed != impl_effects_allowed:
+                issues.append(
+                    f"Tier '{tier}' allowed_higher_order_effects differs: "
+                    f"spec={spec_effects_allowed}, impl={impl_effects_allowed}"
+                )
 
     # Check for tiers in implementation not in spec
     for tier in TIER_DEFINITIONS:

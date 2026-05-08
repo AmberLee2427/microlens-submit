@@ -1,7 +1,7 @@
 # Microlens-Submit Parameter Specification
 # =========================================
-# Version: 0.17.8
-# Last Updated: 2026-02-10
+# Version: 0.17.9
+# Last Updated: 2026-05-08
 #
 # This is the SINGLE SOURCE OF TRUTH for parameter definitions.
 # All validation logic and documentation should be generated from this file.
@@ -38,8 +38,8 @@ tiers:
   beginner:
     description: "Beginner challenge tier with limited event set"
     event_prefix: "rmdc26_"
-    event_range: [0, 253]
-    allowed_model_types: ["1S1L", "1S2L", "2S1L", "2S2L"]
+    event_range: [0, 188]
+    allowed_model_types: ["1S1L", "1S2L", "2S1L", "2S2L", "other"]
     allowed_higher_order_effects: ["parallax", "finite-source"]
     notes: "Designed for participants new to microlensing fitting"
 

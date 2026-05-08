@@ -201,12 +201,17 @@ class Event(BaseModel):
         for sol in self.solutions.values():
             sol.is_active = False
 
-    def run_validation(self) -> List[str]:
+    def run_validation(self, tier: Optional[str] = None) -> List[str]:
         """Validate all active solutions in this event.
 
         This method performs validation on all active solutions in the event,
         including parameter validation, physical consistency checks, and
         event-specific validation like relative probability sums.
+
+        Args:
+            tier: Optional challenge tier to use for model type validation.
+                  If provided, model types will be validated against tier-specific
+                  allowed types. If None, no tier-specific validation is performed.
 
         Returns:
             List[str]: Human-readable validation messages. Empty list indicates
@@ -261,6 +266,22 @@ class Event(BaseModel):
 
         # Validate each active solution
         for sol in active:
+            # Check tier-specific model type validation
+            if tier and tier != "None":
+                try:
+                    from ..tier_validation import get_allowed_model_types
+
+                    allowed_types = get_allowed_model_types(tier)
+                    if allowed_types != "all" and sol.model_type not in allowed_types:
+                        warnings.append(
+                            f"Solution {sol.solution_id}: Model type '{sol.model_type}' is not allowed "
+                            f"for tier '{tier}'. "
+                            f"Valid types for tier '{tier}': {allowed_types}"
+                        )
+                        continue
+                except (ImportError, ValueError):
+                    pass
+
             # Use the centralized validation
             solution_messages = sol.run_validation()
             for msg in solution_messages:

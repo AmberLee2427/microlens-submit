@@ -104,7 +104,7 @@ def add_solution(
     event_id: str,
     model_type: str = typer.Argument(
         ...,
-        metavar="{1S1L|1S2L|2S1L|2S2L|1S3L|2S3L|other}",
+        metavar="{1S1L|1S2L|2S1L|2S2L|1S3L|2S3L|1S4L|2S4L|other}",
         help="Type of model used for the solution (e.g., 1S1L, 1S2L)",
     ),
     param: Optional[List[str]] = typer.Option(
@@ -283,15 +283,9 @@ def add_solution(
                 raise typer.BadParameter(f"Invalid parameter format: {p}")
             key, value = p.split("=", 1)
             params[key] = _parse_cli_value(value)
-    allowed_model_types = [
-        "1S1L",
-        "1S2L",
-        "2S1L",
-        "2S2L",
-        "1S3L",
-        "2S3L",
-        "other",
-    ]
+    from microlens_submit.validate_parameters import MODEL_DEFINITIONS
+
+    allowed_model_types = list(MODEL_DEFINITIONS.keys())
     if model_type not in allowed_model_types:
         error_msg = f"model_type must be one of {allowed_model_types}"
         enhanced_error = format_cli_error_with_suggestions(error_msg, {"model_type": model_type})
