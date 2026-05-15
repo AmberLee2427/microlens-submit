@@ -47,3 +47,49 @@ def test_generate_event_page_missing_directory(tmp_path):
     out_dir = tmp_path / "missing"
     with pytest.raises(FileNotFoundError):
         generate_event_page(evt, sub, out_dir)
+
+
+def test_dashboard_uses_tier_event_count(tmp_path):
+    """Dashboard uses tier-based event count instead of hardcoded 293."""
+    sub = load(str(tmp_path))
+    sub.team_name = "TestTeam"
+    sub.tier = "beginner"
+    evt = sub.get_event("rmdc26_000001")
+    evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+    
+    html = _generate_dashboard_content(sub)
+    
+    # Should show tier-specific count (189 for beginner tier, not 293)
+    assert "/ 189 Events Processed" in html
+    # Should not show the old hardcoded 293
+    assert "/ 293 Events Processed" not in html
+
+
+def test_dashboard_handles_invalid_tier(tmp_path):
+    """Dashboard gracefully handles invalid tier with N/A display."""
+    sub = load(str(tmp_path))
+    sub.team_name = "TestTeam"
+    sub.tier = "invalid-tier-name"
+    evt = sub.get_event("EVENT001")
+    evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+    
+    html = _generate_dashboard_content(sub)
+    
+    # Should show N/A for invalid tier
+    assert "/ N/A Events Processed" in html
+    assert "(N/A)" in html
+
+
+def test_dashboard_handles_none_tier(tmp_path):
+    """Dashboard gracefully handles None tier with N/A display."""
+    sub = load(str(tmp_path))
+    sub.team_name = "TestTeam"
+    sub.tier = None
+    evt = sub.get_event("EVENT001")
+    evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+    
+    html = _generate_dashboard_content(sub)
+    
+    # Should show N/A for None tier
+    assert "/ N/A Events Processed" in html
+    assert "(N/A)" in html
