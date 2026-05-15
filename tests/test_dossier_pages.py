@@ -93,3 +93,20 @@ def test_dashboard_handles_none_tier(tmp_path):
     # Should show N/A for None tier
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
+
+
+def test_dashboard_handles_none_tier_string(tmp_path):
+    """Dashboard gracefully handles 'None' tier string (sentinel for invalid tiers) with N/A display."""
+    sub = load(str(tmp_path))
+    sub.team_name = "TestTeam"
+    sub.tier = "None"  # String "None" is the sentinel value for invalid tiers
+    evt = sub.get_event("EVENT001")
+    evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
+    
+    html = _generate_dashboard_content(sub)
+    
+    # Should show N/A for "None" tier string, not "0 / 0" or "X / 0"
+    assert "/ N/A Events Processed" in html
+    assert "(N/A)" in html
+    # Should NOT show 0 events
+    assert "/ 0 Events Processed" not in html

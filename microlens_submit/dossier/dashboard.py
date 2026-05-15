@@ -140,10 +140,18 @@ def _generate_dashboard_content(submission: Submission, full_dossier_exists: boo
     # Calculate progress based on tier-specific event count
     # Use defensive handling for missing/invalid tier
     try:
-        if submission.tier:
-            total_challenge_events = len(get_tier_event_list(submission.tier))
-            progress_percentage = (total_events / total_challenge_events) * 100 if total_challenge_events > 0 else 0
-            progress_display = f"{progress_percentage:.1f}%"
+        # Treat "None" tier (sentinel for invalid tiers) as N/A case
+        if submission.tier and submission.tier != "None":
+            tier_events = get_tier_event_list(submission.tier)
+            # Also treat empty event sets as N/A
+            if tier_events:
+                total_challenge_events = len(tier_events)
+                progress_percentage = (total_events / total_challenge_events) * 100
+                progress_display = f"{progress_percentage:.1f}%"
+            else:
+                total_challenge_events = "N/A"
+                progress_percentage = 0
+                progress_display = "N/A"
         else:
             total_challenge_events = "N/A"
             progress_percentage = 0
