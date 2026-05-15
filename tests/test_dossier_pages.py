@@ -6,6 +6,7 @@ import pytest
 
 from microlens_submit.dossier import generate_event_page
 from microlens_submit.dossier.dashboard import _generate_dashboard_content
+from microlens_submit.tier_validation import get_tier_event_list
 from microlens_submit.utils import load
 
 
@@ -59,8 +60,9 @@ def test_dashboard_uses_tier_event_count(tmp_path):
     
     html = _generate_dashboard_content(sub)
     
-    # Should show tier-specific count (189 for beginner tier, not 293)
-    assert "/ 189 Events Processed" in html
+    # Should show tier-specific count (dynamically computed from tier definition)
+    expected = len(get_tier_event_list("beginner"))
+    assert f"/ {expected} Events Processed" in html
     # Should not show the old hardcoded 293
     assert "/ 293 Events Processed" not in html
 
