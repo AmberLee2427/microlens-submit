@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .. import __version__
 from ..models.submission import Submission
+from ..tier_validation import get_tier_event_list
 from .utils import copy_dossier_assets, extract_github_repo_name, format_hardware_info
 
 
@@ -136,9 +137,22 @@ def _generate_dashboard_content(submission: Submission, full_dossier_exists: boo
     # Format hardware info
     hardware_info_str = format_hardware_info(submission.hardware_info)
 
-    # Calculate progress (hardcoded total from design spec)
-    TOTAL_CHALLENGE_EVENTS = 293
-    progress_percentage = (total_events / TOTAL_CHALLENGE_EVENTS) * 100 if TOTAL_CHALLENGE_EVENTS > 0 else 0
+    # Calculate progress based on tier-specific event count
+    # Use defensive handling for missing/invalid tier
+    try:
+        if submission.tier:
+            total_challenge_events = len(get_tier_event_list(submission.tier))
+            progress_percentage = (total_events / total_challenge_events) * 100 if total_challenge_events > 0 else 0
+            progress_display = f"{progress_percentage:.1f}%"
+        else:
+            total_challenge_events = "N/A"
+            progress_percentage = 0
+            progress_display = "N/A"
+    except ValueError:
+        # Tier not recognized, fall back to display-only default
+        total_challenge_events = "N/A"
+        progress_percentage = 0
+        progress_display = "N/A"
 
     # Generate event table
     event_rows = []
@@ -371,8 +385,8 @@ class="w-48 mx-auto mb-6">
 style="width: {progress_percentage}%"></div>
                 </div>
                 <p class="text-sm text-rtd-text text-center mb-6">
-                    {total_events} / {TOTAL_CHALLENGE_EVENTS} Events Processed
-                    ({progress_percentage:.1f}%)
+                    {total_events} / {total_challenge_events} Events Processed
+                    ({progress_display})
                 </p>
 
                 <!-- Compute Time Summary -->
