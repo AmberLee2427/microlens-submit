@@ -185,7 +185,7 @@ Core Parameters (Required based on model type)
      - Category
    * - ``t0``
      - float
-     - HJD
+     - BJD
      - Time of closest approach
      - Core
    * - ``u0``

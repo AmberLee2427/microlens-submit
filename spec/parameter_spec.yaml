@@ -518,9 +518,9 @@ parameters:
   t0:
     description: "Time of closest approach"
     type: float
-    units: "HJD"
+    units: "BJD"
     category: core
-    notes: "Heliocentric Julian Date of peak magnification"
+    notes: "Barycentric Julian Date of peak magnification"
 
   u0:
     description: "Minimum impact parameter"
