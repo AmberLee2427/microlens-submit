@@ -279,7 +279,7 @@ PARAMETER_PROPERTIES = {
     # Core Microlensing Parameters
     "t0": {
         "type": "float",
-        "units": "HJD",
+        "units": "BJD",
         "description": "Time of closest approach",
     },
     "u0": {
