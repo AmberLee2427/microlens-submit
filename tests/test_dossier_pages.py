@@ -50,21 +50,30 @@ def test_generate_event_page_missing_directory(tmp_path):
         generate_event_page(evt, sub, out_dir)
 
 
-def test_dashboard_uses_tier_event_count(tmp_path):
-    """Dashboard uses tier-based event count instead of hardcoded 293."""
+def test_dashboard_shows_beginner_tier_event_count(tmp_path):
+    """Dashboard shows the 188-event beginner tier total."""
     sub = load(str(tmp_path))
     sub.team_name = "TestTeam"
     sub.tier = "beginner"
     evt = sub.get_event("rmdc26_000001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
-    # Should show tier-specific count (dynamically computed from tier definition)
-    expected = len(get_tier_event_list("beginner"))
-    assert f"/ {expected} Events Processed" in html
-    # Should not show the old hardcoded 293
-    assert "/ 293 Events Processed" not in html
+
+    assert len(get_tier_event_list("beginner")) == 188
+    assert "/ 188 Events Processed" in html
+
+
+def test_dashboard_shows_experienced_tier_event_count(tmp_path):
+    """Dashboard shows the 2,288-event experienced tier total."""
+    sub = load(str(tmp_path))
+    sub.team_name = "TestTeam"
+    sub.tier = "experienced"
+
+    html = _generate_dashboard_content(sub)
+
+    assert len(get_tier_event_list("experienced")) == 2288
+    assert "/ 2288 Events Processed" in html
 
 
 def test_dashboard_handles_invalid_tier(tmp_path):
@@ -74,9 +83,9 @@ def test_dashboard_handles_invalid_tier(tmp_path):
     sub.tier = "invalid-tier-name"
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for invalid tier
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
@@ -89,9 +98,9 @@ def test_dashboard_handles_none_tier(tmp_path):
     sub.tier = None
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for None tier
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
@@ -104,9 +113,9 @@ def test_dashboard_handles_none_tier_string(tmp_path):
     sub.tier = "None"  # String "None" is the sentinel value for invalid tiers
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for "None" tier string, not "0 / 0" or "X / 0"
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html

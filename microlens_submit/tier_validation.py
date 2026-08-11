@@ -43,14 +43,14 @@ TIER_DEFINITIONS = {
     "beginner": {
         "description": "Beginner challenge tier with limited event set",
         "event_prefix": "rmdc26_",
-        "event_range": [0, 188],
+        "event_range": [1, 188],
         "allowed_model_types": ["1S1L", "1S2L", "2S1L", "2S2L", "other"],
         "allowed_higher_order_effects": ["parallax", "finite-source"],
     },
     "experienced": {
         "description": "Experienced challenge tier with full event set",
         "event_prefix": "rmdc26_",
-        "event_range": [0, 3000],
+        "event_range": [1, 2288],
         "allowed_model_types": ["1S1L", "1S2L", "2S1L", "2S2L", "1S3L", "2S3L", "1S4L", "2S4L", "other"],
         "allowed_higher_order_effects": "all",
     },
@@ -140,7 +140,7 @@ def validate_event_id(event_id: str, tier: str) -> bool:
         bool: True if the event ID is valid for the tier, False otherwise.
 
     Example:
-        >>> is_valid = validate_event_id("rmdc26_000000", "beginner")
+        >>> is_valid = validate_event_id("rmdc26_000001", "beginner")
         >>> if is_valid:
         ...     print("Event is valid for beginner tier")
         >>> else:
