@@ -66,6 +66,23 @@ def test_generate_solution_page_uses_absolute_uri_for_external_lightcurve(tmp_pa
     assert lightcurve.as_uri() in page
 
 
+def test_generate_solution_page_uses_file_uri_for_project_lightcurve(tmp_path):
+    """Solution pages resolve lightcurves relative to the project root."""
+    sub, evt = _basic_submission(tmp_path / "project")
+    solution = next(iter(evt.solutions.values()))
+    lightcurve = Path(sub.project_path) / "plots" / "lightcurve.png"
+    lightcurve.parent.mkdir()
+    lightcurve.write_bytes(b"image")
+    solution.lightcurve_plot_path = "plots/lightcurve.png"
+    output_dir = Path(sub.project_path) / "dossier"
+    output_dir.mkdir()
+
+    generate_solution_page(solution, evt, sub, output_dir)
+
+    page = (output_dir / f"{solution.solution_id}.html").read_text(encoding="utf-8")
+    assert lightcurve.as_uri() in page
+
+
 def test_dashboard_shows_beginner_tier_event_count(tmp_path):
     """Dashboard shows the 188-event beginner tier total."""
     sub = load(str(tmp_path))
