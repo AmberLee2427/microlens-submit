@@ -16,7 +16,8 @@ if __name__ == "__main__":
         },
         install_requires=[
             "pydantic>=2.0.0",
-            "typer[all]>=0.9.0",
+            "typer[all]>=0.9.0,<0.17.0",
+            "click>=8.0.0,<8.3.0",
             "rich>=13.0.0",
             "pyyaml>=6.0",
             "markdown>=3.4.0",
