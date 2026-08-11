@@ -57,9 +57,9 @@ def test_dashboard_shows_beginner_tier_event_count(tmp_path):
     sub.tier = "beginner"
     evt = sub.get_event("rmdc26_000001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     assert len(get_tier_event_list("beginner")) == 188
     assert "/ 188 Events Processed" in html
 
@@ -83,9 +83,9 @@ def test_dashboard_handles_invalid_tier(tmp_path):
     sub.tier = "invalid-tier-name"
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for invalid tier
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
@@ -98,9 +98,9 @@ def test_dashboard_handles_none_tier(tmp_path):
     sub.tier = None
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for None tier
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
@@ -113,9 +113,9 @@ def test_dashboard_handles_none_tier_string(tmp_path):
     sub.tier = "None"  # String "None" is the sentinel value for invalid tiers
     evt = sub.get_event("EVENT001")
     evt.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
-    
+
     html = _generate_dashboard_content(sub)
-    
+
     # Should show N/A for "None" tier string, not "0 / 0" or "X / 0"
     assert "/ N/A Events Processed" in html
     assert "(N/A)" in html
