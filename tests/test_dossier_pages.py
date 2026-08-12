@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from microlens_submit.dossier import generate_event_page
+from microlens_submit.dossier import generate_event_page, generate_solution_page
 from microlens_submit.dossier.dashboard import _generate_dashboard_content
 from microlens_submit.tier_validation import get_tier_event_list
 from microlens_submit.utils import load
@@ -48,6 +48,45 @@ def test_generate_event_page_missing_directory(tmp_path):
     out_dir = tmp_path / "missing"
     with pytest.raises(FileNotFoundError):
         generate_event_page(evt, sub, out_dir)
+
+
+def test_generate_solution_page_copies_external_lightcurve_into_dossier_assets(tmp_path):
+    """Solution pages copy external lightcurves into dossier assets."""
+    sub, evt = _basic_submission(tmp_path / "project")
+    solution = next(iter(evt.solutions.values()))
+    lightcurve = tmp_path / "external lightcurve.png"
+    lightcurve.write_bytes(b"image")
+    solution.lightcurve_plot_path = str(lightcurve)
+    output_dir = Path(sub.project_path) / "dossier"
+    output_dir.mkdir()
+
+    generate_solution_page(solution, evt, sub, output_dir)
+
+    page = (output_dir / f"{solution.solution_id}.html").read_text(encoding="utf-8")
+    copied_name = f"{evt.event_id}_{solution.solution_id}_lightcurve_{lightcurve.name}"
+    copied_path = output_dir / "assets" / "plots" / copied_name
+    assert "assets/plots/" + copied_name in page
+    assert copied_path.exists()
+
+
+def test_generate_solution_page_copies_project_lightcurve_into_dossier_assets(tmp_path):
+    """Solution pages copy project lightcurves into dossier assets."""
+    sub, evt = _basic_submission(tmp_path / "project")
+    solution = next(iter(evt.solutions.values()))
+    lightcurve = Path(sub.project_path) / "plots" / "lightcurve.png"
+    lightcurve.parent.mkdir()
+    lightcurve.write_bytes(b"image")
+    solution.lightcurve_plot_path = "plots/lightcurve.png"
+    output_dir = Path(sub.project_path) / "dossier"
+    output_dir.mkdir()
+
+    generate_solution_page(solution, evt, sub, output_dir)
+
+    page = (output_dir / f"{solution.solution_id}.html").read_text(encoding="utf-8")
+    copied_name = f"{evt.event_id}_{solution.solution_id}_lightcurve_{lightcurve.name}"
+    copied_path = output_dir / "assets" / "plots" / copied_name
+    assert "assets/plots/" + copied_name in page
+    assert copied_path.exists()
 
 
 def test_dashboard_shows_beginner_tier_event_count(tmp_path):
