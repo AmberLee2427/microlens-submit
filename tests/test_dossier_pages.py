@@ -50,8 +50,8 @@ def test_generate_event_page_missing_directory(tmp_path):
         generate_event_page(evt, sub, out_dir)
 
 
-def test_generate_solution_page_uses_absolute_uri_for_external_lightcurve(tmp_path):
-    """Solution pages can render lightcurves stored outside the project."""
+def test_generate_solution_page_copies_external_lightcurve_into_dossier_assets(tmp_path):
+    """Solution pages copy external lightcurves into dossier assets."""
     sub, evt = _basic_submission(tmp_path / "project")
     solution = next(iter(evt.solutions.values()))
     lightcurve = tmp_path / "external lightcurve.png"
@@ -63,11 +63,14 @@ def test_generate_solution_page_uses_absolute_uri_for_external_lightcurve(tmp_pa
     generate_solution_page(solution, evt, sub, output_dir)
 
     page = (output_dir / f"{solution.solution_id}.html").read_text(encoding="utf-8")
-    assert lightcurve.as_uri() in page
+    copied_name = f"{evt.event_id}_{solution.solution_id}_lightcurve_{lightcurve.name}"
+    copied_path = output_dir / "assets" / "plots" / copied_name
+    assert "assets/plots/" + copied_name in page
+    assert copied_path.exists()
 
 
-def test_generate_solution_page_uses_file_uri_for_project_lightcurve(tmp_path):
-    """Solution pages resolve lightcurves relative to the project root."""
+def test_generate_solution_page_copies_project_lightcurve_into_dossier_assets(tmp_path):
+    """Solution pages copy project lightcurves into dossier assets."""
     sub, evt = _basic_submission(tmp_path / "project")
     solution = next(iter(evt.solutions.values()))
     lightcurve = Path(sub.project_path) / "plots" / "lightcurve.png"
@@ -80,7 +83,10 @@ def test_generate_solution_page_uses_file_uri_for_project_lightcurve(tmp_path):
     generate_solution_page(solution, evt, sub, output_dir)
 
     page = (output_dir / f"{solution.solution_id}.html").read_text(encoding="utf-8")
-    assert lightcurve.as_uri() in page
+    copied_name = f"{evt.event_id}_{solution.solution_id}_lightcurve_{lightcurve.name}"
+    copied_path = output_dir / "assets" / "plots" / copied_name
+    assert "assets/plots/" + copied_name in page
+    assert copied_path.exists()
 
 
 def test_dashboard_shows_beginner_tier_event_count(tmp_path):

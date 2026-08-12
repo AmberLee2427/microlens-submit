@@ -157,12 +157,11 @@ def resolve_dossier_asset_path(
     subdir: str,
     prefix: Optional[str] = None,
 ) -> str:
-    """Resolve a local asset path for dossier HTML without copying.
+    """Resolve a local asset path for dossier HTML and copy into dossier assets.
 
     If the input path is a URL, it is returned unchanged. If it is a local
-    filesystem path, it is resolved relative to the project root and returned
-    as an absolute file URI, so the asset can live anywhere on the local
-    machine.
+    filesystem path, it is resolved relative to the project root, copied into
+    the dossier assets directory, and returned as a relative path.
 
     Args:
         path_value: The original path or URL string.
@@ -172,7 +171,7 @@ def resolve_dossier_asset_path(
         prefix: Optional prefix for the copied file name to avoid collisions.
 
     Returns:
-        str: A URL or file URI suitable for HTML src/href attributes.
+        str: A URL or dossier-local relative path suitable for HTML src/href attributes.
     """
     if not path_value:
         return ""
@@ -194,4 +193,10 @@ def resolve_dossier_asset_path(
     if not source_path.exists():
         return path_value
 
-    return source_path.as_uri()
+    assets_subdir = output_dir / "assets" / subdir
+    assets_subdir.mkdir(parents=True, exist_ok=True)
+    target_name = f"{prefix}_{source_path.name}" if prefix else source_path.name
+    target_path = assets_subdir / target_name
+    shutil.copy2(source_path, target_path)
+
+    return (Path("assets") / subdir / target_name).as_posix()
