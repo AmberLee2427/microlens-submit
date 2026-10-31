@@ -1,7 +1,10 @@
-Microlensing Data Challenge Submission Toolkit
-=============================================
+microlens-submit
+================
 
-Welcome to the official documentation for ``microlens-submit``, a comprehensive toolkit for managing and submitting microlensing data challenge solutions.
+.. raw:: html
+
+   <section class="family-billboard"><div class="family-kicker">microlens-submit · RGES-PIT</div><h1>Roman Microlensing Data Challenge 2026 Submission Tool</h1><p>Manage, validate and package your challenge solutions with a stateful Python and command-line toolkit.</p></section>
+   <div class="family-nav-grid"><a class="family-nav-card" href="cli_tutorial.html"><strong>CLI walkthrough</strong><span>Create a project and record solutions.</span></a><a class="family-nav-card" href="api.html"><strong>Python API</strong><span>Use the submission toolkit from your code.</span></a><a class="family-nav-card" href="usage_examples.html"><strong>Examples</strong><span>Import, manage and export solutions.</span></a><a class="family-nav-card" href="submission_manual.html"><strong>Submission format</strong><span>Reference for files and parameters.</span></a></div>
 
 **What is microlens-submit?**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,7 +33,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
 - **Compute Tracking**: CPU and wall time monitoring for resource usage
 
 **Quick Start**
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -52,7 +55,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    microlens-submit export submission.zip
 
 **Documentation Sections**
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. toctree::
    :maxdepth: 2
@@ -64,7 +67,7 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
    submission_manual
 
 **Additional Resources**
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **CLI Tutorial**: Complete step-by-step guide to using microlens-submit
 - **API Reference**: Detailed documentation of the Python API
@@ -72,14 +75,14 @@ During the 2018 Data Challenge, teams mailed in spreadsheets and wrote pages of 
 - **Jupyter Notebooks**: Interactive tutorials in the docs directory
 
 **Getting Help**
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 - **GitHub Issues**: Report bugs or request features on the `GitHub repository <https://github.com/AmberLee2427/microlens-submit>`_
 - **Documentation**: This site contains comprehensive guides and examples
 - **Examples**: Check the Jupyter notebooks in the docs directory for detailed examples
 
 **Why Use microlens-submit?**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using ``microlens-submit`` is **strongly recommended** for packaging your results because it:
 

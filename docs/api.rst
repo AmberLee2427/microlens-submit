@@ -4,7 +4,7 @@ Python API Reference
 For advanced users who prefer integrating ``microlens-submit`` directly into Python scripts, this section documents the public API. The API provides programmatic access to all functionality available through the command-line interface.
 
 **Core Classes**
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 The API is built around three main classes that represent the hierarchical structure of microlensing submissions:
 
@@ -18,7 +18,7 @@ The API is built around three main classes that represent the hierarchical struc
 .. autofunction:: microlens_submit.load
 
 **Submission Class**
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 The main container class that represents an entire microlensing challenge submission.
 
@@ -63,7 +63,7 @@ The main container class that represents an entire microlensing challenge submis
       ...     print(f"Warning: {warning}")
 
 **Event Class**
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Represents a microlensing event that can contain multiple solutions.
 
@@ -100,7 +100,7 @@ Represents a microlensing event that can contain multiple solutions.
       >>> submission.save()
 
 **Solution Class**
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Represents an individual microlensing model fit with all associated metadata.
 
@@ -180,7 +180,7 @@ Represents an individual microlensing model fit with all associated metadata.
    - Aliases can be edited later by setting the ``alias`` attribute
 
 **Advanced Usage**
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 **Working with Multiple Solutions:**
 
@@ -227,7 +227,7 @@ Represents an individual microlensing model fit with all associated metadata.
    >>> generate_dashboard_html(submission, Path("./dossier_output"))
 
 **Best Practices**
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 1. **Always save after changes**: Call ``submission.save()`` after modifying data
 2. **Use validation**: Check ``submission.run_validation()`` before exporting
@@ -236,7 +236,7 @@ Represents an individual microlensing model fit with all associated metadata.
 5. **Document solutions**: Add detailed notes to explain your analysis
 
 **Error Handling**
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 The API raises various exceptions that should be handled appropriately:
 

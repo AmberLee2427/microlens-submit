@@ -49,7 +49,7 @@ intersphinx_mapping = {
 todo_include_todos = True
 
 html_theme = "sphinx_rtd_theme"
-html_logo = "_static/rges-pit_logo.png"
+html_logo = "_static/rges-pit-footer-white-v2.png"
 html_theme_options = {
     "logo_only": False,
     "display_version": True,
@@ -83,4 +83,9 @@ pygments_style = "sphinx"
 
 
 def setup(app):
-    app.add_css_file("custom.css")
+    app.add_css_file("family/family.css")
+    app.add_js_file("family/family-theme.js")
+
+
+html_theme_options.pop("display_version", None)
+exclude_patterns += ["tutorial.rst"]

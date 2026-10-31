@@ -186,7 +186,7 @@ Extended Example
     >>> generate_dashboard_html(submission, Path("./my_submission/dossier"))
 
 Inspecting Solutions and Resolving Duplicate Aliases (Python API)
----------------------------------------------------------------
+-----------------------------------------------------------------
 
 If you re-run a notebook or script, you might accidentally reuse an alias.
 Aliases must be unique within each event. The example below shows how to
@@ -209,7 +209,7 @@ inspect existing aliases, rename one, and optionally deactivate a duplicate.
     >>> submission.save()
 
 Solution-Level Hardware Overrides (Python API)
----------------------------------------------
+----------------------------------------------
 
 If a solution is produced on a different server, you can attach hardware
 metadata directly to the solution without changing submission-wide info.
