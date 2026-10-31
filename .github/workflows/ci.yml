@@ -10,17 +10,18 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    # Python 3.8 binaries are available on this runner image.
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ["3.8", "3.11"]
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -56,17 +57,17 @@ jobs:
         pytest --cov=microlens_submit --cov-report=xml
 
   conda-recipe-ready:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       ready: ${{ steps.check.outputs.ready }}
       reason: ${{ steps.check.outputs.reason }}
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.11"
 
@@ -132,7 +133,7 @@ jobs:
 
   # Additional job: build a wheel/sdist and test normal (non-editable) installation
   normal-install-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
     strategy:
       matrix:
@@ -140,10 +141,10 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -172,12 +173,12 @@ jobs:
         venv_test/bin/python -c "import microlens_submit, sys; print(microlens_submit.__file__); print(sys.version)"
 
   conda-recipe-build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build-and-test, conda-recipe-ready]
     if: needs.conda-recipe-ready.outputs.ready == 'true'
     steps:
     - name: Check out repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v3
