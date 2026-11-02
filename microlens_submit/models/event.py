@@ -66,6 +66,8 @@ class Event(BaseModel):
     event_id: str
     solutions: Dict[str, Solution] = Field(default_factory=dict)
     submission: Optional["Submission"] = Field(default=None, exclude=True)
+    truth_model: Optional[str] = Field(default=None, exclude=True)
+    truth_parameters: Optional[Dict[str, float]] = Field(default=None, exclude=True)
 
     def add_solution(
         self,

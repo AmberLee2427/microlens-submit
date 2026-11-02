@@ -18,6 +18,23 @@ except ImportError:  # pragma: no cover - fallback for Python < 3.9
     import importlib_resources
 
 
+TIER_SUBMISSION_URLS = {
+    "beginner": "https://rmdc26.rges-pit.com/submissions/beginner/",
+    "experienced": "https://rmdc26.rges-pit.com/submissions/experienced/",
+}
+
+
+def get_tier_submissions_url(tier: Optional[str]) -> Optional[str]:
+    """Return the public submissions index URL for a known challenge tier."""
+    return TIER_SUBMISSION_URLS.get(str(tier or "").lower())
+
+
+def get_tier_submissions_label(tier: Optional[str]) -> str:
+    """Return the navigation label for a challenge tier submissions index."""
+    tier_name = str(tier or "").strip().lower()
+    return f"Back to {tier_name.title()} Submissions" if tier_name else "Back to Submissions"
+
+
 def format_hardware_info(hardware_info: Optional[Dict[str, Any]]) -> str:
     """Format hardware information for display in the dashboard.
 

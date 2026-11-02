@@ -43,7 +43,7 @@ TIER_DEFINITIONS = {
     "beginner": {
         "description": "Beginner challenge tier with limited event set",
         "event_prefix": "rmdc26_",
-        "event_range": [0, 188],
+        "event_range": [1, 188],
         "allowed_model_types": ["1S1L", "1S2L", "2S1L", "2S2L", "other"],
         "allowed_higher_order_effects": ["parallax", "finite-source"],
     },

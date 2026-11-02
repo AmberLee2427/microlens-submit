@@ -7,7 +7,8 @@ the command line interface.
 
 __version__ = "0.17.9"
 
+from .dossier.plotting import generate_lightcurve_plot
 from .models import Event, Solution, Submission
 from .utils import load
 
-__all__ = ["Event", "Solution", "Submission", "load"]
+__all__ = ["Event", "Solution", "Submission", "load", "generate_lightcurve_plot"]
