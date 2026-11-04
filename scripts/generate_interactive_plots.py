@@ -14,6 +14,7 @@ from bokeh.layouts import row as bokeh_row, column
 
 from microlens_submit.dossier.evaluation_data import (
     build_truth_parameters,
+    default_evaluation_data_dir,
     find_lightcurve_file,
     evaluator_truth_available,
     is_lens_model,
@@ -1355,11 +1356,15 @@ def get_flux_ratio(lc_file):
         pass
     return 0.0
 
-def generate_comparison_metrics(project_path, data_dir, local_assets_dir, tier="beginner"):
+def generate_comparison_metrics(project_path, data_dir, local_assets_dir, tier="beginner", force=False):
     """Pre-calculate intrinsic event signal strength and truth classifications."""
     print("Generating event comparison metrics...")
     if not evaluator_truth_available(tier):
         print("Trusted truth data is unavailable for this tier. Skipping event comparison metrics.")
+        return
+    metrics_path = local_assets_dir / "event_comparison_metrics.json"
+    if metrics_path.exists() and not force:
+        print(f"  Reusing cached event comparison metrics: {metrics_path}")
         return
     try:
         evaluation_data = resolve_evaluation_data(data_dir, tier)
@@ -1457,7 +1462,7 @@ def generate_comparison_metrics(project_path, data_dir, local_assets_dir, tier="
             "dl": truth.get("dl"),
         }
 
-    with open(local_assets_dir / "event_comparison_metrics.json", "w") as f:
+    with open(metrics_path, "w") as f:
         json.dump(metrics, f, indent=2)
 
 def generate_precision_metrics(project_path, local_assets_dir):
@@ -1678,16 +1683,25 @@ def generate_precision_metrics(project_path, local_assets_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate interactive plots for a submission.")
     parser.add_argument("project_path", type=str, help="Path to the submission project folder.")
-    parser.add_argument("--data-dir", type=str, default="../rmdc26/data", help="Path to ground truth data directory.")
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Path to ground truth data directory (defaults to the cohort's shared evaluator_data directory).",
+    )
     parser.add_argument("--tier", choices=["beginner", "experienced"], default="beginner")
     args = parser.parse_args()
 
     proj = Path(args.project_path).resolve()
-    data = Path(args.data_dir).resolve()
+    data = (
+        Path(args.data_dir).resolve()
+        if args.data_dir
+        else default_evaluation_data_dir(proj.parent, args.tier)
+    )
     evaluation_data = resolve_evaluation_data(data, args.tier)
 
     # Shared lightcurves
-    shared_out = (data.parent / f"interactive_plots_{args.tier}").resolve()
+    shared_out = (proj.parent.parent / f"interactive_plots_{args.tier}").resolve()
     shared_out.mkdir(parents=True, exist_ok=True)
 
     # Local assets folder (unique to THIS submission)

@@ -9,6 +9,7 @@ from microlens_submit import load
 from microlens_submit.cli.main import app
 from microlens_submit.dossier.evaluation_data import (
     build_truth_parameters,
+    default_evaluation_data_dir,
     find_lightcurve_file,
     load_truth_mapping,
     load_truth_records,
@@ -36,6 +37,14 @@ def test_scale_parameter_comparisons_use_log10_space():
         error = parameter_comparison_error(0.01, 0.001, parameter)
         assert error == pytest.approx(1.0)
         assert log10_error_to_fractional_difference(error) == pytest.approx(9.0)
+
+
+def test_default_evaluation_data_dir_is_next_to_cohorts(tmp_path):
+    cohort_dir = tmp_path / "rmdc26_submissions" / "experienced"
+
+    assert default_evaluation_data_dir(cohort_dir, "experienced") == (
+        tmp_path / "rmdc26_submissions" / "evaluator_data" / "experienced"
+    )
 
 
 def test_beginner_evaluation_data_is_normalized(tmp_path):
@@ -165,6 +174,9 @@ def test_experienced_truth_and_gz_lightcurve_are_normalized(tmp_path):
     assert comparison["RMDC26_000123"]["truth_model"] == "2S3L"
     assert comparison["RMDC26_000123"]["truth_parameters"]["q"] == 0.001
     assert comparison["RMDC26_000123"]["truth_parameters"]["s"] == 1.2
+    cached_comparison = (assets_dir / "event_comparison_metrics.json").read_text(encoding="utf-8")
+    generate_comparison_metrics(tmp_path / "project", data_dir, assets_dir, tier="experienced")
+    assert (assets_dir / "event_comparison_metrics.json").read_text(encoding="utf-8") == cached_comparison
 
     team_dir = tmp_path / "team"
     submission = load(str(team_dir))

@@ -13,6 +13,7 @@ from bokeh.transform import transform
 
 from microlens_submit.dossier.evaluation_data import (
     build_truth_parameters,
+    default_evaluation_data_dir,
     is_lens_model,
     is_planet_model,
     is_source_model,
@@ -812,13 +813,22 @@ def generate_cohort_confusion_matrix(cohort_dir, data_dir, output_dir, tier="beg
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate aggregate statistics for a cohort of submissions.")
-    parser.add_argument("--cohort-dir", type=str, default="../rmdc26/submissions/mock_cohort", help="Directory containing multiple submission folders.")
-    parser.add_argument("--data-dir", type=str, default="../rmdc26/data", help="Path to ground truth data directory.")
-    parser.add_argument("--output-dir", type=str, default="../rmdc26/cohort_analysis", help="Directory to save generated plots.")
+    parser.add_argument("--cohort-dir", type=str, required=True, help="Directory containing multiple submission folders.")
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Path to ground truth data directory (defaults to the cohort's shared evaluator_data directory).",
+    )
+    parser.add_argument("--output-dir", type=str, default=None, help="Directory to save generated plots (defaults to <cohort-dir>/cohort_analysis).")
     parser.add_argument("--tier", choices=["beginner", "experienced"], default="beginner")
     args = parser.parse_args()
 
     cohort = Path(args.cohort_dir).resolve()
-    data = Path(args.data_dir).resolve()
-    out = Path(args.output_dir).resolve()
+    data = (
+        Path(args.data_dir).resolve()
+        if args.data_dir
+        else default_evaluation_data_dir(cohort, args.tier)
+    )
+    out = Path(args.output_dir).resolve() if args.output_dir else cohort / "cohort_analysis"
     generate_cohort_confusion_matrix(cohort, data, out, tier=args.tier)

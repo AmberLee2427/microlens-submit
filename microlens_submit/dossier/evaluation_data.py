@@ -19,6 +19,7 @@ import pandas as pd
 
 SUPPORTED_EVALUATION_TIERS = ("beginner", "experienced")
 TRUTH_EVALUATION_TIERS = ("beginner", "experienced")
+EVALUATOR_DATA_DIRECTORY_NAME = "evaluator_data"
 BASE_MODEL_TYPES = ("1S1L", "1S2L", "2S1L", "2S2L")
 EXPERIENCED_MODEL_TYPES = (
     "1S1L",
@@ -76,6 +77,27 @@ def evaluator_truth_available(tier: str) -> bool:
     return str(tier or "").lower() in TRUTH_EVALUATION_TIERS
 
 
+def default_evaluation_data_dir(cohort_dir: Path, tier: str) -> Path:
+    """Return the standard evaluator-data directory for a cohort.
+
+    Cohorts are expected to live beside the shared ``evaluator_data`` directory::
+
+        rmdc26_submissions/
+        |-- beginner/
+        |-- experienced/
+        `-- evaluator_data/
+            |-- beginner/
+            `-- experienced/
+    """
+    tier = str(tier or "").strip().lower()
+    if tier not in SUPPORTED_EVALUATION_TIERS:
+        raise ValueError(
+            f"Unsupported evaluator tier {tier!r}; expected one of "
+            f"{', '.join(SUPPORTED_EVALUATION_TIERS)}"
+        )
+    return Path(cohort_dir).resolve().parent / EVALUATOR_DATA_DIRECTORY_NAME / tier
+
+
 @dataclass(frozen=True)
 class EvaluationData:
     """Resolved external files for one evaluator tier."""
@@ -121,7 +143,10 @@ def resolve_evaluation_data(
         mapping_candidates = [data_dir / "RMDC26_beginner_tier_w_id.txt"]
         truth_candidates = [data_dir / "RMDC26_Events.out.hdf5"]
         lightcurve_candidates = [data_dir / "Original Lightcurves"]
-        prediction_candidates = [data_dir.parent / "beginner_tier_predictions.csv"]
+        prediction_candidates = [
+            data_dir / "beginner_tier_predictions.csv",
+            data_dir.parent / "beginner_tier_predictions.csv",
+        ]
     else:
         parquet_candidates = [
             data_dir / "RMDC26_Experienced_Data.parquet",
@@ -140,6 +165,8 @@ def resolve_evaluation_data(
             data_dir / "Original Lightcurves",
         ]
         prediction_candidates = [
+            data_dir / "experienced_tier_predictions.csv",
+            data_dir / "experienced_predictions.csv",
             data_dir.parent / "experienced_tier_predictions.csv",
             data_dir.parent / "experienced_predictions.csv",
         ]
