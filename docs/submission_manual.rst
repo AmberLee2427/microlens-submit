@@ -1,5 +1,5 @@
 Microlensing Submission Format Manual
-====================================
+=====================================
 
 .. note::
    **A Note from the Organizers:** We strongly recommend integrating the official ``microlens-submit`` tool into your workflow. It provides immediate solution validation feedback, easy solution comparison, and automated metadata collection. The tool handles all the tedious formatting and metadata generation for you, significantly reducing the risk of submission errors.
@@ -46,7 +46,7 @@ CSV Import Format
 The tool can import solutions from a CSV file with the following columns:
 
 Required Columns
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. list-table:: Required CSV Columns
    :widths: 25 15 40 20
@@ -166,7 +166,7 @@ Higher-Order Effects (Optional in model_tags)
 .. END AUTO-GENERATED: HIGHER_ORDER_EFFECTS_TABLE
 
 Parameter Columns
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 You can include model parameters as individual columns. The tool will automatically recognize and validate them:
 
@@ -185,7 +185,7 @@ Core Parameters (Required based on model type)
      - Category
    * - ``t0``
      - float
-     - HJD
+     - BJD
      - Time of closest approach
      - Core
    * - ``u0``
@@ -216,7 +216,7 @@ Core Parameters (Required based on model type)
 .. END AUTO-GENERATED: CORE_PARAMETERS_TABLE
 
 Higher-Order Effect Parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. BEGIN AUTO-GENERATED: HIGHER_ORDER_PARAMETERS_TABLE
 .. list-table:: Parameter Reference
@@ -332,7 +332,7 @@ For each photometric band, you need source and blend flux parameters:
 For binary source models, use ``F0_S1``, ``F0_S2``, ``F0_B`` etc.
 
 Optional Columns
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 .. list-table:: Optional CSV Columns
    :widths: 25 15 40 20
@@ -360,7 +360,7 @@ Optional Columns
      - ``0.8``
 
 Example CSV
-^^^^^^^^^^
+^^^^^^^^^^^
 
 .. code-block:: text
 
@@ -370,12 +370,12 @@ Example CSV
    OGLE-2023-BLG-0002,finite_source,"[""1S1L"", ""finite-source""]",2459156.2,0.08,35.7,,,,,,0.001,"# Finite Source Solution"
 
 Manual Submission Format
------------------------
+------------------------
 
 If you prefer to create the submission structure manually, here are the specifications:
 
 Directory Structure
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 A valid submission is a directory containing a ``submission.json`` file and an ``events/`` subdirectory.
 
@@ -390,10 +390,10 @@ A valid submission is a directory containing a ``submission.json`` file and an `
                └── <solution_id>.json
 
 File Schemas
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 submission.json
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Global metadata for the entire submission.
 
@@ -481,7 +481,7 @@ Describes a single event.
    }
 
 solution.json
-^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Represents a single model fit.
 
@@ -601,7 +601,7 @@ Represents a single model fit.
    ``lens_plane_plot_path`` are automatically included in the exported ``.zip``.
 
 External File Locations
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 These optional files must live *inside* your submission directory, and the
 paths stored in each ``solution.json`` should be **relative** to the submission

@@ -46,8 +46,17 @@ def test_get_tier_event_list():
     events = get_tier_event_list("beginner")
     assert isinstance(events, set)
     assert "rmdc26_000001" in events
-    assert "rmdc26_000001" in events
     assert "rmdc26_000188" in events
+    assert len(events) == 188
+    assert "rmdc26_000000" not in events
+
+    experienced_events = get_tier_event_list("experienced")
+    assert len(experienced_events) == 2288
+    assert "rmdc26_000001" in experienced_events
+    assert "rmdc26_000188" in experienced_events
+    assert "rmdc26_000189" in experienced_events
+    assert "rmdc26_002288" in experienced_events
+    assert "rmdc26_002289" not in experienced_events
 
     events = get_tier_event_list("None")
     assert isinstance(events, set)
@@ -70,6 +79,7 @@ def test_validate_event_id():
 
     # Test invalid events
     assert not validate_event_id("INVALID_EVENT", "beginner")
+    assert not validate_event_id("rmdc26_000000", "beginner")
     assert not validate_event_id("rmdc26_003001", "experienced")
 
     # Test None tier and invalid tiers (should always return True)
@@ -216,13 +226,13 @@ def test_submission_validation_with_valid_events(tmp_path):
     sub.hardware_info = {"cpu": "test"}
 
     # Add only valid events for beginner tier
-    evt1 = sub.get_event("rmdc26_000003")
+    evt1 = sub.get_event("rmdc26_000001")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt2 = sub.get_event("rmdc26_000001")
+    evt2 = sub.get_event("rmdc26_000002")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt3 = sub.get_event("rmdc26_000002")
+    evt3 = sub.get_event("rmdc26_000003")
     evt3.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Run validation - should not have tier validation warnings
@@ -368,10 +378,10 @@ def test_export_with_valid_events_should_succeed(tmp_path):
     sub.hardware_info = {"cpu": "test"}
 
     # Add only valid events for beginner tier
-    evt1 = sub.get_event("rmdc26_000003")
+    evt1 = sub.get_event("rmdc26_000001")
     evt1.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
-    evt2 = sub.get_event("rmdc26_000001")
+    evt2 = sub.get_event("rmdc26_000002")
     evt2.add_solution("1S1L", {"t0": 2459123.5, "u0": 0.1, "tE": 20.0})
 
     # Save the submission
