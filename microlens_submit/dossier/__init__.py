@@ -41,7 +41,6 @@ Note:
 from .dashboard import generate_dashboard_html
 from .event_page import generate_event_page
 from .full_report import generate_full_dossier_report_html
-from .plotting import generate_lightcurve_plot
 from .solution_page import generate_solution_page
 
 __all__ = [
@@ -49,5 +48,4 @@ __all__ = [
     "generate_event_page",
     "generate_solution_page",
     "generate_full_dossier_report_html",
-    "generate_lightcurve_plot",
 ]

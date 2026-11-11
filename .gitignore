@@ -220,6 +220,3 @@ test_env/
 test_dossier_output.log
 aliases.json
 tmp/
-
-/mock_submission
-agents.md
