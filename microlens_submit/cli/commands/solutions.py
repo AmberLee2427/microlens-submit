@@ -891,3 +891,99 @@ def import_solutions(
         typer.echo(f"\n{symbol('search')} Dry run completed - no changes made")
     else:
         typer.echo(f"\n{symbol('check')} Import completed successfully")
+
+
+def plot_solution_command(
+    solution_id: str = typer.Argument(..., help="UUID or alias of the solution to plot"),
+    data_path: Path = typer.Option(..., "--data", "-d", help="Path to the lightcurve data file (.csv or .dat)"),
+    project_path: Path = typer.Option(Path("."), "--project", "-p", help="Project directory"),
+    save_to_solution: bool = typer.Option(True, "--save/--no-save", help="Automatically set and save this plot on the solution"),
+    update_likelihood: bool = typer.Option(True, "--update-likelihood/--no-update-likelihood", help="Automatically update log_likelihood from the fit (-0.5 * chi2)"),
+    event_id: Optional[str] = typer.Option(None, "--event-id", "-e", help="Optional Event ID to disambiguate solution aliases"),
+) -> None:
+    """Generate an interactive lightcurve and residuals plot using MulensModel and attach it to the solution.
+
+    The plot is saved in the solution's directory (under events/<event_id>/solutions/<solution_id>/) and
+    lightcurve_plot_path is updated accordingly.
+    """
+    sub = load(str(project_path))
+
+    target_solution = None
+    target_event = None
+
+    if event_id:
+        if event_id not in sub.events:
+            console.print(f"[red]Error: Event '{event_id}' not found[/red]")
+            raise typer.Exit(code=1)
+        event = sub.events[event_id]
+        if solution_id in event.solutions:
+            target_solution = event.solutions[solution_id]
+            target_event = event
+        else:
+            for sol in event.solutions.values():
+                if sol.alias == solution_id:
+                    target_solution = sol
+                    target_event = event
+                    break
+    else:
+        # Search all events, but check for ambiguity if matching by alias
+        matched_solutions = []
+        for eid, event in sub.events.items():
+            if solution_id in event.solutions:
+                matched_solutions.append((event.solutions[solution_id], event))
+            else:
+                for sol in event.solutions.values():
+                    if sol.alias == solution_id:
+                        matched_solutions.append((sol, event))
+
+        if len(matched_solutions) > 1:
+            console.print(f"[yellow]Ambiguity warning: Alias '{solution_id}' matches solutions in multiple events:[/yellow]")
+            for sol, event in matched_solutions:
+                console.print(f"  • Event: {event.event_id} (Solution: {sol.solution_id[:8]})")
+            console.print(f"[red]Error: Please specify the event ID using --event-id / -e to disambiguate.[/red]")
+            raise typer.Exit(code=1)
+        elif len(matched_solutions) == 1:
+            target_solution, target_event = matched_solutions[0]
+
+    if target_solution is None:
+        console.print(f"[red]Error: Solution or alias '{solution_id}' not found[/red]")
+        raise typer.Exit(code=1)
+
+    # Output path for the plot
+    # Canonical location: events/<event_id>/solutions/<solution_id>/lightcurve.html
+    # lightcurve_plot_path should be relative to project_path
+    rel_plot_dir = Path("events") / target_event.event_id / "solutions" / target_solution.solution_id
+    abs_plot_dir = Path(project_path) / rel_plot_dir
+    abs_plot_dir.mkdir(parents=True, exist_ok=True)
+
+    output_plot_path = abs_plot_dir / "lightcurve.html"
+    rel_plot_path = rel_plot_dir / "lightcurve.html"
+
+    console.print(
+        f"[blue]{symbol('progress')} Generating lightcurve plot for solution {target_solution.solution_id[:8]}...[/blue]"
+    )
+
+    try:
+        from microlens_submit.dossier.plotting import generate_lightcurve_plot
+
+        chi2 = generate_lightcurve_plot(
+            solution=target_solution,
+            event=target_event,
+            data_path=data_path,
+            output_path=output_plot_path,
+        )
+
+        console.print(f"[green]{symbol('check')} Plot successfully generated and saved to {output_plot_path}[/green]")
+        console.print(f"[green]   Best fit chi2: {chi2:.2f}[/green]")
+
+        if save_to_solution:
+            target_solution.lightcurve_plot_path = str(rel_plot_path)
+            target_solution.lens_plane_plot_path = str(rel_plot_dir / "lens_plane.png")
+            if update_likelihood:
+                target_solution.log_likelihood = -0.5 * chi2
+            sub.save()
+            console.print(f"[green]{symbol('save')} Solution updated and saved on disk![/green]")
+
+    except Exception as e:
+        console.print(f"[red]Error during plotting: {e}[/red]")
+        raise typer.Exit(code=1)

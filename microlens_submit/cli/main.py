@@ -105,6 +105,7 @@ app.command("remove-solution")(solutions.remove_solution)
 app.command("edit-solution")(solutions.edit_solution)
 app.command("notes")(solutions.edit_notes)
 app.command("import-solutions")(solutions.import_solutions)
+app.command("plot-solution")(solutions.plot_solution_command)
 
 app.command("validate-solution")(validation.validate_solution)
 app.command("validate-submission")(validation.validate_submission)
@@ -113,6 +114,7 @@ app.command("list-solutions")(validation.list_solutions)
 app.command("compare-solutions")(validation.compare_solutions)
 
 app.command("generate-dossier")(dossier.generate_dossier)
+app.command("evaluate-cohort")(dossier.evaluate_cohort)
 
 app.command("export")(export.export)
 app.command("remove-event")(export.remove_event)

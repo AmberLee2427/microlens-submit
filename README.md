@@ -16,6 +16,8 @@
 
 Full documentation is hosted on [Read the Docs](https://microlens-submit.readthedocs.io/en/latest/). A comprehensive tutorial notebook is available at `docs/Submission_Tool_Tutorial.ipynb`. Challenge participants who prefer not to use this tool can consult the [Submission Manual](https://microlens-submit.readthedocs.io/en/latest/submission_manual.html) for the manual submission format.
 
+Evaluator handoff instructions, including the shared cohort data layout and report-generation commands, are in [`docs/EVALUATOR_REPORTS.md`](docs/EVALUATOR_REPORTS.md).
+
 ## Key Features
 
 * **Persistent Projects:** Treat your submission as a local project that you can load, edit, and save over weeks or months.

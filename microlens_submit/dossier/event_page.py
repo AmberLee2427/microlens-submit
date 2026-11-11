@@ -8,14 +8,23 @@ evaluator-only visualizations.
 
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from .. import __version__
 from ..models import Event, Submission
+from .evaluation_data import evaluator_truth_available
 from .solution_page import generate_solution_page
 from .utils import resolve_dossier_asset_path
+from .utils import get_tier_submissions_label, get_tier_submissions_url
+from .plotting import generate_mass_distance_comparison_plot, generate_proper_motion_comparison_plot
 
 
-def generate_event_page(event: Event, submission: Submission, output_dir: Path) -> None:
+def generate_event_page(
+    event: Event,
+    submission: Submission,
+    output_dir: Path,
+    evaluator_mode: bool = False,
+) -> None:
     """Generate an HTML dossier page for a single event.
 
     Creates a detailed HTML page for a specific microlensing event, following
@@ -27,6 +36,7 @@ def generate_event_page(event: Event, submission: Submission, output_dir: Path) 
         submission: The parent Submission object for context and metadata.
         output_dir: The dossier directory where the HTML file will be saved.
             The file will be named {event.event_id}.html.
+        evaluator_mode: If True, include simulation truth comparisons in the report.
 
     Raises:
         OSError: If unable to write the HTML file.
@@ -61,13 +71,79 @@ def generate_event_page(event: Event, submission: Submission, output_dir: Path) 
             subdir="event-data",
             prefix=f"{event.event_id}_event_data",
         )
-    html = _generate_event_page_content(event, submission, event_data_link=event_data_link)
+
+    # Check for interactive lightcurve plot
+    # 1. Check project's own dossier directory
+    interactive_plot_path = output_dir / "interactive" / f"{event.event_id}_lc.html"
+
+    # 2. Check shared location (../rmdc26/interactive_plots) relative to project root
+    if not interactive_plot_path.exists():
+        # Fallback to shared location in the parent of the repo or current directory
+        # Try several common locations for interactive plots
+        possible_dirs = [
+            project_root.parent / f"interactive_plots_{submission.tier}",
+            project_root.parent / "rmdc26" / "interactive_plots",
+            project_root.parent / "rmdc26" / f"interactive_plots_{submission.tier}",
+            Path("../rmdc26/interactive_plots").resolve(),
+            Path(f"../rmdc26/interactive_plots_{submission.tier}").resolve(),
+            Path("./rmdc26/interactive_plots").resolve(),
+            Path(f"./rmdc26/interactive_plots_{submission.tier}").resolve(),
+        ]
+
+        for shared_plots_dir in possible_dirs:
+            if shared_plots_dir.exists():
+                shared_plot = shared_plots_dir / f"{event.event_id}_lc.html"
+                if shared_plot.exists():
+                    interactive_plot_path = shared_plot
+                    break
+
+    interactive_plot_html = ""
+    if interactive_plot_path.exists():
+        with interactive_plot_path.open("r", encoding="utf-8") as f:
+            interactive_plot_html = f.read()
+
+    # Generate degeneracy comparison plots
+    mass_dist_path = output_dir / "plots" / f"{event.event_id}_mass_dist.png"
+    proper_motion_path = output_dir / "plots" / f"{event.event_id}_prop_mot.png"
+
+    generate_mass_distance_comparison_plot(event, mass_dist_path)
+    generate_proper_motion_comparison_plot(event, proper_motion_path)
+
+    # Resolve paths for HTML
+    mass_dist_link = ""
+    if mass_dist_path.exists():
+        mass_dist_link = resolve_dossier_asset_path(
+            str(mass_dist_path),
+            project_root,
+            output_dir,
+            subdir="plots",
+            prefix=f"{event.event_id}_mass_dist",
+        )
+    proper_motion_link = ""
+    if proper_motion_path.exists():
+        proper_motion_link = resolve_dossier_asset_path(
+            str(proper_motion_path),
+            project_root,
+            output_dir,
+            subdir="plots",
+            prefix=f"{event.event_id}_prop_mot",
+        )
+
+    html = _generate_event_page_content(
+        event,
+        submission,
+        event_data_link=event_data_link,
+        interactive_plot_html=interactive_plot_html,
+        evaluator_mode=evaluator_mode,
+        mass_dist_plot=mass_dist_link,
+        proper_motion_plot=proper_motion_link,
+    )
     with (output_dir / f"{event.event_id}.html").open("w", encoding="utf-8") as f:
         f.write(html)
 
     # After generating the event page, generate solution pages
     for sol in event.solutions.values():
-        generate_solution_page(sol, event, submission, output_dir)
+        generate_solution_page(sol, event, submission, output_dir, evaluator_mode=evaluator_mode)
 
 
 def _generate_event_page_content(
@@ -75,6 +151,10 @@ def _generate_event_page_content(
     submission: Submission,
     *,
     event_data_link: str = "",
+    interactive_plot_html: str = "",
+    evaluator_mode: bool = False,
+    mass_dist_plot: str = "",
+    proper_motion_plot: str = "",
 ) -> str:
     """Generate the HTML content for an event dossier page.
 
@@ -85,6 +165,9 @@ def _generate_event_page_content(
     Args:
         event: The Event object containing solutions and metadata.
         submission: The parent Submission object for context and metadata.
+        event_data_link: Optional link to download raw event data.
+        interactive_plot_html: Optional HTML snippet for an interactive lightcurve plot.
+        evaluator_mode: If True, include simulation truth comparisons in the report.
 
     Returns:
         str: Complete HTML content as a string for the event page.
@@ -114,6 +197,15 @@ def _generate_event_page_content(
             -(sol.relative_probability if sol.relative_probability is not None else float("-inf")),
             sol.solution_id,
         )
+
+    truth_available = evaluator_mode and evaluator_truth_available(submission.tier)
+    tier_submissions_url = get_tier_submissions_url(submission.tier)
+    tier_submissions_link = (
+        f"<a href='{tier_submissions_url}' class='text-rtd-accent hover:underline'>"
+        f"{get_tier_submissions_label(submission.tier)}</a>"
+        if tier_submissions_url
+        else ""
+    )
 
     solutions = sorted(event.solutions.values(), key=sort_key)
     # Table rows
@@ -185,6 +277,58 @@ def _generate_event_page_content(
             f'<a href="{event_data_link}" '
             f'class="text-rtd-accent hover:underline">Download Data</a></p>'
         )
+
+    # Lightcurve visualization logic
+    if interactive_plot_html:
+        lightcurve_viz = f"""
+            <div class='mb-6 flex flex-col items-center'>
+                <div class='bg-gray-50 p-4 rounded-lg shadow-inner border border-gray-200 w-full flex justify-center'>
+                    {interactive_plot_html}
+                </div>
+                <p class='text-sm text-gray-600 mt-2 text-center'>
+                    Interactive view of the event data for {event.event_id}. Use the tools on the right to zoom and pan.
+                </p>
+            </div>
+        """
+    else:
+        lightcurve_description = (
+            "Raw lightcurve data for this submitted event."
+            if not truth_available
+            else "Raw lightcurve data with the simulation truth overlaid (Evaluator View)."
+        )
+        lightcurve_viz = f"""
+            <div class='mb-6'>
+                <img
+                    src='https://placehold.co/800x450/dfc5fa/361d49?text=Raw+Lightcurve+and+Astrometry+Data+
+                    (Evaluator+Only)'
+                    alt='Raw Data Plot'
+                    class='w-full rounded-lg shadow-md'
+                >
+                <p class='text-sm text-gray-600 mt-2'>{lightcurve_description}</p>
+            </div>
+        """
+
+    visualization_title = (
+        "Event Data Visualizations (Evaluator-Only)"
+        if truth_available
+        else "Submitted Event Data Visualizations"
+    )
+    visualization_note = (
+        "Note: These advanced plots include comparisons to simulation truths and other teams' results."
+        if truth_available
+        else "Note: This tier does not have trusted hidden truth data; plots show submitted solutions only."
+    )
+    mass_placeholder = (
+        "https://placehold.co/600x400/dfc5fa/361d49?text=Mass+vs+Distance+Plot"
+        if not truth_available
+        else "https://placehold.co/600x400/dfc5fa/361d49?text=Mass+vs+Distance+Scatter+Plot+(Evaluator+Only)"
+    )
+    proper_motion_placeholder = (
+        "https://placehold.co/600x400/dfc5fa/361d49?text=Proper+Motion+Plot"
+        if not truth_available
+        else "https://placehold.co/600x400/dfc5fa/361d49?text=Proper+Motion+N+vs+E+Plot+(Evaluator+Only)"
+    )
+
     # HTML content
     html = f"""<!DOCTYPE html>
 <html lang='en'>
@@ -211,13 +355,18 @@ def _generate_event_page_content(
         }},
       }};
     </script>
-    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' \
-rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap' rel='stylesheet'>
     <!-- Highlight.js for code syntax highlighting -->
-    <link rel="stylesheet" \
-href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
+
+    <!-- Bokeh for interactive plots -->
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.0.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.0.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.8.0.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.8.0.min.js"></script>
+
     <style>
         .prose {{
             color: #000;
@@ -298,6 +447,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.m
                 </p>
                 <nav class='flex justify-center space-x-4 mb-8'>
                     <a href='index.html' class='text-rtd-accent hover:underline'>&larr; Back to Dashboard</a>
+                    {tier_submissions_link}
                 </nav>
             </div>
 
@@ -313,6 +463,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.m
                 </p>
                 {raw_data_html}
             </section>
+
             <!-- Solutions Table -->
             <section class='mb-10 px-8'>
                 <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
@@ -338,37 +489,21 @@ href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.m
             <!-- Event-Specific Data Visualizations (Evaluator-Only Placeholders) -->
             <section class='mb-10 px-8'>
                 <h2 class='text-2xl font-semibold text-rtd-secondary mb-4'>
-                    Event Data Visualizations (Evaluator-Only)
+                    {visualization_title}
                 </h2>
-                <p class='text-sm text-gray-500 italic mb-4'>
-                    Note: These advanced plots, including comparisons to simulation truths and
-                    other teams' results, are available in the Evaluator Dossier.
-                </p>
+                <p class='text-sm text-gray-500 italic mb-4'>{visualization_note}</p>
+
+                {lightcurve_viz}
+
                 <div class='mb-6'>
-                    <img
-                        src='https://placehold.co/800x450/dfc5fa/361d49?text=Raw+Lightcurve+and+Astrometry+Data+
-                        (Evaluator+Only)'
-                        alt='Raw Data Plot'
-                        class='w-full rounded-lg shadow-md'
-                    >
-                    <p class='text-sm text-gray-600 mt-2'>
-                        Raw lightcurve and astrometry data for Event
-                        {event.event_id}, with true model overlaid (Evaluator View).
-                    </p>
-                </div>
-                <div class='mb-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Mass+vs+Distance+Scatter+Plot+
-(Evaluator+Only)'
+                    <img src='{mass_dist_plot if mass_dist_plot else mass_placeholder}'
 alt='Mass vs Distance Plot' class='w-full rounded-lg shadow-md'>
-                    <p class='text-sm text-gray-600 mt-2'>Derived Lens Mass vs. Lens Distance for solutions of \
-Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
+                    <p class='text-sm text-gray-600 mt-2'>{"Derived Lens Mass vs. Lens Distance for submitted solutions (Evaluator View)." if truth_available else "Lens mass vs. distance for submitted solutions."}</p>
                 </div>
                 <div class='mb-6'>
-                    <img src='https://placehold.co/600x400/dfc5fa/361d49?text=Proper+Motion+N+vs+E+Plot+
-(Evaluator+Only)'
+                    <img src='{proper_motion_plot if proper_motion_plot else proper_motion_placeholder}'
 alt='Proper Motion Plot' class='w-full rounded-lg shadow-md'>
-                    <p class='text-sm text-gray-600 mt-2'>Proper Motion North vs. East components for solutions of \
-Event {event.event_id}. Points colored by Relative Probability (Evaluator View).</p>
+                    <p class='text-sm text-gray-600 mt-2'>{"Proper Motion North vs. East components for submitted solutions (Evaluator View)." if truth_available else "Proper Motion North vs. East components for submitted solutions."}</p>
                 </div>
             </section>
 

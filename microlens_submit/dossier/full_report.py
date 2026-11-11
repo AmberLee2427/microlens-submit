@@ -15,10 +15,14 @@ from ..models.solution import Solution
 from .dashboard import _generate_dashboard_content
 from .event_page import _generate_event_page_content
 from .solution_page import _generate_solution_page_content
-from .utils import resolve_dossier_asset_path
+from .utils import (
+    get_tier_submissions_label,
+    get_tier_submissions_url,
+    resolve_dossier_asset_path,
+)
 
 
-def generate_full_dossier_report_html(submission: Submission, output_dir: Path) -> None:
+def generate_full_dossier_report_html(submission: Submission, output_dir: Path, evaluator_mode: bool = False) -> None:
     """Generate a comprehensive printable HTML dossier report.
 
     Creates a single HTML file that concatenates all dossier sections (dashboard,
@@ -30,6 +34,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
         submission: The submission object containing all events and solutions.
         output_dir: Directory where the full dossier report will be saved.
             The file will be named full_dossier_report.html.
+        evaluator_mode: If True, include simulation truth comparisons in the report.
 
     Raises:
         OSError: If unable to write the HTML file.
@@ -57,8 +62,17 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
         generate_dashboard_html() when creating a full dossier.
     """
     all_html_sections = []
-    # Dashboard (extract only main content, skip header/logo)
-    dash_html = _generate_dashboard_content(submission, full_dossier_exists=True)
+    # Reuse the freshly generated dashboard so evaluator assets and ranks are
+    # preserved in the printable report as well.
+    dashboard_path = output_dir / "index.html"
+    if evaluator_mode and dashboard_path.exists():
+        dash_html = dashboard_path.read_text(encoding="utf-8")
+    else:
+        dash_html = _generate_dashboard_content(
+            submission,
+            full_dossier_exists=True,
+            evaluator_mode=evaluator_mode,
+        )
     dash_body = extract_main_content_body(dash_html)
     all_html_sections.append(dash_body)
     all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after dashboard
@@ -75,7 +89,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
                 subdir="event-data",
                 prefix=f"{event.event_id}_event_data",
             )
-        event_html = _generate_event_page_content(event, submission, event_data_link=event_data_link)
+        event_html = _generate_event_page_content(event, submission, event_data_link=event_data_link, evaluator_mode=evaluator_mode)
         event_body = extract_main_content_body(event_html, section_type="event", section_id=event.event_id)
         all_html_sections.append(event_body)
         all_html_sections.append('<hr class="my-8 border-t-2 border-rtd-accent">')  # Divider after event
@@ -106,6 +120,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
                 sol,
                 event,
                 submission,
+                evaluator_mode=evaluator_mode,
                 lc_plot=lc_plot,
                 lens_plot=lens_plot,
                 posterior=posterior,
@@ -122,6 +137,13 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
 
     # Compose the full HTML
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+    tier_submissions_url = get_tier_submissions_url(submission.tier)
+    tier_submissions_link = (
+        f"<a href='{tier_submissions_url}' class='underline'>"
+        f"{get_tier_submissions_label(submission.tier)}</a>"
+        if tier_submissions_url
+        else ""
+    )
     header = f"""
     <div class="text-center py-8 bg-rtd-primary text-rtd-secondary">
         <img src='assets/rges-pit_logo.png' alt='RGES-PIT Logo' class='w-48 mx-auto mb-6'>
@@ -130,6 +152,7 @@ def generate_full_dossier_report_html(submission: Submission, output_dir: Path) 
         <p class="text-md">
             Team: {submission.team_name} | Tier: {submission.tier}
         </p>
+        <p class="mt-3">{tier_submissions_link}</p>
     </div>
     <hr class="border-t-4 border-rtd-accent my-8">
     """
